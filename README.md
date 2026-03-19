@@ -1,1 +1,155 @@
-# TreeFlow
+# TreeFlow - AI代理系统
+
+## 项目概述
+
+TreeFlow是一个基于AI的代理系统，类似于OpenClaw，支持使用token进行身份验证，提供分支对话功能，并集成了话题管理系统。项目采用现代前端技术栈，包括React、Material-UI和react-flow，为用户提供流畅的交互体验。
+
+## 核心功能
+
+1. **AI对话**：与AI模型进行对话，支持多种模型选择
+2. **分支对话**：创建对话分支，在不影响主对话的情况下进行并行讨论
+3. **话题管理**：创建和切换不同的话题，每个话题有独立的对话历史
+4. **Token管理**：添加、删除和管理API token，支持自动模型识别
+5. **模型选择**：根据token自动识别可用模型，并允许用户手动选择
+6. **脑图分支**：集成react-flow库，支持创建和管理思维导图形式的对话分支
+
+## 技术栈
+
+### 前端
+- **React 18**：构建用户界面的核心库
+- **Material-UI**：提供现代化的UI组件
+- **react-flow**：用于创建交互式思维导图和分支结构
+- **Vite**：快速的前端构建工具
+
+### 后端
+- **Node.js**：运行环境
+- **Express**：Web服务器框架
+- **CORS**：处理跨域请求
+
+## 项目结构
+
+```
+TreeFlow/
+├── client/              # 前端代码
+│   ├── src/
+│   │   ├── App.jsx      # 主应用组件
+│   │   ├── index.css    # 全局样式
+│   │   └── main.jsx     # 应用入口
+│   ├── package.json      # 前端依赖
+│   └── vite.config.js   # Vite配置
+├── src/                 # 后端代码
+│   ├── agent.js         # AI代理核心逻辑
+│   └── tokenManager.js  # Token管理
+├── server.js            # 后端服务器
+├── package.json         # 后端依赖
+└── README.md            # 项目文档
+```
+
+## 安装与运行
+
+### 前端
+
+1. 进入client目录：
+   ```bash
+   cd client
+   ```
+
+2. 安装依赖：
+   ```bash
+   npm install
+   ```
+
+3. 启动开发服务器：
+   ```bash
+   npm run dev
+   ```
+
+### 后端
+
+1. 在项目根目录安装依赖：
+   ```bash
+   npm install
+   ```
+
+2. 启动服务器：
+   ```bash
+   node server.js
+   ```
+
+## 功能流程图
+
+```mermaid
+sequenceDiagram
+    participant User as 用户
+    participant Frontend as 前端
+    participant Backend as 后端
+    participant AI as AI模型
+
+    User->>Frontend: 输入消息
+    Frontend->>Backend: 发送API请求
+    Backend->>TokenManager: 检查token
+    TokenManager-->>Backend: 返回可用token
+    Backend->>AI: 发送请求
+    AI-->>Backend: 返回响应
+    Backend-->>Frontend: 返回AI响应
+    Frontend-->>User: 显示AI回复
+    
+    User->>Frontend: 创建分支
+    Frontend->>Backend: 请求创建分支
+    Backend->>Agent: 创建对话分支
+    Agent-->>Backend: 分支创建成功
+    Backend-->>Frontend: 返回成功消息
+    Frontend-->>User: 显示分支创建成功
+    
+    User->>Frontend: 创建话题
+    Frontend->>Backend: 请求创建话题
+    Backend->>Agent: 创建新话题
+    Agent-->>Backend: 话题创建成功
+    Backend-->>Frontend: 返回成功消息
+    Frontend-->>User: 显示话题创建成功
+```
+
+## 界面设计
+
+### 布局结构
+- **顶部导航栏**：包含应用名称和主要操作按钮（token管理、创建分支）
+- **左侧边栏**：显示话题列表，支持创建新话题
+- **主内容区**：显示当前话题的对话历史和输入区域
+- **模型选择**：允许用户选择不同的AI模型
+- **Token管理**：模态框形式的token管理界面
+
+### 交互流程
+1. 用户打开应用，默认进入默认话题
+2. 用户可以创建新话题或切换现有话题
+3. 用户输入消息，选择模型（可选），发送给AI
+4. AI返回响应，显示在对话历史中
+5. 用户可以选择语句点击“添加到对话“进行提出疑问或请求，根据语句生成分支或纠正语句的错误内容
+6. 用户可以管理token，添加或删除API token
+
+## 未来规划
+
+1. **脑图可视化**：使用react-flow实现更直观的分支对话可视化
+2. **技能系统**：支持通过"/"命令调用不同的技能
+3. **历史记录**：保存和管理对话历史
+
+## 技术亮点
+
+1. **模块化设计**：清晰的代码结构，易于维护和扩展
+2. **现代UI**：使用Material-UI提供美观、响应式的用户界面
+3. **智能token管理**：自动识别token对应的模型，优化API调用
+4. **流畅的交互**：实时对话和动画效果，提升用户体验
+5. **可扩展性**：预留了技能系统和脑图可视化的扩展接口
+
+## 注意事项
+
+- 本项目需要有效的API token才能与AI模型进行交互
+- 不同的AI模型可能有不同的使用限制和计费方式
+- 建议使用环境变量存储敏感信息，避免硬编码token
+
+## 贡献
+
+欢迎提交Issue和Pull Request，共同改进TreeFlow项目。
+
+## 许可证
+
+本项目采用MIT许可证。

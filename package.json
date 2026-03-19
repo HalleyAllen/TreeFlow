@@ -1,0 +1,26 @@
+{
+  "name": "treeflow",
+  "version": "1.0.0",
+  "description": "AI代理系统，支持分支对话和token管理",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "client": "cd client && npm start",
+    "install-client": "cd client && npm install"
+  },
+  "dependencies": {
+    "openai": "^4.0.0",
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "chat",
+    "branching",
+    "web"
+  ],
+  "author": "",
+  "license": "MIT"
+}
