@@ -1,0 +1,71 @@
+{
+  "currentModel": "qvq-max-2025-03-25",
+  "ollamaBaseUrl": "http://localhost:11434",
+  "ollamaEnabled": true,
+  "currentTopic": "default",
+  "theme": "light",
+  "providers": {
+    "OpenAI": {
+      "apiUrl": "https://api.openai.com/v1/chat/completions",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {{token}}"
+      },
+      "requestBody": {
+        "model": "{{model}}",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a helpful assistant."
+          },
+          {
+            "role": "user",
+            "content": "{{question}}"
+          }
+        ]
+      },
+      "responsePath": "choices[0].message.content"
+    },
+    "Anthropic": {
+      "apiUrl": "https://api.anthropic.com/v1/messages",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json",
+        "x-api-key": "{{token}}",
+        "anthropic-version": "2023-06-01"
+      },
+      "requestBody": {
+        "model": "{{model}}",
+        "messages": [
+          {
+            "role": "user",
+            "content": "{{question}}"
+          }
+        ],
+        "max_tokens": 1024
+      },
+      "responsePath": "content[0].text"
+    },
+    "Google": {
+      "apiUrl": "https://generativelanguage.googleapis.com/v1/models/{{model}}:generateContent?key={{token}}",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "requestBody": {
+        "contents": [
+          {
+            "parts": [
+              {
+                "text": "{{question}}"
+              }
+            ]
+          }
+        ]
+      },
+      "responsePath": "candidates[0].content.parts[0].text"
+    },
+    "default": "OpenAI"
+  }
+}

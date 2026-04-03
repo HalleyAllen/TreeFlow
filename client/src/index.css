@@ -1,18 +1,6 @@
+/* ==================== 主题变量 ==================== */
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.9);
-  background-color: #1a1a1a;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  /* 自定义变量 */
+  /* 深色主题（默认） */
   --primary-color: #3b82f6;
   --primary-hover: #2563eb;
   --secondary-color: #64748b;
@@ -21,7 +9,7 @@
   --border-color: #333;
   --text-color: rgba(255, 255, 255, 0.9);
   --text-secondary: rgba(255, 255, 255, 0.6);
-  --user-message-bg: #3b82f6;
+  --user-message-bg: linear-gradient(135deg, #3b82f6, #2563eb);
   --ai-message-bg: #2a2a2a;
   --sidebar-bg: #1e1e1e;
   --header-bg: #1e1e1e;
@@ -29,6 +17,56 @@
   --modal-bg: rgba(0, 0, 0, 0.9);
   --success-color: #10b981;
   --error-color: #ef4444;
+  --warning-color: #f59e0b;
+  --success-bg: rgba(16, 185, 129, 0.1);
+  --error-bg: rgba(239, 68, 68, 0.1);
+  --scrollbar-track: #1a1a1a;
+  --scrollbar-thumb: #444;
+  --hover-bg: rgba(59, 130, 246, 0.1);
+  --tooltip-bg: #333;
+  --divider-color: #333;
+}
+
+/* 浅色主题 */
+[data-theme="light"] {
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+  --secondary-color: #64748b;
+  --background-color: #f8fafc;
+  --card-background: #ffffff;
+  --border-color: #e2e8f0;
+  --text-color: #1e293b;
+  --text-secondary: #64748b;
+  --user-message-bg: linear-gradient(135deg, #3b82f6, #2563eb);
+  --ai-message-bg: #ffffff;
+  --sidebar-bg: #ffffff;
+  --header-bg: #ffffff;
+  --input-bg: #ffffff;
+  --modal-bg: rgba(0, 0, 0, 0.5);
+  --success-color: #10b981;
+  --error-color: #ef4444;
+  --warning-color: #f59e0b;
+  --success-bg: rgba(16, 185, 129, 0.1);
+  --error-bg: rgba(239, 68, 68, 0.1);
+  --scrollbar-track: #f1f5f9;
+  --scrollbar-thumb: #cbd5e1;
+  --hover-bg: rgba(37, 99, 235, 0.08);
+  --tooltip-bg: #475569;
+  --divider-color: #e2e8f0;
+}
+
+/* ==================== 基础样式 ==================== */
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
@@ -40,6 +78,8 @@
 body {
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--background-color);
+  color: var(--text-color);
 }
 
 #root {
@@ -57,6 +97,7 @@ body {
   background-color: var(--background-color);
 }
 
+/* ==================== Header 样式 ==================== */
 header {
   background-color: var(--header-bg);
   padding: 1rem 1.5rem;
@@ -68,6 +109,7 @@ header {
   position: sticky;
   top: 0;
   z-index: 100;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 header h1 {
@@ -77,6 +119,7 @@ header h1 {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  transition: color 0.3s ease;
 }
 
 header h1::before {
@@ -87,6 +130,7 @@ header h1::before {
 nav {
   display: flex;
   gap: 0.75rem;
+  align-items: center;
 }
 
 nav button {
@@ -108,27 +152,58 @@ nav button:hover {
   box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
 }
 
-nav button:active {
-  transform: translateY(0);
-}
-
-main {
-  flex: 1;
+/* 主题切换按钮 */
+.theme-toggle {
   display: flex;
-  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background-color: var(--card-background);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1.2rem;
 }
 
+.theme-toggle:hover {
+  border-color: var(--primary-color);
+  background-color: var(--hover-bg);
+  transform: scale(1.05);
+}
+
+.theme-toggle .sun-icon,
+.theme-toggle .moon-icon {
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+}
+
+/* ==================== Sidebar 样式 ==================== */
 .sidebar {
   width: 280px;
   background-color: var(--sidebar-bg);
   border-right: 1px solid var(--border-color);
   padding: 1.5rem;
   overflow-y: auto;
-  transition: width 0.3s ease;
+  transition: width 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .sidebar:hover {
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
 }
 
 .sidebar-header {
@@ -148,8 +223,70 @@ main {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  transition: color 0.3s ease;
 }
 
+.sidebar h2::before {
+  content: "📋";
+  font-size: 1.1rem;
+}
+
+.sidebar ul {
+  list-style: none;
+  margin-bottom: 2rem;
+}
+
+.sidebar li {
+  margin-bottom: 0.5rem;
+}
+
+.sidebar button {
+  text-align: left;
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: var(--text-color);
+  font-size: 0.95rem;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.sidebar button::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background-color: transparent;
+  transition: all 0.3s ease;
+}
+
+.sidebar button:hover {
+  background-color: var(--hover-bg);
+  border-color: var(--primary-color);
+  transform: translateX(4px);
+}
+
+.sidebar button:hover::before {
+  background-color: var(--primary-color);
+}
+
+.sidebar button.active {
+  background-color: var(--hover-bg);
+  border-color: var(--primary-color);
+  font-weight: 500;
+}
+
+.sidebar button.active::before {
+  background-color: var(--primary-color);
+}
+
+/* ==================== 创建话题表单 ==================== */
 .create-topic-form {
   background-color: var(--card-background);
   border: 1px solid var(--border-color);
@@ -165,7 +302,6 @@ main {
     opacity: 0;
     transform: translateY(-10px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -209,7 +345,7 @@ main {
 }
 
 .create-topic-buttons button:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--hover-bg);
 }
 
 .create-topic-buttons button.primary {
@@ -247,65 +383,7 @@ main {
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
 }
 
-.sidebar h2::before {
-  content: "📋";
-  font-size: 1.1rem;
-}
-
-.sidebar ul {
-  list-style: none;
-  margin-bottom: 2rem;
-}
-
-.sidebar li {
-  margin-bottom: 0.5rem;
-}
-
-.sidebar button {
-  text-align: left;
-  background-color: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  padding: 0.75rem 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: var(--text-color);
-  font-size: 0.95rem;
-  position: relative;
-  overflow: hidden;
-}
-
-.sidebar button::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 4px;
-  height: 100%;
-  background-color: transparent;
-  transition: all 0.3s ease;
-}
-
-.sidebar button:hover {
-  background-color: rgba(59, 130, 246, 0.1);
-  border-color: var(--primary-color);
-  transform: translateX(4px);
-}
-
-.sidebar button:hover::before {
-  background-color: var(--primary-color);
-}
-
-.sidebar button.active {
-  background-color: rgba(59, 130, 246, 0.15);
-  border-color: var(--primary-color);
-  font-weight: 500;
-}
-
-.sidebar button.active::before {
-  background-color: var(--primary-color);
-}
-
+/* ==================== Chat Container 样式 ==================== */
 .chat-container {
   flex: 1;
   display: flex;
@@ -314,6 +392,7 @@ main {
   overflow: hidden;
   background-color: var(--background-color);
   position: relative;
+  transition: background-color 0.3s ease;
 }
 
 .chat-container::before {
@@ -335,6 +414,12 @@ main {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+  transition: color 0.3s ease;
+}
+
+.chat-container h2::before {
+  content: "💬";
+  font-size: 1.2rem;
 }
 
 .add-topic-button {
@@ -360,11 +445,7 @@ main {
   box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
 }
 
-.chat-container h2::before {
-  content: "💬";
-  font-size: 1.2rem;
-}
-
+/* ==================== 消息列表 ==================== */
 .chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -380,11 +461,11 @@ main {
 }
 
 .chat-messages::-webkit-scrollbar-track {
-  background: var(--background-color);
+  background: var(--scrollbar-track);
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
-  background: var(--border-color);
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 
@@ -392,6 +473,7 @@ main {
   background: var(--secondary-color);
 }
 
+/* ==================== 消息气泡 ==================== */
 .message {
   max-width: 75%;
   padding: 1.25rem 1.5rem;
@@ -399,6 +481,7 @@ main {
   position: relative;
   animation: messageSlide 0.3s ease-out;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: background 0.3s ease, border 0.3s ease;
 }
 
 @keyframes messageSlide {
@@ -406,7 +489,6 @@ main {
     opacity: 0;
     transform: translateY(10px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -415,7 +497,7 @@ main {
 
 .user-message {
   align-self: flex-end;
-  background-color: var(--user-message-bg);
+  background: var(--user-message-bg);
   color: white;
   border-bottom-right-radius: 4px;
 }
@@ -428,6 +510,7 @@ main {
   color: var(--text-color);
 }
 
+/* ==================== 输入区域 ==================== */
 .input-area {
   display: flex;
   flex-direction: column;
@@ -436,6 +519,7 @@ main {
   border-radius: 12px;
   border: 1px solid var(--border-color);
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .input-area input {
@@ -446,23 +530,23 @@ main {
   background-color: var(--input-bg);
   color: var(--text-color);
   font-size: 1rem;
-  transition: all 0.3s ease;
+  transition: all 0.3s ease, background-color 0.3s ease;
   resize: none;
   min-height: 48px;
   max-height: 120px;
   overflow-y: auto;
 }
 
-.input-area:focus-within {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 24px 5px rgba(59, 130, 246, 0.1);
-}
-
 .input-area input:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 0px rgba(59, 130, 246, 0.1);
+}
+
+.input-area:focus-within {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 24px 5px rgba(59, 130, 246, 0.1);
 }
 
 .input-buttons {
@@ -495,7 +579,7 @@ main {
 }
 
 .model-button:hover {
-  background-color: rgba(59, 130, 246, 0.1);
+  background-color: var(--hover-bg);
   border-color: var(--primary-color);
   transform: translateY(-1px);
 }
@@ -529,6 +613,7 @@ main {
   min-width: 200px;
   z-index: 100;
   overflow: hidden;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .model-option {
@@ -539,6 +624,7 @@ main {
   cursor: pointer;
   transition: all 0.2s ease;
   border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
 }
 
 .model-option:last-child {
@@ -546,11 +632,11 @@ main {
 }
 
 .model-option:hover {
-  background-color: rgba(59, 130, 246, 0.1);
+  background-color: var(--hover-bg);
 }
 
 .model-option.selected {
-  background-color: rgba(59, 130, 246, 0.15);
+  background-color: var(--hover-bg);
   border-left: 3px solid var(--primary-color);
 }
 
@@ -566,6 +652,7 @@ main {
 .model-name {
   font-size: 0.9rem;
   font-weight: 500;
+  color: var(--text-color);
 }
 
 .model-status {
@@ -585,46 +672,7 @@ main {
   color: var(--error-color);
 }
 
-.mic-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  background-color: var(--primary-color);
-  border: 1px solid var(--primary-color);
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: white;
-  margin-left: auto;
-  overflow: visible;
-  position: relative;
-  z-index: 1;
-}
-
-.mic-button svg {
-  z-index: 2;
-  position: relative;
-}
-
-.mic-button:hover {
-  background-color: var(--primary-hover);
-  border-color: var(--primary-hover);
-  transform: scale(1.05);
-}
-
-.mic-button:disabled {
-  background-color: var(--secondary-color);
-  border-color: var(--secondary-color);
-  cursor: not-allowed;
-  transform: none;
-}
-
-.mic-icon {
-  font-size: 1rem;
-}
-
+/* ==================== Modal 样式 ==================== */
 .modal {
   position: fixed;
   top: 0;
@@ -644,7 +692,6 @@ main {
   from {
     opacity: 0;
   }
-
   to {
     opacity: 1;
   }
@@ -662,6 +709,7 @@ main {
   border: 1px solid var(--border-color);
   animation: modalSlideIn 0.3s ease-out;
   position: relative;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 @keyframes modalSlideIn {
@@ -669,7 +717,6 @@ main {
     opacity: 0;
     transform: translateY(-20px) scale(0.95);
   }
-
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -686,6 +733,7 @@ main {
   gap: 0.5rem;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--border-color);
+  transition: color 0.3s ease, border-color 0.3s ease;
 }
 
 .modal-content h2::before {
@@ -737,6 +785,8 @@ main {
   font-size: 0.85rem;
   position: relative;
   overflow: hidden;
+  background-color: transparent;
+  color: var(--text-color);
 }
 
 .modal-content button::before {
@@ -755,7 +805,7 @@ main {
 }
 
 .modal-content button:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--hover-bg);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
@@ -788,6 +838,7 @@ main {
   display: none;
 }
 
+/* ==================== Token 统计样式 ==================== */
 .token-stats {
   margin-top: 1rem;
   padding: 1rem;
@@ -797,6 +848,7 @@ main {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   max-height: 200px;
   overflow-y: auto;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .token-stats h3 {
@@ -807,6 +859,7 @@ main {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  transition: color 0.3s ease;
 }
 
 .token-stats h3::before {
@@ -824,13 +877,27 @@ main {
   color: var(--text-secondary);
   padding: 0.4rem;
   border-radius: 4px;
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--hover-bg);
   transition: all 0.2s ease;
   cursor: pointer;
 }
 
 .token-stats li:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--border-color);
+}
+
+.token-stats::-webkit-scrollbar {
+  width: 4px;
+}
+
+.token-stats::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 2px;
+}
+
+.token-stats::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 2px;
 }
 
 .token-list {
@@ -847,6 +914,7 @@ main {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  transition: color 0.3s ease;
 }
 
 .token-list h3::before {
@@ -883,12 +951,14 @@ main {
   margin-bottom: 0.5rem;
   color: var(--text-color);
   word-break: break-all;
+  transition: color 0.3s ease;
 }
 
 .token-meta {
   display: block;
   font-size: 0.8rem;
   color: var(--text-secondary);
+  transition: color 0.3s ease;
 }
 
 .token-delete {
@@ -915,141 +985,59 @@ main {
   box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
 }
 
-.token-stats::-webkit-scrollbar {
-  width: 4px;
+/* ==================== Mic Button ==================== */
+.mic-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+  margin-left: auto;
+  overflow: visible;
+  position: relative;
+  z-index: 1;
 }
 
-.token-stats::-webkit-scrollbar-track {
-  background: var(--background-color);
-  border-radius: 2px;
+.mic-button svg {
+  z-index: 2;
+  position: relative;
 }
 
-.token-stats::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 2px;
+.mic-button:hover {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+  transform: scale(1.05);
 }
 
-.token-stats::-webkit-scrollbar-thumb:hover {
-  background: var(--secondary-color);
+.mic-button:disabled {
+  background-color: var(--secondary-color);
+  border-color: var(--secondary-color);
+  cursor: not-allowed;
+  transform: none;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    --primary-color: #2563eb;
-    --primary-hover: #1d4ed8;
-    --secondary-color: #64748b;
-    --background-color: #f8fafc;
-    --card-background: #ffffff;
-    --border-color: #e2e8f0;
-    --text-color: #1e293b;
-    --text-secondary: #64748b;
-    --user-message-bg: #e3f2fd;
-    --ai-message-bg: #f8fafc;
-    --sidebar-bg: #ffffff;
-    --header-bg: #ffffff;
-    --input-bg: #ffffff;
-    --modal-bg: rgba(0, 0, 0, 0.5);
-  }
+.mic-icon {
+  font-size: 1rem;
+}
 
-  body {
-    color: var(--text-color);
-    background-color: var(--background-color);
+/* ==================== 响应式设计 ==================== */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 200px;
   }
-
-  header,
-  .sidebar,
-  .chat-container,
-  .input-area input,
-  .modal-content,
-  .token-stats {
-    background-color: var(--card-background);
-    color: var(--text-color);
+  
+  .message {
+    max-width: 85%;
   }
-
-  .user-message {
-    background-color: var(--user-message-bg);
-    color: var(--text-color);
-  }
-
-  .ai-message {
-    background-color: var(--ai-message-bg);
-    color: var(--text-color);
-    border-color: var(--border-color);
-  }
-
-  nav button {
-    background-color: transparent;
-    border: 1px solid var(--primary-color);
-    color: var(--primary-color);
-  }
-
-  nav button:hover {
-    background-color: var(--primary-color);
-    color: white;
-  }
-
-  .sidebar button {
-    background-color: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--text-color);
-  }
-
-  .sidebar button:hover {
-    background-color: rgba(37, 99, 235, 0.1);
-    border-color: var(--primary-color);
-  }
-
-  .sidebar button.active {
-    background-color: rgba(37, 99, 235, 0.15);
-    border-color: var(--primary-color);
-  }
-
-  .input-area button {
-    background-color: var(--primary-color);
-    color: white;
-  }
-
-  .input-area button:hover {
-    background-color: var(--primary-hover);
-  }
-
-  .modal-content button {
-    background-color: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--text-color);
-  }
-
-  .modal-content button:hover {
-    background-color: #f1f5f9;
-  }
-
-  .token-stats li {
-    background-color: #f1f5f9;
-    color: var(--text-secondary);
-  }
-
-  .token-stats li:hover {
-    background-color: #e2e8f0;
-  }
-
-  .token-item {
-    background-color: var(--card-background);
-    border-color: var(--border-color);
-  }
-
-  .token-item:hover {
-    border-color: var(--primary-color);
-  }
-
-  .token-list h3 {
-    color: var(--text-color);
-  }
-
-  .token-value {
-    color: var(--text-color);
-  }
-
-  .token-meta {
-    color: var(--text-secondary);
+  
+  .modal-content {
+    min-width: 90%;
+    margin: 1rem;
   }
 }

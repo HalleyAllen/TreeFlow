@@ -1,5 +1,10 @@
-const { TreeFlowAgent } = require('./src/agent');
+/**
+ * TreeFlow CLI 入口
+ * 提供命令行交互界面
+ */
+const { TreeFlowAgent } = require('./core/agent/TreeFlowAgent');
 const readline = require('readline');
+const logger = require('./core/utils/logger');
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -17,7 +22,7 @@ function startConversation() {
 
     if (input.toLowerCase() === 'branch') {
       const result = agent.createBranch();
-      console.log(result);
+      logger.info('CLI', result);
       startConversation();
       return;
     }
@@ -27,13 +32,13 @@ function startConversation() {
       if (parts[0] === 'topic') {
         const topicId = parts.slice(1).join(' ');
         const result = agent.switchTopic(topicId);
-        console.log(result);
+        logger.info('CLI', result);
         startConversation();
         return;
       } else {
         const branchId = input.substring(7).trim();
         const result = agent.switchToBranch(branchId);
-        console.log(result);
+        logger.info('CLI', result);
         startConversation();
         return;
       }
@@ -41,7 +46,7 @@ function startConversation() {
 
     if (input.toLowerCase() === 'tokens') {
       const stats = agent.getTokenStats();
-      console.log('Token状态:', stats);
+      logger.info('CLI', 'Token状态:', stats);
       startConversation();
       return;
     }
@@ -49,7 +54,7 @@ function startConversation() {
     if (input.toLowerCase().startsWith('addtoken ')) {
       const token = input.substring(8).trim();
       const result = agent.addToken(token);
-      console.log(result);
+      logger.info('CLI', result);
       startConversation();
       return;
     }
@@ -57,14 +62,14 @@ function startConversation() {
     if (input.toLowerCase().startsWith('create topic ')) {
       const topicName = input.substring(13).trim();
       const result = agent.createTopic(topicName);
-      console.log(result);
+      logger.info('CLI', result);
       startConversation();
       return;
     }
 
     if (input.toLowerCase() === 'list topics') {
       const topics = agent.listTopics();
-      console.log('话题列表:', topics);
+      logger.info('CLI', '话题列表:', topics);
       startConversation();
       return;
     }
@@ -72,28 +77,28 @@ function startConversation() {
     if (input.toLowerCase().startsWith('delete topic ')) {
       const topicId = input.substring(13).trim();
       const result = agent.deleteTopic(topicId);
-      console.log(result);
+      logger.info('CLI', result);
       startConversation();
       return;
     }
 
     if (input.toLowerCase() === 'current topic') {
       const currentTopic = agent.getCurrentTopic();
-      console.log('当前话题:', currentTopic);
+      logger.info('CLI', '当前话题:', currentTopic);
       startConversation();
       return;
     }
 
     agent.ask(input).then((response) => {
-      console.log('AI:', response);
+      logger.info('CLI', 'AI:', response);
       startConversation();
     }).catch((error) => {
-      console.error('错误:', error);
+      logger.error('CLI', '错误:', { error: error.message });
       startConversation();
     });
   });
 }
 
-console.log('TreeFlow AI代理系统已启动');
-console.log('您可以开始与AI对话，输入exit退出');
+logger.info('CLI', 'TreeFlow AI代理系统已启动');
+logger.info('CLI', '您可以开始与AI对话，输入exit退出');
 startConversation();

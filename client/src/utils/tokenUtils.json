@@ -1,0 +1,24 @@
+{
+  "providerOptions": [
+    {
+      "value": "OpenAI",
+      "label": "OpenAI"
+    },
+    {
+      "value": "阿里云",
+      "label": "阿里云"
+    }
+  ],
+  "modelOptions": {
+    "OpenAI": [
+      "gpt-4o",
+      "gpt-4-turbo",
+      "gpt-3.5-turbo"
+    ],
+    "阿里云": [
+      "qwen-turbo",
+      "qwen-plus",
+      "qwen-max"
+    ]
+  }
+}

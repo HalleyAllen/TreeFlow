@@ -2,17 +2,19 @@
   "name": "treeflow",
   "version": "1.0.0",
   "description": "AI代理系统，支持分支对话和token管理",
-  "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
-    "client": "cd client && npm start",
-    "install-client": "cd client && npm install"
+    "start": "cd server && npm start",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "install:all": "npm install && npm run install:server && npm run install:client",
+    "install:server": "cd server && npm install",
+    "install:client": "cd client && npm install",
+    "build": "cd client && npm run build",
+    "lint": "cd client && npm run lint"
   },
   "dependencies": {
-    "openai": "^4.0.0",
-    "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "concurrently": "^8.2.2"
   },
   "keywords": [
     "ai",

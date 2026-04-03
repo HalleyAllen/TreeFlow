@@ -1,0 +1,240 @@
+[2026-04-03T06:20:29.468Z] [INFO] [TopicManager] 话题文件不存在，使用默认话题
+[2026-04-03T06:20:29.464Z] [INFO] [ConfigManager] 加载配置成功 {"currentModel":"gpt-3.5-turbo","ollamaBaseUrl":"http://localhost:11434","currentTopic":"default","providers":["OpenAI","Anthropic","Google","default"]}
+[2026-04-03T06:20:29.474Z] [INFO] [TreeFlowAgent] TreeFlowAgent初始化完成
+[2026-04-03T06:20:29.474Z] [INFO] [SkillManager] 技能加载成功 {"count":5}
+[2026-04-03T06:20:29.474Z] [INFO] [TreeFlowAgent] 初始化TreeFlowAgent
+[2026-04-03T06:20:29.479Z] [INFO] [Server] 服务器运行在 http://localhost:3003
+[2026-04-03T06:42:43.490Z] [INFO] [SkillManager] 技能加载成功 {"count":5}
+[2026-04-03T06:42:43.491Z] [INFO] [TreeFlowAgent] 初始化TreeFlowAgent
+[2026-04-03T06:42:43.490Z] [INFO] [TopicManager] 话题文件不存在，使用默认话题
+[2026-04-03T06:42:43.486Z] [INFO] [ConfigManager] 加载配置成功 {"currentModel":"gpt-3.5-turbo","ollamaBaseUrl":"http://localhost:11434","currentTopic":"default","providers":["OpenAI","Anthropic","Google","default"]}
+[2026-04-03T06:42:43.491Z] [INFO] [TreeFlowAgent] TreeFlowAgent初始化完成
+[2026-04-03T06:42:43.497Z] [INFO] [Server] 服务器运行在 http://localhost:3003
+[2026-04-03T06:44:39.695Z] [INFO] [TreeFlowAgent] 获取当前话题 {"id":"default","name":"默认话题"}
+[2026-04-03T06:44:39.756Z] [INFO] [TreeFlowAgent] 获取话题列表 {"topicCount":1}
+[2026-04-03T06:44:39.764Z] [INFO] [TreeFlowAgent] 获取Token列表 {"tokenCount":1}
+[2026-04-03T06:44:39.770Z] [INFO] [TreeFlowAgent] 获取当前话题 {"id":"default","name":"默认话题"}
+[2026-04-03T06:44:39.774Z] [INFO] [TreeFlowAgent] 获取话题列表 {"topicCount":1}
+[2026-04-03T06:44:39.782Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T06:44:39.785Z] [INFO] [TreeFlowAgent] 获取Token列表 {"tokenCount":1}
+[2026-04-03T06:44:39.799Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T06:44:39.848Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T06:50:51.971Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T06:51:15.942Z] [INFO] [ConfigManager] 保存配置成功 {"providers":["OpenAI","Anthropic","Google","default"]}
+[2026-04-03T06:51:15.942Z] [INFO] [ConfigManager] 设置主题 {"theme":"light"}
+[2026-04-03T06:51:16.551Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T06:53:35.979Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T06:54:06.456Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T06:54:35.770Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T06:56:11.473Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T06:56:11.574Z] [INFO] [ConfigManager] 设置主题 {"theme":"dark"}
+[2026-04-03T06:56:11.574Z] [INFO] [ConfigManager] 保存配置成功 {"providers":["OpenAI","Anthropic","Google","default"]}
+[2026-04-03T06:56:12.181Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T06:57:40.350Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T06:58:13.695Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T06:58:51.019Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T06:59:10.212Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T06:59:52.491Z] [INFO] [TreeFlowAgent] 获取话题列表 {"topicCount":1}
+[2026-04-03T06:59:52.492Z] [INFO] [TreeFlowAgent] 获取当前话题 {"id":"default","name":"默认话题"}
+[2026-04-03T06:59:52.494Z] [INFO] [TreeFlowAgent] 获取Token列表 {"tokenCount":1}
+[2026-04-03T06:59:52.498Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T06:59:52.507Z] [INFO] [TreeFlowAgent] 获取当前话题 {"id":"default","name":"默认话题"}
+[2026-04-03T06:59:52.504Z] [INFO] [TreeFlowAgent] 获取话题列表 {"topicCount":1}
+[2026-04-03T06:59:52.509Z] [INFO] [TreeFlowAgent] 获取Token列表 {"tokenCount":1}
+[2026-04-03T06:59:52.516Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T06:59:52.550Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T07:03:44.542Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:03:44.870Z] [INFO] [ConfigManager] 设置主题 {"theme":"light"}
+[2026-04-03T07:03:44.870Z] [INFO] [ConfigManager] 保存配置成功 {"providers":["OpenAI","Anthropic","Google","default"]}
+[2026-04-03T07:03:45.486Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:04:00.927Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:27:35.400Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:27:37.618Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:27:49.318Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:27:50.405Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:27:54.511Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:28:17.758Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:28:21.138Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:28:34.279Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:28:41.372Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:28:45.469Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:28:48.565Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:28:50.625Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:29:03.845Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:32:08.027Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:32:24.838Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:32:34.183Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:33:12.575Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:33:16.130Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:33:26.005Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:33:41.424Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:33:49.733Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:33:56.958Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:34:13.195Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:34:16.539Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:35:12.505Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:35:14.126Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:35:24.289Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:35:44.038Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:35:59.385Z] [INFO] [TreeFlowAgent] 获取当前话题 {"id":"default","name":"默认话题"}
+[2026-04-03T07:35:59.384Z] [INFO] [TreeFlowAgent] 获取话题列表 {"topicCount":1}
+[2026-04-03T07:35:59.388Z] [INFO] [TreeFlowAgent] 获取Token列表 {"tokenCount":1}
+[2026-04-03T07:35:59.396Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T07:35:59.416Z] [INFO] [TreeFlowAgent] 获取当前话题 {"id":"default","name":"默认话题"}
+[2026-04-03T07:35:59.410Z] [INFO] [TreeFlowAgent] 获取话题列表 {"topicCount":1}
+[2026-04-03T07:35:59.417Z] [INFO] [TreeFlowAgent] 获取Token列表 {"tokenCount":1}
+[2026-04-03T07:35:59.431Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T07:35:59.531Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T07:48:53.622Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T07:49:01.300Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T08:00:01.581Z] [INFO] [TreeFlowAgent] 获取话题列表 {"topicCount":1}
+[2026-04-03T08:00:01.583Z] [INFO] [TreeFlowAgent] 获取当前话题 {"id":"default","name":"默认话题"}
+[2026-04-03T08:00:01.604Z] [INFO] [TreeFlowAgent] 获取Token列表 {"tokenCount":1}
+[2026-04-03T08:00:01.612Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T08:00:01.628Z] [INFO] [TreeFlowAgent] 获取当前话题 {"id":"default","name":"默认话题"}
+[2026-04-03T08:00:01.627Z] [INFO] [TreeFlowAgent] 获取话题列表 {"topicCount":1}
+[2026-04-03T08:00:01.629Z] [INFO] [TreeFlowAgent] 获取Token列表 {"tokenCount":1}
+[2026-04-03T08:00:01.668Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T08:00:02.093Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T08:00:03.451Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T08:00:16.847Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T08:00:24.085Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T08:01:00.214Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T08:01:08.461Z] [ERROR] [API] 请求错误: GET /api/ollama/models {"error":"fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13185:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async E:\\code\\TreeFlow\\backend\\server\\routes\\ollama.routes.js:58:22"}
+[2026-04-03T08:21:40.308Z] [ERROR] [API] 请求错误: POST /api/ask {"error":"路径未找到: /api/ask","stack":"Error: 路径未找到: /api/ask\n    at notFoundHandler (E:\\code\\TreeFlow\\backend\\server\\middleware\\errorHandler.js:46:17)\n    at Layer.handle [as handle_request] (E:\\code\\TreeFlow\\backend\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (E:\\code\\TreeFlow\\backend\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at E:\\code\\TreeFlow\\backend\\node_modules\\express\\lib\\router\\index.js:286:9\n    at Function.process_params (E:\\code\\TreeFlow\\backend\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (E:\\code\\TreeFlow\\backend\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at E:\\code\\TreeFlow\\backend\\node_modules\\express\\lib\\router\\index.js:646:15\n    at next (E:\\code\\TreeFlow\\backend\\node_modules\\express\\lib\\router\\index.js:265:14)\n    at Function.handle (E:\\code\\TreeFlow\\backend\\node_modules\\express\\lib\\router\\index.js:175:3)\n    at router (E:\\code\\TreeFlow\\backend\\node_modules\\express\\lib\\router\\index.js:47:12)"}
+[2026-04-03T08:21:42.507Z] [INFO] [ConfigManager] 保存配置成功 {"providers":["OpenAI","Anthropic","Google","default"]}
+[2026-04-03T08:21:42.507Z] [INFO] [TreeFlowAgent] 切换模型 {"oldModel":"gpt-3.5-turbo","newModel":"qvq-max-2025-03-25"}
+[2026-04-03T08:29:12.331Z] [INFO] [TopicManager] 话题文件不存在，使用默认话题
+[2026-04-03T08:29:12.328Z] [INFO] [ConfigManager] 加载配置成功 {"currentModel":"qvq-max-2025-03-25","ollamaBaseUrl":"http://localhost:11434","currentTopic":"default","providers":["OpenAI","Anthropic","Google","default"]}
+[2026-04-03T08:29:12.332Z] [INFO] [TreeFlowAgent] 初始化TreeFlowAgent
+[2026-04-03T08:29:12.332Z] [INFO] [SkillManager] 技能加载成功 {"count":5}
+[2026-04-03T08:29:12.337Z] [INFO] [Server] 服务器运行在 http://localhost:3003
+[2026-04-03T08:29:12.332Z] [INFO] [TreeFlowAgent] TreeFlowAgent初始化完成
+[2026-04-03T08:29:19.818Z] [INFO] [TreeFlowAgent] 获取当前话题 {"id":"default","name":"默认话题"}
+[2026-04-03T08:29:19.874Z] [INFO] [TreeFlowAgent] 获取Token列表 {"tokenCount":1}
+[2026-04-03T08:29:19.812Z] [INFO] [TreeFlowAgent] 获取话题列表 {"topicCount":1}
+[2026-04-03T08:29:19.885Z] [INFO] [TreeFlowAgent] 获取话题列表 {"topicCount":1}
+[2026-04-03T08:29:19.896Z] [INFO] [TreeFlowAgent] 获取当前话题 {"id":"default","name":"默认话题"}
+[2026-04-03T08:29:19.899Z] [INFO] [TreeFlowAgent] 获取Token列表 {"tokenCount":1}
+[2026-04-03T08:29:19.908Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T08:29:19.921Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T08:29:20.039Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T08:29:31.882Z] [INFO] [ApiManager] 开始AI请求 {"model":"qvq-max-2025-03-25","question":"你好...","historyLength":0}
+[2026-04-03T08:29:31.882Z] [INFO] [TreeFlowAgent] 开始AI请求 {"model":"qvq-max-2025-03-25","question":"你好...","historyLength":0,"skillId":"none"}
+[2026-04-03T08:29:31.882Z] [INFO] [ApiManager] 使用API {"provider":"OpenAI","model":"qvq-max-2025-03-25"}
+[2026-04-03T08:29:31.883Z] [INFO] [ApiManager] 使用通用API {"provider":"OpenAI","model":"qvq-max-2025-03-25","apiUrl":"https://api.openai.com/v1/chat/completions"}
+[2026-04-03T08:29:31.883Z] [INFO] [ApiManager] 获取Token成功 {"provider":"OpenAI"}
+[2026-04-03T08:29:32.888Z] [INFO] [ConfigManager] 设置主题 {"theme":"dark"}
+[2026-04-03T08:29:32.888Z] [INFO] [ConfigManager] 保存配置成功 {"providers":["OpenAI","Anthropic","Google","default"]}
+[2026-04-03T08:29:33.971Z] [INFO] [ConfigManager] 保存配置成功 {"providers":["OpenAI","Anthropic","Google","default"]}
+[2026-04-03T08:29:33.971Z] [INFO] [ConfigManager] 设置主题 {"theme":"light"}
+[2026-04-03T08:29:35.763Z] [INFO] [ConfigManager] 保存配置成功 {"providers":["OpenAI","Anthropic","Google","default"]}
+[2026-04-03T08:29:35.764Z] [INFO] [ConfigManager] 设置主题 {"theme":"dark"}
+[2026-04-03T08:29:36.520Z] [INFO] [ConfigManager] 设置主题 {"theme":"light"}
+[2026-04-03T08:29:36.520Z] [INFO] [ConfigManager] 保存配置成功 {"providers":["OpenAI","Anthropic","Google","default"]}
+[2026-04-03T08:29:41.934Z] [ERROR] [ApiManager] 通用API请求失败: {"error":"fetch failed","provider":"OpenAI","model":"qvq-max-2025-03-25"}
+[2026-04-03T08:29:41.935Z] [ERROR] [TreeFlowAgent] AI请求失败: {"error":"AI请求失败: OpenAI请求失败: fetch failed"}
+[2026-04-03T08:29:41.934Z] [ERROR] [ApiManager] AI请求失败: {"error":"OpenAI请求失败: fetch failed"}
+[2026-04-03T08:29:41.935Z] [ERROR] [API] 请求错误: POST /api/ask {"error":"AI请求失败: AI请求失败: OpenAI请求失败: fetch failed","stack":"Error: AI请求失败: AI请求失败: OpenAI请求失败: fetch failed\n    at TreeFlowAgent.ask (E:\\code\\TreeFlow\\server\\core\\agent\\TreeFlowAgent.js:218:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async ChatController.ask (E:\\code\\TreeFlow\\server\\server\\controllers\\chat.controller.js:17:20)"}
+[2026-04-03T08:31:47.175Z] [INFO] [TreeFlowAgent] 获取话题列表 {"topicCount":1}
+[2026-04-03T08:31:47.176Z] [INFO] [TreeFlowAgent] 获取当前话题 {"id":"default","name":"默认话题"}
+[2026-04-03T08:31:47.179Z] [INFO] [TreeFlowAgent] 获取Token列表 {"tokenCount":1}
+[2026-04-03T08:31:47.185Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T08:31:47.210Z] [INFO] [TreeFlowAgent] 获取话题列表 {"topicCount":1}
+[2026-04-03T08:31:47.208Z] [INFO] [TreeFlowAgent] 获取当前话题 {"id":"default","name":"默认话题"}
+[2026-04-03T08:31:47.206Z] [INFO] [TreeFlowAgent] 获取Token列表 {"tokenCount":1}
+[2026-04-03T08:31:47.215Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T08:31:47.242Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T08:35:13.067Z] [INFO] [TreeFlowAgent] 开始AI请求 {"model":"qvq-max-2025-03-25","question":"你好...","historyLength":0,"skillId":"none"}
+[2026-04-03T08:35:13.067Z] [INFO] [ApiManager] 使用通用API {"provider":"OpenAI","model":"qvq-max-2025-03-25","apiUrl":"https://api.openai.com/v1/chat/completions"}
+[2026-04-03T08:35:13.067Z] [INFO] [ApiManager] 开始AI请求 {"model":"qvq-max-2025-03-25","question":"你好...","historyLength":0}
+[2026-04-03T08:35:13.067Z] [INFO] [ApiManager] 使用API {"provider":"OpenAI","model":"qvq-max-2025-03-25"}
+[2026-04-03T08:35:13.067Z] [INFO] [ApiManager] 获取Token成功 {"provider":"OpenAI"}
+[2026-04-03T08:35:23.076Z] [ERROR] [ApiManager] 通用API请求失败: {"error":"fetch failed","provider":"OpenAI","model":"qvq-max-2025-03-25"}
+[2026-04-03T08:35:23.076Z] [ERROR] [ApiManager] AI请求失败: {"error":"OpenAI请求失败: fetch failed"}
+[2026-04-03T08:35:23.076Z] [ERROR] [TreeFlowAgent] AI请求失败: {"error":"AI请求失败: OpenAI请求失败: fetch failed"}
+[2026-04-03T08:35:23.076Z] [ERROR] [API] 请求错误: POST /api/ask {"error":"AI请求失败: AI请求失败: OpenAI请求失败: fetch failed","stack":"Error: AI请求失败: AI请求失败: OpenAI请求失败: fetch failed\n    at TreeFlowAgent.ask (E:\\code\\TreeFlow\\server\\core\\agent\\TreeFlowAgent.js:218:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async ChatController.ask (E:\\code\\TreeFlow\\server\\server\\controllers\\chat.controller.js:17:20)"}
+[2026-04-03T08:35:32.465Z] [INFO] [TreeFlowAgent] 获取话题列表 {"topicCount":1}
+[2026-04-03T08:35:32.466Z] [INFO] [TreeFlowAgent] 获取当前话题 {"id":"default","name":"默认话题"}
+[2026-04-03T08:35:32.469Z] [INFO] [TreeFlowAgent] 获取Token列表 {"tokenCount":1}
+[2026-04-03T08:35:32.486Z] [INFO] [TreeFlowAgent] 获取话题列表 {"topicCount":1}
+[2026-04-03T08:35:32.484Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T08:35:32.489Z] [INFO] [TreeFlowAgent] 获取当前话题 {"id":"default","name":"默认话题"}
+[2026-04-03T08:35:32.491Z] [INFO] [TreeFlowAgent] 获取Token列表 {"tokenCount":1}
+[2026-04-03T08:35:32.505Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T08:35:32.585Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T08:36:55.730Z] [INFO] [ApiManager] 使用API {"provider":"OpenAI","model":"qvq-max-2025-03-25"}
+[2026-04-03T08:36:55.730Z] [INFO] [ApiManager] 开始AI请求 {"model":"qvq-max-2025-03-25","question":"1...","historyLength":0}
+[2026-04-03T08:36:55.730Z] [INFO] [ApiManager] 使用通用API {"provider":"OpenAI","model":"qvq-max-2025-03-25","apiUrl":"https://api.openai.com/v1/chat/completions"}
+[2026-04-03T08:36:55.729Z] [INFO] [TreeFlowAgent] 开始AI请求 {"model":"qvq-max-2025-03-25","question":"1...","historyLength":0,"skillId":"none"}
+[2026-04-03T08:36:55.730Z] [INFO] [ApiManager] 获取Token成功 {"provider":"OpenAI"}
+[2026-04-03T08:37:05.734Z] [ERROR] [ApiManager] AI请求失败: {"error":"OpenAI请求失败: fetch failed"}
+[2026-04-03T08:37:05.732Z] [ERROR] [ApiManager] 通用API请求失败: {"error":"fetch failed","provider":"OpenAI","model":"qvq-max-2025-03-25"}
+[2026-04-03T08:37:05.735Z] [ERROR] [API] 请求错误: POST /api/ask {"error":"AI请求失败: AI请求失败: OpenAI请求失败: fetch failed","stack":"Error: AI请求失败: AI请求失败: OpenAI请求失败: fetch failed\n    at TreeFlowAgent.ask (E:\\code\\TreeFlow\\server\\core\\agent\\TreeFlowAgent.js:218:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async ChatController.ask (E:\\code\\TreeFlow\\server\\server\\controllers\\chat.controller.js:17:20)"}
+[2026-04-03T08:37:05.735Z] [ERROR] [TreeFlowAgent] AI请求失败: {"error":"AI请求失败: OpenAI请求失败: fetch failed"}
+[2026-04-03T08:37:13.419Z] [INFO] [ApiManager] 使用API {"provider":"OpenAI","model":"qvq-max-2025-03-25"}
+[2026-04-03T08:37:13.419Z] [INFO] [TreeFlowAgent] 开始AI请求 {"model":"qvq-max-2025-03-25","question":"22...","historyLength":0,"skillId":"none"}
+[2026-04-03T08:37:13.419Z] [INFO] [ApiManager] 开始AI请求 {"model":"qvq-max-2025-03-25","question":"22...","historyLength":0}
+[2026-04-03T08:37:13.419Z] [INFO] [ApiManager] 使用通用API {"provider":"OpenAI","model":"qvq-max-2025-03-25","apiUrl":"https://api.openai.com/v1/chat/completions"}
+[2026-04-03T08:37:13.420Z] [INFO] [ApiManager] 获取Token成功 {"provider":"OpenAI"}
+[2026-04-03T08:37:23.426Z] [ERROR] [API] 请求错误: POST /api/ask {"error":"AI请求失败: AI请求失败: OpenAI请求失败: fetch failed","stack":"Error: AI请求失败: AI请求失败: OpenAI请求失败: fetch failed\n    at TreeFlowAgent.ask (E:\\code\\TreeFlow\\server\\core\\agent\\TreeFlowAgent.js:218:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async ChatController.ask (E:\\code\\TreeFlow\\server\\server\\controllers\\chat.controller.js:17:20)"}
+[2026-04-03T08:37:23.425Z] [ERROR] [ApiManager] 通用API请求失败: {"error":"fetch failed","provider":"OpenAI","model":"qvq-max-2025-03-25"}
+[2026-04-03T08:37:23.425Z] [ERROR] [TreeFlowAgent] AI请求失败: {"error":"AI请求失败: OpenAI请求失败: fetch failed"}
+[2026-04-03T08:37:23.425Z] [ERROR] [ApiManager] AI请求失败: {"error":"OpenAI请求失败: fetch failed"}
+[2026-04-03T08:58:53.037Z] [INFO] [TreeFlowAgent] 获取话题列表 {"topicCount":1}
+[2026-04-03T08:58:53.039Z] [INFO] [TreeFlowAgent] 获取当前话题 {"id":"default","name":"默认话题"}
+[2026-04-03T08:58:53.042Z] [INFO] [TreeFlowAgent] 获取Token列表 {"tokenCount":1}
+[2026-04-03T08:58:53.051Z] [INFO] [TreeFlowAgent] 获取当前话题 {"id":"default","name":"默认话题"}
+[2026-04-03T08:58:53.052Z] [INFO] [TreeFlowAgent] 获取话题列表 {"topicCount":1}
+[2026-04-03T08:58:53.055Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T08:58:53.059Z] [INFO] [TreeFlowAgent] 获取Token列表 {"tokenCount":1}
+[2026-04-03T08:58:53.081Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T08:58:53.155Z] [ERROR] [API] 请求错误: GET /api/tree/default {"error":"路径未找到: /api/tree/default","stack":"Error: 路径未找到: /api/tree/default\n    at notFoundHandler (E:\\code\\TreeFlow\\server\\server\\middleware\\errorHandler.js:46:17)\n    at Layer.handle [as handle_request] (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n    at Function.process_params (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:646:15\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:265:14)\n    at Function.handle (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:175:3)\n    at router (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:47:12)"}
+[2026-04-03T08:58:53.160Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T08:59:01.783Z] [INFO] [ApiManager] 开始AI请求 {"model":"qvq-max-2025-03-25","question":"你好...","historyLength":0}
+[2026-04-03T08:59:01.783Z] [INFO] [ApiManager] 使用API {"provider":"OpenAI","model":"qvq-max-2025-03-25"}
+[2026-04-03T08:59:01.783Z] [INFO] [ApiManager] 使用通用API {"provider":"OpenAI","model":"qvq-max-2025-03-25","apiUrl":"https://api.openai.com/v1/chat/completions"}
+[2026-04-03T08:59:01.783Z] [INFO] [TreeFlowAgent] 开始AI请求 {"model":"qvq-max-2025-03-25","question":"你好...","historyLength":0,"skillId":"none"}
+[2026-04-03T08:59:01.783Z] [INFO] [ApiManager] 获取Token成功 {"provider":"OpenAI"}
+[2026-04-03T08:59:01.827Z] [ERROR] [API] 请求错误: GET /api/tree/default {"error":"路径未找到: /api/tree/default","stack":"Error: 路径未找到: /api/tree/default\n    at notFoundHandler (E:\\code\\TreeFlow\\server\\server\\middleware\\errorHandler.js:46:17)\n    at Layer.handle [as handle_request] (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n    at Function.process_params (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:646:15\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:265:14)\n    at Function.handle (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:175:3)\n    at router (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:47:12)"}
+[2026-04-03T08:59:11.794Z] [ERROR] [TreeFlowAgent] AI请求失败: {"error":"AI请求失败: OpenAI请求失败: fetch failed"}
+[2026-04-03T08:59:11.794Z] [ERROR] [ApiManager] 通用API请求失败: {"error":"fetch failed","provider":"OpenAI","model":"qvq-max-2025-03-25"}
+[2026-04-03T08:59:11.794Z] [ERROR] [API] 请求错误: POST /api/ask {"error":"AI请求失败: AI请求失败: OpenAI请求失败: fetch failed","stack":"Error: AI请求失败: AI请求失败: OpenAI请求失败: fetch failed\n    at TreeFlowAgent.ask (E:\\code\\TreeFlow\\server\\core\\agent\\TreeFlowAgent.js:218:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async ChatController.ask (E:\\code\\TreeFlow\\server\\server\\controllers\\chat.controller.js:17:20)"}
+[2026-04-03T08:59:11.794Z] [ERROR] [ApiManager] AI请求失败: {"error":"OpenAI请求失败: fetch failed"}
+[2026-04-03T08:59:11.841Z] [ERROR] [API] 请求错误: GET /api/tree/default {"error":"路径未找到: /api/tree/default","stack":"Error: 路径未找到: /api/tree/default\n    at notFoundHandler (E:\\code\\TreeFlow\\server\\server\\middleware\\errorHandler.js:46:17)\n    at Layer.handle [as handle_request] (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n    at Function.process_params (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:646:15\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:265:14)\n    at Function.handle (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:175:3)\n    at router (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:47:12)"}
+[2026-04-03T09:03:43.987Z] [ERROR] [API] 请求错误: GET /api/tree/default {"error":"路径未找到: /api/tree/default","stack":"Error: 路径未找到: /api/tree/default\n    at notFoundHandler (E:\\code\\TreeFlow\\server\\server\\middleware\\errorHandler.js:46:17)\n    at Layer.handle [as handle_request] (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n    at Function.process_params (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:646:15\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:265:14)\n    at Function.handle (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:175:3)\n    at router (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:47:12)"}
+[2026-04-03T09:03:44.019Z] [INFO] [ApiManager] 开始AI请求 {"model":"qvq-max-2025-03-25","question":"11...","historyLength":0}
+[2026-04-03T09:03:44.019Z] [INFO] [TreeFlowAgent] 开始AI请求 {"model":"qvq-max-2025-03-25","question":"11...","historyLength":0,"skillId":"none"}
+[2026-04-03T09:03:44.019Z] [INFO] [ApiManager] 使用API {"provider":"OpenAI","model":"qvq-max-2025-03-25"}
+[2026-04-03T09:03:44.019Z] [INFO] [ApiManager] 使用通用API {"provider":"OpenAI","model":"qvq-max-2025-03-25","apiUrl":"https://api.openai.com/v1/chat/completions"}
+[2026-04-03T09:03:44.019Z] [INFO] [ApiManager] 获取Token成功 {"provider":"OpenAI"}
+[2026-04-03T09:03:54.025Z] [ERROR] [TreeFlowAgent] AI请求失败: {"error":"AI请求失败: OpenAI请求失败: fetch failed"}
+[2026-04-03T09:03:54.024Z] [ERROR] [ApiManager] 通用API请求失败: {"error":"fetch failed","provider":"OpenAI","model":"qvq-max-2025-03-25"}
+[2026-04-03T09:03:54.025Z] [ERROR] [ApiManager] AI请求失败: {"error":"OpenAI请求失败: fetch failed"}
+[2026-04-03T09:03:54.025Z] [ERROR] [API] 请求错误: POST /api/ask {"error":"AI请求失败: AI请求失败: OpenAI请求失败: fetch failed","stack":"Error: AI请求失败: AI请求失败: OpenAI请求失败: fetch failed\n    at TreeFlowAgent.ask (E:\\code\\TreeFlow\\server\\core\\agent\\TreeFlowAgent.js:218:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async ChatController.ask (E:\\code\\TreeFlow\\server\\server\\controllers\\chat.controller.js:17:20)"}
+[2026-04-03T09:03:54.050Z] [ERROR] [API] 请求错误: GET /api/tree/default {"error":"路径未找到: /api/tree/default","stack":"Error: 路径未找到: /api/tree/default\n    at notFoundHandler (E:\\code\\TreeFlow\\server\\server\\middleware\\errorHandler.js:46:17)\n    at Layer.handle [as handle_request] (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n    at Function.process_params (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:646:15\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:265:14)\n    at Function.handle (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:175:3)\n    at router (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:47:12)"}
+[2026-04-03T09:06:00.060Z] [INFO] [TreeFlowAgent] 获取话题列表 {"topicCount":1}
+[2026-04-03T09:06:00.062Z] [INFO] [TreeFlowAgent] 获取当前话题 {"id":"default","name":"默认话题"}
+[2026-04-03T09:06:00.070Z] [INFO] [TreeFlowAgent] 获取Token列表 {"tokenCount":1}
+[2026-04-03T09:06:00.075Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T09:06:12.695Z] [INFO] [TreeFlowAgent] 获取当前话题 {"id":"default","name":"默认话题"}
+[2026-04-03T09:06:12.693Z] [INFO] [TreeFlowAgent] 获取话题列表 {"topicCount":1}
+[2026-04-03T09:06:12.697Z] [INFO] [TreeFlowAgent] 获取Token列表 {"tokenCount":1}
+[2026-04-03T09:06:12.707Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T09:06:12.742Z] [INFO] [TreeFlowAgent] 获取当前话题 {"id":"default","name":"默认话题"}
+[2026-04-03T09:06:12.744Z] [INFO] [TreeFlowAgent] 获取Token列表 {"tokenCount":1}
+[2026-04-03T09:06:12.745Z] [INFO] [TreeFlowAgent] 获取话题列表 {"topicCount":1}
+[2026-04-03T09:06:12.753Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T09:06:12.809Z] [ERROR] [API] 请求错误: GET /api/tree/default {"error":"路径未找到: /api/tree/default","stack":"Error: 路径未找到: /api/tree/default\n    at notFoundHandler (E:\\code\\TreeFlow\\server\\server\\middleware\\errorHandler.js:46:17)\n    at Layer.handle [as handle_request] (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n    at Function.process_params (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:646:15\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:265:14)\n    at Function.handle (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:175:3)\n    at router (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:47:12)"}
+[2026-04-03T09:06:12.813Z] [WARN] [Model Routes] 无法获取ollama模型列表: {"error":"fetch failed"}
+[2026-04-03T09:08:14.645Z] [INFO] [ApiManager] 开始AI请求 {"model":"qvq-max-2025-03-25","question":"你好...","historyLength":0}
+[2026-04-03T09:08:14.646Z] [INFO] [ApiManager] 使用API {"provider":"OpenAI","model":"qvq-max-2025-03-25"}
+[2026-04-03T09:08:14.646Z] [INFO] [ApiManager] 使用通用API {"provider":"OpenAI","model":"qvq-max-2025-03-25","apiUrl":"https://api.openai.com/v1/chat/completions"}
+[2026-04-03T09:08:14.645Z] [INFO] [TreeFlowAgent] 开始AI请求 {"model":"qvq-max-2025-03-25","question":"你好...","historyLength":0,"skillId":"none"}
+[2026-04-03T09:08:14.646Z] [INFO] [ApiManager] 获取Token成功 {"provider":"OpenAI"}
+[2026-04-03T09:08:14.676Z] [ERROR] [API] 请求错误: GET /api/tree/default {"error":"路径未找到: /api/tree/default","stack":"Error: 路径未找到: /api/tree/default\n    at notFoundHandler (E:\\code\\TreeFlow\\server\\server\\middleware\\errorHandler.js:46:17)\n    at Layer.handle [as handle_request] (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n    at Function.process_params (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:646:15\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:265:14)\n    at Function.handle (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:175:3)\n    at router (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:47:12)"}
+[2026-04-03T09:08:24.656Z] [ERROR] [ApiManager] 通用API请求失败: {"error":"fetch failed","provider":"OpenAI","model":"qvq-max-2025-03-25"}
+[2026-04-03T09:08:24.656Z] [ERROR] [ApiManager] AI请求失败: {"error":"OpenAI请求失败: fetch failed"}
+[2026-04-03T09:08:24.656Z] [ERROR] [TreeFlowAgent] AI请求失败: {"error":"AI请求失败: OpenAI请求失败: fetch failed"}
+[2026-04-03T09:08:24.656Z] [ERROR] [API] 请求错误: POST /api/ask {"error":"AI请求失败: AI请求失败: OpenAI请求失败: fetch failed","stack":"Error: AI请求失败: AI请求失败: OpenAI请求失败: fetch failed\n    at TreeFlowAgent.ask (E:\\code\\TreeFlow\\server\\core\\agent\\TreeFlowAgent.js:218:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async ChatController.ask (E:\\code\\TreeFlow\\server\\server\\controllers\\chat.controller.js:17:20)"}
+[2026-04-03T09:08:24.682Z] [ERROR] [API] 请求错误: GET /api/tree/default {"error":"路径未找到: /api/tree/default","stack":"Error: 路径未找到: /api/tree/default\n    at notFoundHandler (E:\\code\\TreeFlow\\server\\server\\middleware\\errorHandler.js:46:17)\n    at Layer.handle [as handle_request] (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n    at Function.process_params (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:646:15\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:265:14)\n    at Function.handle (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:175:3)\n    at router (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:47:12)"}
