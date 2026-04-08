@@ -6,6 +6,7 @@ const express = require('express');
 const router = express.Router();
 const { asyncHandler } = require('../middleware/errorHandler');
 const logger = require('../../core/utils/logger');
+const fetch = require('node-fetch');
 
 /**
  * 创建路由时传入agent实例

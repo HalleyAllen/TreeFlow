@@ -3,6 +3,8 @@
  * 处理与AI服务提供商的API调用
  */
 const logger = require('../utils/logger');
+const fetch = require('node-fetch');
+const OpenAI = require('openai');
 
 class ApiManager {
   constructor(providers, tokenManager) {
@@ -19,7 +21,8 @@ class ApiManager {
     // 根据模型名称判断提供商
     if (model.includes('gpt')) {
       return { provider: 'OpenAI', model: model };
-    } else if (model.includes('qwen')) {
+    } else if (model.includes('qwen') || model.includes('qvq') || model.startsWith('qwen-') || model.startsWith('qvq-')) {
+      // 阿里云通义系列：qwen, qvq 等
       return { provider: '阿里云', model: model };
     } else {
       // 默认返回OpenAI
@@ -47,7 +50,7 @@ class ApiManager {
       
       // 根据当前模型获取合适的Token
       const token = this.tokenManager.getTokenByModel(model);
-      logger.info('ApiManager', '获取Token成功', { provider });
+      logger.info('ApiManager', '获取Token成功', { provider, tokenPrefix: token ? token.substring(0, 10) + '...' : 'null' });
       
       // 替换占位符
       const replacePlaceholders = (str) => {
@@ -92,31 +95,17 @@ class ApiManager {
         }
       };
       
-      // 特殊处理阿里云格式的请求体（input.messages 嵌套结构）
-      const processAliyunBody = (body) => {
-        let result = { ...body };
-        // 处理嵌套的 messages
-        if (body.input && body.input.messages && conversationHistory.length > 0) {
-          result.input = {
-            ...body.input,
-            messages: messages
-          };
-        }
-        // 添加 parameters 参数（如果配置中有）
-        if (providerConfig.parameters) {
-          result.parameters = providerConfig.parameters;
-        }
-        return result;
-      };
-      
-      let requestBody = processRequestBody(providerConfig.requestBody);
-      
-      // 对阿里云格式进行特殊处理
-      if (provider === '阿里云') {
-        requestBody = processAliyunBody(requestBody);
-      }
+      const requestBody = processRequestBody(providerConfig.requestBody);
       
       // 发送请求
+      logger.info('ApiManager', '发送请求', { 
+        url: apiUrl, 
+        provider, 
+        model,
+        headers: Object.keys(headers),
+        bodyKeys: Object.keys(requestBody)
+      });
+      
       const response = await fetch(apiUrl, {
         method: providerConfig.method,
         headers: headers,
@@ -130,9 +119,10 @@ class ApiManager {
           statusText: response.statusText, 
           error: errorText, 
           url: apiUrl,
-          provider
+          provider,
+          requestBody: JSON.stringify(requestBody).substring(0, 200)
         });
-        throw new Error(`${provider} API请求失败: ${response.statusText}`);
+        throw new Error(`${provider} API请求失败: ${response.statusText} - ${errorText}`);
       }
       
       const data = await response.json();
@@ -165,7 +155,13 @@ class ApiManager {
       
       return responseContent;
     } catch (error) {
-      logger.error('ApiManager', '通用API请求失败:', { error: error.message, provider, model });
+      logger.error('ApiManager', '通用API请求失败:', { 
+        error: error.message, 
+        provider, 
+        model,
+        errorType: error.name,
+        errorCode: error.code
+      });
       throw new Error(`${provider}请求失败: ${error.message}`);
     }
   }
@@ -216,14 +212,56 @@ class ApiManager {
   }
 
   /**
+   * 使用OpenAI SDK调用阿里云API
+   * @param {string} question - 问题
+   * @param {string} model - 模型名称
+   * @param {string} token - API密钥
+   * @param {Array} [conversationHistory] - 对话历史
+   * @returns {string} - AI的回答
+   */
+  async askAliyunWithOpenAI(question, model, token, conversationHistory = []) {
+    try {
+      logger.info('ApiManager', '使用OpenAI SDK调用阿里云', { model });
+      
+      const openai = new OpenAI({
+        apiKey: token,
+        baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+      });
+
+      const messages = [
+        ...conversationHistory,
+        { role: 'user', content: question }
+      ];
+
+      const completion = await openai.chat.completions.create({
+        model: model,
+        messages: messages
+      });
+
+      const response = completion.choices[0].message.content;
+      logger.info('ApiManager', '阿里云请求成功', { model, responseLength: response.length,response: response.substring(0, 20) + '...'});
+      return response;
+    } catch (error) {
+      logger.error('ApiManager', '阿里云OpenAI SDK请求失败:', { 
+        error: error.message,
+        model,
+        errorType: error.name,
+        errorCode: error.code
+      });
+      throw new Error(`阿里云请求失败: ${error.message}`);
+    }
+  }
+
+  /**
    * 发送AI请求
    * @param {string} question - 问题
    * @param {string} model - 模型名称
    * @param {string} ollamaBaseUrl - Ollama基础URL
    * @param {Array} [conversationHistory] - 对话历史
+   * @param {string} [explicitProvider] - 显式指定的供应商（可选）
    * @returns {string} - AI的回答
    */
-  async ask(question, model, ollamaBaseUrl, conversationHistory = []) {
+  async ask(question, model, ollamaBaseUrl, conversationHistory = [], explicitProvider = null) {
     try {
       logger.info('ApiManager', '开始AI请求', { model, question: question.substring(0, 50) + '...', historyLength: conversationHistory.length });
       let aiResponse;
@@ -234,13 +272,18 @@ class ApiManager {
         logger.info('ApiManager', '使用Ollama API');
         aiResponse = await this.askOllama(question, model, ollamaBaseUrl, conversationHistory);
       } else {
-        // 根据模型类型选择不同的API
-        const modelInfo = this.getModelInfo(model);
-        const provider = modelInfo.provider;
-        logger.info('ApiManager', '使用API', { provider, model });
+        // 使用显式指定的供应商，或根据模型类型推断
+        const provider = explicitProvider || this.getModelInfo(model).provider;
+        logger.info('ApiManager', '使用API', { provider, model, source: explicitProvider ? 'explicit' : 'inferred' });
         
-        // 调用通用API方法
-        aiResponse = await this.askGenericAPI(question, model, provider, conversationHistory);
+        // 阿里云使用OpenAI SDK
+        if (provider === '阿里云') {
+          const token = this.tokenManager.getTokenByModel(model);
+          aiResponse = await this.askAliyunWithOpenAI(question, model, token, conversationHistory);
+        } else {
+          // 其他提供商使用通用fetch方法
+          aiResponse = await this.askGenericAPI(question, model, provider, conversationHistory);
+        }
       }
 
       logger.info('ApiManager', 'AI请求成功', { responseLength: aiResponse.length });

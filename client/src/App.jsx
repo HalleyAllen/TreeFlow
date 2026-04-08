@@ -31,12 +31,16 @@ function App() {
     messages,
     chatLoading,
     branchMode,
+    nodeCreated,
     input,
+    quotedTexts,
     handleInputChange,
     handleKeyPress,
     handleSend,
     handleEnterBranchMode,
     exitBranchMode,
+    handleQuoteText,
+    removeQuote,
 
     // 模型相关
     models,
@@ -89,8 +93,10 @@ function App() {
           showModelDropdown={showModelDropdown}
           branchMode={branchMode}
           isLoading={chatLoading}
+          nodeCreated={nodeCreated}
           skills={skills}
           activeSkill={activeSkill}
+          quotedTexts={quotedTexts}
           onInputChange={handleInputChange}
           onKeyPress={handleKeyPress}
           onSend={handleSend}
@@ -100,6 +106,8 @@ function App() {
           onExitBranchMode={exitBranchMode}
           onSelectSkill={selectSkill}
           onClearSkill={clearSkill}
+          onQuoteText={handleQuoteText}
+          onRemoveQuote={removeQuote}
         />
       </Box>
 

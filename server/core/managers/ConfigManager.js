@@ -33,25 +33,20 @@ class ConfigManager {
           "responsePath": "choices[0].message.content"
         },
         "阿里云": {
-          "apiUrl": "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation",
+          "apiUrl": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
           "method": "POST",
           "headers": {
             "Content-Type": "application/json",
             "Authorization": "Bearer {{token}}"
           },
-          "parameters": {
-            "result_format": "message"
-          },
           "requestBody": {
             "model": "{{model}}",
-            "input": {
-              "messages": [
-                { "role": "system", "content": "You are a helpful assistant." },
-                { "role": "user", "content": "{{question}}" }
-              ]
-            }
+            "messages": [
+              { "role": "system", "content": "You are a helpful assistant." },
+              { "role": "user", "content": "{{question}}" }
+            ]
           },
-          "responsePath": "output.choices[0].message.content"
+          "responsePath": "choices[0].message.content"
         },
         "default": "OpenAI"
       }

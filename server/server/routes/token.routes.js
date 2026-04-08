@@ -35,14 +35,5 @@ module.exports = (agent) => {
   // 检查Token健康状态
   router.post('/check-health', asyncHandler((req, res) => controller.checkTokenHealth(req, res)));
 
-  // 批量检查所有Token健康状态
-  router.post('/check-all-health', asyncHandler((req, res) => controller.checkAllTokensHealth(req, res)));
-
-  // 获取Token使用统计
-  router.get('/stats', asyncHandler((req, res) => controller.getTokenStats(req, res)));
-
-  // 获取指定模型的可用Token数量
-  router.get('/available/:model', asyncHandler((req, res) => controller.getAvailableTokensByModel(req, res)));
-
   return router;
 };

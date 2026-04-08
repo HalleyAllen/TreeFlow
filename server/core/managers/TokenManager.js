@@ -1,10 +1,13 @@
 /**
  * TokenManager 类 - 管理AI服务的token信息
  * 提供token的添加、删除、更新等功能
+ * 重构后：专注于 Token CRUD，模型识别逻辑移至 ModelIdentifier 服务
  */
 const fs = require('fs');
 const path = require('path');
 const logger = require('../utils/logger');
+const fetch = require('node-fetch');
+const ModelIdentifier = require('../services/ModelIdentifier');
 
 class TokenManager {
   /**
@@ -65,7 +68,8 @@ class TokenManager {
       throw new Error('Token不能为空');
     }
     // 基本长度验证
-    if (token.length < 10) {
+    const MIN_TOKEN_LENGTH = 10;
+    if (token.length < MIN_TOKEN_LENGTH) {
       throw new Error('Token格式不正确');
     }
     return true;
@@ -88,12 +92,12 @@ class TokenManager {
       throw new Error('Token已存在');
     }
 
-    // 如果没有提供厂商和模型，自动识别
+    // 如果没有提供厂商和模型，使用 ModelIdentifier 自动识别
     let modelInfo;
     if (provider && model) {
       modelInfo = { provider, model };
     } else {
-      modelInfo = this.identifyModelFromToken(token);
+      modelInfo = ModelIdentifier.identify(token);
     }
 
     this.tokens.push({
@@ -240,143 +244,6 @@ class TokenManager {
   }
 
   /**
-   * 获取Token详细信息
-   * @param {string} token - 要查询的token
-   * @returns {Object|null} - Token详细信息，未找到返回null
-   */
-  getTokenDetails(token) {
-    const index = this.findTokenIndex(token);
-    return index > -1 ? this.tokens[index] : null;
-  }
-
-  /**
-   * 获取指定模型的可用Token数量
-   * @param {string} model - 模型名称
-   * @returns {number} - 可用Token数量
-   */
-  getAvailableTokensByModel(model) {
-    return this.tokens.filter(t =>
-      t.status === 'active' &&
-      t.model === model
-    ).length;
-  }
-
-  /**
-   * 根据token识别AI模型
-   * @param {string} token - 要识别的token
-   * @returns {Object} - 识别结果，包含provider和model
-   */
-  identifyModelFromToken(token) {
-    // OpenAI token格式: sk-开头
-    if (token.startsWith('sk-')) {
-      // 百度token也是sk-开头，这里暂时默认识别为OpenAI
-      // 用户可以在界面上手动修改为百度
-      return {
-        provider: 'OpenAI',
-        model: 'gpt-3.5-turbo'
-      };
-    }
-    // Anthropic (Claude) token格式: sk-ant-开头
-    else if (token.startsWith('sk-ant-')) {
-      return {
-        provider: 'Anthropic',
-        model: 'claude-3-opus-20240229'
-      };
-    }
-    // Google AI Studio token格式: AIzaSy开头
-    else if (token.startsWith('AIzaSy')) {
-      return {
-        provider: 'Gemini',
-        model: 'gemini-1.5-pro'
-      };
-    }
-    // AWS token格式: ak-开头
-    else if (token.startsWith('ak-')) {
-      return {
-        provider: 'AWS',
-        model: 'bedrock-anthropic-claude-3'
-      };
-    }
-    // xAI token格式: xai-开头
-    else if (token.startsWith('xai-')) {
-      return {
-        provider: 'xAI',
-        model: 'grok-1'
-      };
-    }
-    // OpenRouter token格式: or-开头
-    else if (token.startsWith('or-')) {
-      return {
-        provider: 'OpenRouter',
-        model: 'openai/gpt-4o'
-      };
-    }
-    // Vercel AI-Gateway token格式: vercel-开头
-    else if (token.startsWith('vercel-')) {
-      return {
-        provider: 'Vercel AI-Gateway',
-        model: 'openai/gpt-4o'
-      };
-    }
-    // MiniMax token格式: mm-开头
-    else if (token.startsWith('mm-')) {
-      return {
-        provider: 'MiniMax-CN',
-        model: 'abab6-chat'
-      };
-    }
-    // DeepSeek token格式: ds-开头
-    else if (token.startsWith('ds-')) {
-      return {
-        provider: 'DeepSeek',
-        model: 'deepseek-llm-7b-chat'
-      };
-    }
-    // 火山引擎 token格式: volc-开头
-    else if (token.startsWith('volc-')) {
-      return {
-        provider: '火山引擎',
-        model: 'volcengine-llama3'
-      };
-    }
-    // 阿里云 token格式: aliyun-开头
-    else if (token.startsWith('aliyun-')) {
-      return {
-        provider: '阿里云',
-        model: 'qwen-7b-chat'
-      };
-    }
-    // 腾讯云 token格式: tencent-开头
-    else if (token.startsWith('tencent-')) {
-      return {
-        provider: '腾讯云',
-        model: 'tencent-hunyuan'
-      };
-    }
-    // Kimi token格式: kimi-开头
-    else if (token.startsWith('kimi-')) {
-      return {
-        provider: 'Kimi-CN',
-        model: 'kimi-cn'
-      };
-    }
-    // BytePlus token格式: byteplus-开头
-    else if (token.startsWith('byteplus-')) {
-      return {
-        provider: 'BytePlus',
-        model: 'byteplus-llm-7b'
-      };
-    }
-    // 默认情况
-    else {
-      return {
-        provider: 'Unknown',
-        model: 'unknown'
-      };
-    }
-  }
-
-  /**
    * 辅助函数：查找token索引
    * @param {string} token - 要查找的token
    * @returns {number} - token在数组中的索引，未找到返回-1
@@ -422,7 +289,8 @@ class TokenManager {
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
+    const TIMEOUT_MS = 5000;
+    const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
     try {
       tokenData.status = 'testing';
@@ -471,43 +339,12 @@ class TokenManager {
       this.saveTokens();
       return {
         healthy: false,
-        message: error.name === 'AbortError' ? '连接超时（5秒）' : `连接错误: ${error.message}`,
+        message: error.name === 'AbortError' ? `连接超时（${TIMEOUT_MS/1000}秒）` : `连接错误: ${error.message}`,
         token
       };
     } finally {
       clearTimeout(timeout);
     }
-  }
-
-  /**
-   * 批量检查所有Token健康状态
-   * @returns {Array} - 所有Token的健康检查结果
-   */
-  async checkAllTokensHealth() {
-    const results = await Promise.allSettled(
-      this.tokens.map(token => this.checkTokenHealth(token.token))
-    );
-    return results.map((result, index) => {
-      if (result.status === 'fulfilled') {
-        return { ...result.value, index };
-      }
-      return { healthy: false, message: '检查异常', token: this.tokens[index]?.token, index };
-    });
-  }
-
-  /**
-   * 获取Token使用统计
-   * @returns {Array} - Token统计信息
-   */
-  getTokenUsageStats() {
-    return this.tokens.map(token => ({
-      token: token.token.substring(0, 8) + '...',
-      provider: token.provider,
-      model: token.model,
-      status: token.status,
-      createdAt: token.createdAt,
-      fullToken: token.token
-    }));
   }
 }
 

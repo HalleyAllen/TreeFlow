@@ -10,15 +10,11 @@ import {
   MiniMap,
   useNodesState,
   useEdgesState,
-  ReactFlowProvider,
-  Panel
+  ReactFlowProvider
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Box, ToggleButton, ToggleButtonGroup, Tooltip } from '@mui/material';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
-import VerticalAlignTopIcon from '@mui/icons-material/VerticalAlignTop';
-import HorizontalSplitIcon from '@mui/icons-material/HorizontalSplit';
-import FitScreenIcon from '@mui/icons-material/FitScreen';
+import { Box } from '@mui/material';
+
 import MindMapNode from './MindMapNode';
 import { useMindMapLayout } from './useMindMapLayout';
 
@@ -35,19 +31,60 @@ const defaultNodeOptions = {
   connectable: false
 };
 
-function MindMapInner({ 
-  treeData, 
+function MindMapInner({
+  treeData,
   currentNodeId,
+  topicId,
   onNodeSelect,
   onBranchFromNode,
-  loading 
+  onQuoteText,
+  onEditNode,
+  onCopyNode,
+  onDeleteNode,
+  loading,
+  onTreeChange
 }) {
-  const [layoutType, setLayoutType] = useState('radial');
   const [selectedNode, setSelectedNode] = useState(null);
   const reactFlowInstance = useRef(null);
 
-  // 计算布局
-  const { nodes: layoutNodes, edges: layoutEdges } = useMindMapLayout(treeData, layoutType);
+  // 调试日志
+  console.log('MindMap treeData:', treeData ? {
+    id: treeData.id,
+    childrenCount: treeData.children?.length,
+    question: treeData.question?.substring(0, 30)
+  } : 'null');
+
+  // 使用固定文档布局
+  const { nodes: layoutNodes, edges: layoutEdges } = useMindMapLayout(treeData, 'document');
+
+  console.log('MindMap layout result:', {
+    nodesCount: layoutNodes.length,
+    edgesCount: layoutEdges.length
+  });
+
+  // 处理节点编辑
+  const handleEditNode = useCallback(async (nodeId, question, answer) => {
+    const result = await onEditNode?.(nodeId, question, answer);
+    if (result?.success) {
+      onTreeChange?.();
+    }
+  }, [onEditNode, onTreeChange]);
+
+  // 处理节点复制
+  const handleCopyNode = useCallback(async (nodeId) => {
+    const result = await onCopyNode?.(nodeId);
+    if (result?.success) {
+      onTreeChange?.();
+    }
+  }, [onCopyNode, onTreeChange]);
+
+  // 处理节点删除
+  const handleDeleteNode = useCallback(async (nodeId) => {
+    const result = await onDeleteNode?.(nodeId);
+    if (result?.success) {
+      onTreeChange?.();
+    }
+  }, [onDeleteNode, onTreeChange]);
 
   // 转换为 ReactFlow 格式
   const initialNodes = layoutNodes.map(node => ({
@@ -56,7 +93,13 @@ function MindMapInner({
     position: node.position,
     data: {
       ...node.data,
+      id: node.id,
+      topicId,
       onBranchClick: onBranchFromNode,
+      onQuoteText: onQuoteText,
+      onEditNode: handleEditNode,
+      onCopyNode: handleCopyNode,
+      onDeleteNode: handleDeleteNode,
       onNodeClick: (nodeData) => {
         setSelectedNode(nodeData.id);
         onNodeSelect?.(nodeData);
@@ -69,13 +112,10 @@ function MindMapInner({
     ...edge,
     animated: true,
     style: { 
-      stroke: 'var(--primary-color)',
-      strokeWidth: 2,
+      stroke: edge.style?.stroke || 'var(--primary-color)',
+      strokeWidth: edge.style?.strokeWidth || 2,
+      strokeDasharray: edge.style?.strokeDasharray,
       opacity: 0.6
-    },
-    markerEnd: {
-      type: 'arrowclosed',
-      color: 'var(--primary-color)'
     }
   }));
 
@@ -86,14 +126,7 @@ function MindMapInner({
   useEffect(() => {
     setNodes(initialNodes);
     setEdges(initialEdges);
-  }, [treeData, layoutType, selectedNode]);
-
-  // 布局切换
-  const handleLayoutChange = useCallback((_, newLayout) => {
-    if (newLayout) {
-      setLayoutType(newLayout);
-    }
-  }, []);
+  }, [treeData, selectedNode]);
 
   // 适应画布
   const handleFitView = useCallback(() => {
@@ -124,11 +157,28 @@ function MindMapInner({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeContextMenu={onNodeContextMenu}
+        onNodeClick={(_, node) => {
+          // 阻止节点点击的默认选择行为
+          setSelectedNode(node.id);
+        }}
         nodeTypes={nodeTypes}
         fitView
         attributionPosition="bottom-right"
         minZoom={0.1}
         maxZoom={2}
+        nodesDraggable={false}
+        nodesConnectable={false}
+        elementsSelectable={false}
+        selectNodesOnDrag={false}
+        selectionOnDrag={false}
+        panOnDrag={true}
+        panOnScroll={true}
+        zoomOnScroll={true}
+        zoomOnPinch={true}
+        zoomOnDoubleClick={false}
+        selectionKeyCode={null}
+        multiSelectionKeyCode={null}
+        deleteKeyCode={null}
         defaultEdgeOptions={{
           type: 'smoothstep',
           animated: true
@@ -139,6 +189,7 @@ function MindMapInner({
         style={{
           background: 'var(--background-color)'
         }}
+        className="mindmap-flow"
       >
         <Background 
           color="var(--border-color)"
@@ -154,90 +205,25 @@ function MindMapInner({
             background: 'var(--card-background)',
             border: '1px solid var(--border-color)'
           }}
+          showFitView={true}
+          showInteractive={false}
         />
         
-        <MiniMap 
+        <MiniMap
           style={{
             background: 'var(--card-background)',
             border: '1px solid var(--border-color)',
             borderRadius: 8
           }}
-          nodeColor={(node) => 
+          nodeColor={(node) =>
             node.data?.isCurrentPath ? 'var(--primary-color)' : 'var(--text-secondary)'
           }
           maskColor="rgba(0, 0, 0, 0.2)"
         />
-
-        {/* 布局切换面板 */}
-        <Panel position="top-left">
-          <ToggleButtonGroup
-            value={layoutType}
-            exclusive
-            onChange={handleLayoutChange}
-            size="small"
-            sx={{
-              bgcolor: 'var(--card-background)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 1,
-              '& .MuiToggleButton-root': {
-                color: 'var(--text-secondary)',
-                border: 'none',
-                '&.Mui-selected': {
-                  bgcolor: 'var(--primary-color)',
-                  color: 'white'
-                },
-                '&:hover': {
-                  bgcolor: 'var(--hover-bg)'
-                }
-              }
-            }}
-          >
-            <Tooltip title="放射状布局">
-              <ToggleButton value="radial">
-                <AccountTreeIcon sx={{ fontSize: 18 }} />
-              </ToggleButton>
-            </Tooltip>
-            <Tooltip title="垂直布局">
-              <ToggleButton value="vertical">
-                <VerticalAlignTopIcon sx={{ fontSize: 18 }} />
-              </ToggleButton>
-            </Tooltip>
-            <Tooltip title="水平布局">
-              <ToggleButton value="horizontal">
-                <HorizontalSplitIcon sx={{ fontSize: 18, transform: 'rotate(90deg)' }} />
-              </ToggleButton>
-            </Tooltip>
-          </ToggleButtonGroup>
-        </Panel>
-
-        {/* 适应画布按钮 */}
-        <Panel position="bottom-left">
-          <Box
-            onClick={handleFitView}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 36,
-              height: 36,
-              bgcolor: 'var(--card-background)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 1,
-              cursor: 'pointer',
-              color: 'var(--text-secondary)',
-              '&:hover': {
-                bgcolor: 'var(--hover-bg)',
-                color: 'var(--primary-color)'
-              }
-            }}
-          >
-            <FitScreenIcon sx={{ fontSize: 18 }} />
-          </Box>
-        </Panel>
       </ReactFlow>
 
-      {/* 加载遮罩 */}
-      {loading && (
+      {/* 加载指示器 - 只在初始加载时显示 */}
+      {loading && !treeData && (
         <Box
           sx={{
             position: 'absolute',

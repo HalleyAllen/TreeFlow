@@ -1,17 +1,20 @@
 /**
  * Token控制器
  * 处理Token的CRUD操作和健康检查
+ * 重构后：直接使用 TokenManager
  */
 class TokenController {
   constructor(agent) {
     this.agent = agent;
+    // 直接使用 TokenManager
+    this.tokenManager = agent.tokenManager;
   }
 
   /**
    * 获取Token列表
    */
-  getTokenList(req, res) {
-    const tokens = this.agent.getTokenList();
+  getTokenList(_req, res) {
+    const tokens = this.tokenManager.getTokenList();
     res.success({ tokens });
   }
 
@@ -20,7 +23,7 @@ class TokenController {
    */
   addToken(req, res) {
     const { token, provider, model } = req.body;
-    const result = this.agent.addToken(token, provider, model);
+    const result = this.tokenManager.addToken(token, provider, model);
     res.success({ result });
   }
 
@@ -29,7 +32,7 @@ class TokenController {
    */
   removeToken(req, res) {
     const { token } = req.body;
-    const result = this.agent.tokenManager.removeToken(token);
+    const result = this.tokenManager.removeToken(token);
     res.success({ result });
   }
 
@@ -38,7 +41,7 @@ class TokenController {
    */
   updateTokenInfo(req, res) {
     const { token, newToken, provider, model } = req.body;
-    const result = this.agent.updateTokenInfo(token, newToken, provider, model);
+    const result = this.tokenManager.updateTokenInfo(token, newToken, provider, model);
     res.success({ result });
   }
 
@@ -47,15 +50,15 @@ class TokenController {
    */
   updateTokenStatus(req, res) {
     const { token, status } = req.body;
-    const result = this.agent.updateTokenStatus(token, status);
+    const result = this.tokenManager.updateTokenStatus(token, status);
     res.success({ result });
   }
 
   /**
    * 清除所有Token
    */
-  clearTokens(req, res) {
-    const result = this.agent.clearTokens();
+  clearTokens(_req, res) {
+    const result = this.tokenManager.clearTokens();
     res.success({ result });
   }
 
@@ -64,33 +67,8 @@ class TokenController {
    */
   async checkTokenHealth(req, res) {
     const { token } = req.body;
-    const result = await this.agent.tokenManager.checkTokenHealth(token);
+    const result = await this.tokenManager.checkTokenHealth(token);
     res.success({ result });
-  }
-
-  /**
-   * 批量检查所有Token健康状态
-   */
-  async checkAllTokensHealth(req, res) {
-    const results = await this.agent.tokenManager.checkAllTokensHealth();
-    res.success({ results });
-  }
-
-  /**
-   * 获取Token使用统计
-   */
-  getTokenStats(req, res) {
-    const stats = this.agent.getTokenStats();
-    res.success({ stats });
-  }
-
-  /**
-   * 获取指定模型的可用Token数量
-   */
-  getAvailableTokensByModel(req, res) {
-    const { model } = req.params;
-    const count = this.agent.tokenManager.getAvailableTokensByModel(model);
-    res.success({ count });
   }
 }
 

@@ -104,28 +104,3 @@ export const checkTokenHealth = async (token) => {
     return { success: false, error: error.message };
   }
 };
-
-// 批量检查Token健康状态
-export const checkAllTokensHealth = async () => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/tokens/check-all-health`, {
-      method: 'POST'
-    });
-    return await response.json();
-  } catch (error) {
-    logger.error('API', '批量检查tokens健康状态失败:', { error: error.message });
-    return { success: false, error: error.message };
-  }
-};
-
-// 获取Token使用统计
-export const getTokenUsageStats = async () => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/tokens/stats`);
-    const data = await response.json();
-    return data.data?.stats || data.stats || [];
-  } catch (error) {
-    logger.error('API', '获取token使用统计失败:', { error: error.message });
-    return [];
-  }
-};

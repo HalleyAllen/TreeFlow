@@ -1,12 +1,16 @@
 /**
  * 树形结构控制器
  * 处理对话树的查询和转换
+ * 重构后：直接使用 ConversationTreeManager
  */
 const logger = require('../../core/utils/logger');
 
 class TreeController {
   constructor(agent) {
     this.agent = agent;
+    // 直接使用 ConversationTreeManager
+    this.treeManager = agent.conversationTreeManager;
+    this.topicManager = agent.topicManager;
   }
 
   /**
@@ -16,13 +20,34 @@ class TreeController {
   getTree = (req, res) => {
     try {
       const { topicId } = req.params;
-      const topic = this.agent.topicManager.getTopic(topicId);
+      const topic = this.topicManager.getTopic(topicId);
       
       if (!topic) {
         return res.status(404).json({ success: false, error: '话题不存在' });
       }
 
+      // 如果没有对话节点，返回空树
+      if (!topic.conversationTree) {
+        logger.info('TreeController', '话题暂无对话节点', { topicId, topicName: topic.name });
+        return res.json({
+          success: true,
+          data: {
+            topicId: topic.id,
+            topicName: topic.name,
+            tree: null,
+            currentNodeId: null
+          }
+        });
+      }
+
       const tree = this.buildTreeNode(topic.conversationTree, topic);
+      
+      logger.info('TreeController', '获取对话树', { 
+        topicId, 
+        topicName: topic.name,
+        rootChildrenCount: tree.children.length,
+        currentNodeId: topic.currentNode?.id 
+      });
       
       res.json({
         success: true,
@@ -52,12 +77,12 @@ class TreeController {
         return res.status(400).json({ success: false, error: '缺少topicId参数' });
       }
 
-      const topic = this.agent.topicManager.getTopic(topicId);
+      const topic = this.topicManager.getTopic(topicId);
       if (!topic) {
         return res.status(404).json({ success: false, error: '话题不存在' });
       }
 
-      const node = this.agent.topicManager.findNodeById(topic.conversationTree, nodeId);
+      const node = this.treeManager.findNodeById(topic.conversationTree, nodeId);
       if (!node) {
         return res.status(404).json({ success: false, error: '节点不存在' });
       }
@@ -85,6 +110,8 @@ class TreeController {
       answerSummary: this.generateSummary(node.response),
       status: node.status || 'completed',
       error: node.error || null,
+      branchType: node.branchType || null,
+      quoteNodeIds: node.quoteNodeIds || [],
       children: node.children.map(child => this.buildTreeNode(child, topic)),
       childrenCount: node.children.length,
       isCurrentPath: topic.currentNode && this.isInPath(topic.currentNode, node, topic.conversationTree),
@@ -131,7 +158,7 @@ class TreeController {
     if (currentNode.id === targetNode.id) return true;
     if (!targetNode.parentId) return false;
     
-    const parent = this.findNodeById(tree, targetNode.parentId);
+    const parent = this.treeManager.findNodeById(tree, targetNode.parentId);
     if (!parent) return false;
     
     return this.isInPath(currentNode, parent, tree);
@@ -146,22 +173,111 @@ class TreeController {
     let current = node;
     while (current.parentId) {
       depth++;
-      current = this.findNodeById(tree, current.parentId);
+      current = this.treeManager.findNodeById(tree, current.parentId);
     }
     return depth;
   }
 
   /**
-   * 根据ID查找节点
-   * @private
+   * 编辑节点内容
+   * PUT /api/tree/node/:nodeId
    */
-  findNodeById(tree, nodeId) {
-    if (tree.id === nodeId) return tree;
-    for (const child of tree.children) {
-      const found = this.findNodeById(child, nodeId);
-      if (found) return found;
+  editNode = (req, res) => {
+    try {
+      const { nodeId } = req.params;
+      const { topicId, question, answer } = req.body;
+
+      if (!topicId) {
+        return res.status(400).json({ success: false, error: '缺少topicId参数' });
+      }
+
+      const topic = this.topicManager.getTopic(topicId);
+      if (!topic) {
+        return res.status(404).json({ success: false, error: '话题不存在' });
+      }
+
+      const node = this.treeManager.editNode(topicId, nodeId, question, answer);
+      if (!node) {
+        return res.status(404).json({ success: false, error: '节点不存在或编辑失败' });
+      }
+
+      logger.info('TreeController', '编辑节点成功', { nodeId, topicId });
+      res.json({
+        success: true,
+        data: this.serializeNode(node, topic)
+      });
+    } catch (error) {
+      logger.error('TreeController', '编辑节点失败:', error);
+      res.status(500).json({ success: false, error: error.message });
     }
-    return null;
+  }
+
+  /**
+   * 复制节点
+   * POST /api/tree/node/:nodeId/copy
+   */
+  copyNode = (req, res) => {
+    try {
+      const { nodeId } = req.params;
+      const { topicId, targetParentId } = req.body;
+
+      if (!topicId) {
+        return res.status(400).json({ success: false, error: '缺少topicId参数' });
+      }
+
+      const topic = this.topicManager.getTopic(topicId);
+      if (!topic) {
+        return res.status(404).json({ success: false, error: '话题不存在' });
+      }
+
+      const newNode = this.treeManager.copyNode(topicId, nodeId, targetParentId);
+      if (!newNode) {
+        return res.status(400).json({ success: false, error: '复制节点失败' });
+      }
+
+      logger.info('TreeController', '复制节点成功', { sourceNodeId: nodeId, newNodeId: newNode.id, topicId });
+      res.json({
+        success: true,
+        data: this.serializeNode(newNode, topic)
+      });
+    } catch (error) {
+      logger.error('TreeController', '复制节点失败:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  /**
+   * 删除节点
+   * DELETE /api/tree/node/:nodeId
+   */
+  deleteNode = (req, res) => {
+    try {
+      const { nodeId } = req.params;
+      const { topicId } = req.query;
+
+      if (!topicId) {
+        return res.status(400).json({ success: false, error: '缺少topicId参数' });
+      }
+
+      const topic = this.topicManager.getTopic(topicId);
+      if (!topic) {
+        return res.status(404).json({ success: false, error: '话题不存在' });
+      }
+
+      const success = this.treeManager.deleteNode(topicId, nodeId);
+      if (!success) {
+        return res.status(400).json({ success: false, error: '删除节点失败，可能是根节点或节点不存在' });
+      }
+
+      logger.info('TreeController', '删除节点成功', { nodeId, topicId });
+      res.json({
+        success: true,
+        message: '节点已删除'
+      });
+    } catch (error) {
+      logger.error('TreeController', '删除节点失败:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
   }
 }
 

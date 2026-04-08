@@ -5,12 +5,16 @@ import logger from '../logger';
 
 const API_BASE_URL = '';
 
-// 发送消息
-export const sendMessage = async (question, fromNodeId = null, skillId = null) => {
+// 发送消息（支持引用分支）
+export const sendMessage = async (question, fromNodeId = null, skillId = null, model = null, provider = null, branchType = null, quoteNodeIds = []) => {
   try {
     const body = { question };
     if (fromNodeId) body.fromNodeId = fromNodeId;
     if (skillId) body.skillId = skillId;
+    if (model) body.model = model;
+    if (provider) body.provider = provider;
+    if (branchType) body.branchType = branchType;
+    if (quoteNodeIds && quoteNodeIds.length > 0) body.quoteNodeIds = quoteNodeIds;
     const response = await fetch(`${API_BASE_URL}/api/ask`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -24,55 +28,15 @@ export const sendMessage = async (question, fromNodeId = null, skillId = null) =
   }
 };
 
-// 发送消息（流式响应）
-export const sendMessageStream = async (question, fromNodeId = null, skillId = null, onMessage) => {
+// 加载话题消息列表
+export const loadTopicMessages = async (topicId) => {
   try {
-    const body = { question };
-    if (fromNodeId) body.fromNodeId = fromNodeId;
-    if (skillId) body.skillId = skillId;
-    
-    const response = await fetch(`${API_BASE_URL}/api/ask-stream`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-
-    if (!response.ok) {
-      throw new Error('流式请求失败');
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let fullResponse = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n').filter(line => line.trim());
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          try {
-            const data = JSON.parse(line.substring(6));
-            if (data.content) {
-              fullResponse += data.content;
-              if (onMessage) onMessage(data.content, false);
-            }
-            if (data.done) {
-              if (onMessage) onMessage(fullResponse, true, data.nodeId);
-              return { response: fullResponse, nodeId: data.nodeId };
-            }
-          } catch (e) {
-            // 忽略解析错误
-          }
-        }
-      }
-    }
+    const response = await fetch(`${API_BASE_URL}/api/topics/${topicId}/messages`);
+    const data = await response.json();
+    return data.data || data;
   } catch (error) {
-    logger.error('API', '流式发送消息失败:', { error: error.message });
-    return { error: '发送消息失败，请稍后再试' };
+    logger.error('API', '加载话题消息失败:', { error: error.message });
+    return { error: '加载话题消息失败，请稍后再试' };
   }
 };
 

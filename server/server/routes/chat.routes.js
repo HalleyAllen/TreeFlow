@@ -32,8 +32,5 @@ module.exports = (agent) => {
   // 获取话题消息
   router.get('/topic-messages', asyncHandler((req, res) => controller.getTopicMessages(req, res)));
 
-  // 流式对话（Ollama）
-  router.post('/ask-stream', asyncHandler((req, res) => controller.askStream(req, res)));
-
   return router;
 };

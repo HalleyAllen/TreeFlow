@@ -21,7 +21,7 @@ import MemoryIcon from '@mui/icons-material/Memory'
 import ThermostatIcon from '@mui/icons-material/Thermostat'
 import MessageIcon from '@mui/icons-material/Message'
 import {
-  addToken, removeToken, updateTokenInfo, checkTokenHealth, checkAllTokensHealth,
+  addToken, removeToken, updateTokenInfo, checkTokenHealth,
   getOllamaUrl, setOllamaUrl, setOllamaEnabled, checkOllamaStatus, getOllamaModels,
   pullOllamaModel, deleteOllamaModel
 } from '../../services/api'

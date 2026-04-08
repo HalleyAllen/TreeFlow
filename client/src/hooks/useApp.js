@@ -22,6 +22,9 @@ export const useApp = () => {
   // 输入状态
   const [input, setInput] = useState('');
   
+  // 引用状态（支持多个引用）
+  const [quotedTexts, setQuotedTexts] = useState([]);
+  
   // Ollama 状态
   const [ollamaEnabled, setOllamaEnabled] = useState(false);
   const [ollamaUrl, setOllamaUrl] = useState('http://localhost:11434');
@@ -41,6 +44,7 @@ export const useApp = () => {
     loading: chatLoading,
     branchMode,
     branchFromNodeId,
+    nodeCreated,
     sendMessage: sendChatMessage,
     loadMessages,
     enterBranchMode,
@@ -116,32 +120,61 @@ export const useApp = () => {
     setInput(e.target.value);
   }, []);
 
+  // 处理划词引用（支持多个引用）
+  const handleQuoteText = useCallback((quoteData) => {
+    if (quoteData === null) {
+      // 清除所有引用
+      setQuotedTexts([]);
+    } else {
+      // 添加新引用（去重）
+      setQuotedTexts(prev => {
+        // 检查是否已存在相同引用
+        const exists = prev.some(q => q.text === quoteData.text && q.nodeId === quoteData.nodeId);
+        if (exists) return prev;
+        return [...prev, { ...quoteData, id: Date.now() }];
+      });
+    }
+  }, []);
+
+  // 删除单个引用
+  const removeQuote = useCallback((quoteId) => {
+    setQuotedTexts(prev => prev.filter(q => q.id !== quoteId));
+  }, []);
+
   // 发送消息
   const handleSend = useCallback(async () => {
     if (!input.trim()) return;
 
-    const currentInput = input;
+    // 构造带引用的消息内容
+    let currentInput = input;
+    if (quotedTexts.length > 0) {
+      const quotesText = quotedTexts.map((q, i) => `[引用${i + 1}: "${q.text}"]`).join('\n');
+      currentInput = `${quotesText}\n${input}`;
+    }
+    
     setInput(''); // 清空输入
+    setQuotedTexts([]); // 清除所有引用
 
-    // 添加用户消息到界面
-    const userMsg = { type: 'user', content: currentInput };
-    if (branchFromNodeId) userMsg.nodeId = branchFromNodeId;
-    setMessages(prev => [...prev, userMsg]);
+    // 查找当前模型的供应商
+    const currentModelInfo = models.find(m => m.id === selectedModel);
+    const provider = currentModelInfo?.provider;
 
-    const result = await sendChatMessage(currentInput, activeSkill?.id);
+    // 使用 sendChatMessage 处理消息添加和响应显示
+    // 如果有引用，标记为引用分支模式
+    const result = await sendChatMessage(
+      currentInput, 
+      activeSkill?.id, 
+      selectedModel, 
+      provider,
+      quotedTexts.length > 0 ? 'quote' : null,  // 引用类型
+      quotedTexts.map(q => q.nodeId)  // 引用的节点ID列表
+    );
 
     if (result.success) {
-      // 添加AI响应
-      const aiMsg = { type: 'ai', content: result.result.response };
-      if (result.result.nodeId) aiMsg.nodeId = result.result.nodeId;
-      setMessages(prev => [...prev, aiMsg]);
       // 清除技能
       clearSkill();
-    } else {
-      // 添加错误消息
-      setMessages(prev => [...prev, { type: 'ai', content: `错误: ${result.error}` }]);
     }
-  }, [input, branchFromNodeId, sendChatMessage, activeSkill, clearSkill, setMessages]);
+  }, [input, branchFromNodeId, sendChatMessage, activeSkill, clearSkill, setMessages, models, selectedModel, quotedTexts]);
 
   // 按键事件
   const handleKeyPress = useCallback((e) => {
@@ -221,12 +254,16 @@ export const useApp = () => {
     messages,
     chatLoading,
     branchMode,
+    nodeCreated,
     input,
+    quotedTexts,
     handleInputChange,
     handleKeyPress,
     handleSend,
     handleEnterBranchMode,
     exitBranchMode,
+    handleQuoteText,
+    removeQuote,
 
     // 模型相关
     models,

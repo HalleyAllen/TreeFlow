@@ -1,10 +1,12 @@
 /**
  * TreeFlowAgent 类 - 处理AI对话和话题管理
  * 核心业务逻辑入口，协调各管理器工作
+ * 重构后：移除简单转发方法，专注于复杂业务协调
  */
 const TokenManager = require('../managers/TokenManager');
 const ConfigManager = require('../managers/ConfigManager');
 const TopicManager = require('../managers/TopicManager');
+const ConversationTreeManager = require('../managers/ConversationTreeManager');
 const ApiManager = require('../managers/ApiManager');
 const { SkillManager } = require('../managers/SkillManager');
 const path = require('path');
@@ -26,6 +28,9 @@ class TreeFlowAgent {
     // 加载话题
     this.topicManager.loadTopics();
     
+    // 初始化对话树管理器（依赖 TopicManager）
+    this.conversationTreeManager = new ConversationTreeManager(this.topicManager);
+    
     // 初始化API管理器
     this.apiManager = new ApiManager(this.configManager.getProviders(), this.tokenManager);
     
@@ -41,152 +46,48 @@ class TreeFlowAgent {
   }
 
   /**
-   * 设置当前模型
-   * @param {string} model - 模型名称
-   * @returns {string} - 切换模型的结果信息
-   */
-  setModel(model) {
-    const oldModel = this.configManager.getCurrentModel();
-    this.configManager.setCurrentModel(model);
-    logger.info('TreeFlowAgent', '切换模型', { oldModel, newModel: model });
-    return `已切换到模型: ${model}`;
-  }
-
-  /**
-   * 获取当前模型
-   * @returns {string} - 当前模型名称
-   */
-  getModel() {
-    return this.configManager.getCurrentModel();
-  }
-
-  /**
-   * 设置Ollama启用状态
-   * @param {boolean} enabled - 是否启用
-   * @returns {string} - 结果信息
-   */
-  setOllamaEnabled(enabled) {
-    this.ollamaEnabled = enabled;
-    this.configManager.setConfig({ ollamaEnabled: enabled });
-    logger.info('TreeFlowAgent', '设置Ollama启用状态', { enabled });
-    return `Ollama已${enabled ? '启用' : '禁用'}`;
-  }
-
-  /**
-   * 设置Ollama基础URL
-   * @param {string} url - Ollama基础URL
-   * @returns {string} - 设置Ollama基础URL的结果信息
-   */
-  setOllamaBaseUrl(url) {
-    const oldUrl = this.configManager.getOllamaBaseUrl();
-    this.configManager.setOllamaBaseUrl(url);
-    this.ollamaBaseUrl = url;
-    logger.info('TreeFlowAgent', '设置Ollama基础URL', { oldUrl, newUrl: url });
-    return `已设置Ollama基础URL: ${url}`;
-  }
-
-  /**
-   * 添加Token
-   * @param {string} token - Token值
-   * @param {string} [provider=null] - 提供商名称
-   * @param {string} [model=null] - 模型名称
-   * @returns {string} - 添加Token的结果信息
-   */
-  addToken(token, provider = null, model = null) {
-    const result = this.tokenManager.addToken(token, provider, model);
-    logger.info('TreeFlowAgent', '添加Token', { provider, model });
-    return result;
-  }
-
-  /**
-   * 获取Token列表
-   * @returns {Array} - Token列表
-   */
-  getTokenList() {
-    const tokens = this.tokenManager.getTokenList();
-    logger.info('TreeFlowAgent', '获取Token列表', { tokenCount: tokens.length });
-    return tokens;
-  }
-
-  /**
-   * 更新Token状态
-   * @param {string} token - Token值
-   * @param {string} status - Token状态
-   * @returns {string} - 更新Token状态的结果信息
-   */
-  updateTokenStatus(token, status) {
-    const result = this.tokenManager.updateTokenStatus(token, status);
-    logger.info('TreeFlowAgent', '更新Token状态', { status });
-    return result;
-  }
-
-  /**
-   * 更新Token信息
-   * @param {string} oldToken - 旧Token值
-   * @param {string} newToken - 新Token值
-   * @param {string} provider - 提供商名称
-   * @param {string} model - 模型名称
-   * @returns {string} - 更新Token信息的结果信息
-   */
-  updateTokenInfo(oldToken, newToken, provider, model) {
-    const result = this.tokenManager.updateTokenInfo(oldToken, newToken, provider, model);
-    logger.info('TreeFlowAgent', '更新Token信息', { provider, model });
-    return result;
-  }
-
-  /**
-   * 清除所有Token
-   * @returns {string} - 清除所有Token的结果信息
-   */
-  clearTokens() {
-    const result = this.tokenManager.clearTokens();
-    logger.info('TreeFlowAgent', '清除所有Token');
-    return result;
-  }
-
-  /**
-   * 获取Token详细信息
-   * @param {string} token - Token值
-   * @returns {Object} - Token详细信息
-   */
-  getTokenDetails(token) {
-    const details = this.tokenManager.getTokenDetails(token);
-    logger.info('TreeFlowAgent', '获取Token详细信息', { provider: details?.provider });
-    return details;
-  }
-
-  /**
-   * 获取Token统计信息
-   * @returns {Object} - Token统计信息
-   */
-  getTokenStats() {
-    return this.tokenManager.getTokenUsageStats();
-  }
-
-  /**
-   * 发送AI请求
+   * 发送AI请求 - 核心业务方法
    * @param {string} question - 问题
    * @param {string} [fromNodeId] - 可选，从指定节点分支后提问
    * @param {string} [skillId] - 可选，使用的技能ID
+   * @param {string} [model] - 可选，模型名称（不传则使用当前配置）
+   * @param {string} [provider] - 可选，供应商名称（不传则自动推断）
+   * @param {string} [branchType] - 可选，分支类型
+   * @param {Array} [quoteNodeIds] - 可选，引用节点ID列表
    * @returns {Object} - {response, nodeId}
    */
-  async ask(question, fromNodeId = null, skillId = null) {
+  async ask(question, fromNodeId = null, skillId = null, model = null, provider = null, branchType = null, quoteNodeIds = []) {
+    let newNode = null;
+    const currentTopic = this.configManager.getCurrentTopic();
+    
     try {
-      const model = this.configManager.getCurrentModel();
+      const currentModel = model || this.configManager.getCurrentModel();
       const ollamaBaseUrl = this.configManager.getOllamaBaseUrl();
-      const currentTopic = this.configManager.getCurrentTopic();
-      
-      // 如果指定了 fromNodeId，先创建分支
-      if (fromNodeId) {
-        this.topicManager.createBranchFromNode(currentTopic, fromNodeId);
-      }
       
       // 先创建节点（只包含问题，回答为空，状态为加载中）
-      const newNode = this.topicManager.addConversationNode(currentTopic, question, '', { status: 'loading' });
-      logger.info('TreeFlowAgent', '创建对话节点', { nodeId: newNode.id, status: 'loading' });
+      // 标记引用分支类型
+      const nodeOptions = { status: 'loading' };
+      let actualParentId = null;
+      
+      if (branchType === 'quote') {
+        nodeOptions.branchType = 'quote';
+        nodeOptions.quoteNodeIds = quoteNodeIds || [];
+        // 引用分支直接以被引用节点为父节点，不创建中间空分支
+        actualParentId = fromNodeId;
+      } else if (fromNodeId) {
+        // 普通分支：先创建中间分支，再添加节点
+        this.conversationTreeManager.createBranchFromNode(currentTopic, fromNodeId);
+      }
+      
+      newNode = this.conversationTreeManager.addConversationNode(currentTopic, question, '', nodeOptions, actualParentId);
+      if (!newNode) {
+        logger.error('TreeFlowAgent', '创建节点失败', { topic: currentTopic });
+        throw new Error('创建对话节点失败');
+      }
+      logger.info('TreeFlowAgent', '创建对话节点', { nodeId: newNode.id, status: 'loading', branchType });
       
       // 获取对话历史用于上下文
-      let conversationHistory = this.topicManager.getConversationHistory(currentTopic);
+      let conversationHistory = this.conversationTreeManager.getConversationHistory(currentTopic);
       
       // 如果指定了技能，添加系统提示词
       let finalQuestion = question;
@@ -203,7 +104,8 @@ class TreeFlowAgent {
       }
       
       logger.info('TreeFlowAgent', '开始AI请求', { 
-        model, 
+        model: currentModel, 
+        provider: provider || 'auto',
         question: finalQuestion.substring(0, 50) + '...', 
         historyLength: conversationHistory.length, 
         skillId: skillId || 'none',
@@ -211,18 +113,18 @@ class TreeFlowAgent {
       });
       
       // 调用API管理器发送请求（传入对话历史）
-      const aiResponse = await this.apiManager.ask(finalQuestion, model, ollamaBaseUrl, conversationHistory);
+      const aiResponse = await this.apiManager.ask(finalQuestion, currentModel, ollamaBaseUrl, conversationHistory, provider);
       
       // 更新节点，添加AI回答
-      this.topicManager.updateNodeResponse(currentTopic, newNode.id, aiResponse, { status: 'completed' });
+      this.conversationTreeManager.updateNodeResponse(currentTopic, newNode.id, aiResponse, { status: 'completed' });
       
       logger.info('TreeFlowAgent', 'AI请求成功', { responseLength: aiResponse.length, nodeId: newNode.id });
       return { response: aiResponse, nodeId: newNode.id };
     } catch (error) {
       logger.error('TreeFlowAgent', 'AI请求失败:', { error: error.message });
       // 更新节点状态为错误
-      if (typeof newNode !== 'undefined' && newNode) {
-        this.topicManager.updateNodeResponse(currentTopic, newNode.id, `错误: ${error.message}`, { status: 'error' });
+      if (newNode) {
+        this.conversationTreeManager.updateNodeResponse(currentTopic, newNode.id, `错误: ${error.message}`, { status: 'error' });
       }
       throw new Error(`AI请求失败: ${error.message}`);
     }
@@ -236,9 +138,9 @@ class TreeFlowAgent {
   createBranch(fromNodeId = null) {
     const currentTopic = this.configManager.getCurrentTopic();
     if (fromNodeId) {
-      return this.topicManager.createBranchFromNode(currentTopic, fromNodeId);
+      return this.conversationTreeManager.createBranchFromNode(currentTopic, fromNodeId);
     }
-    return this.topicManager.createBranch(currentTopic);
+    return this.conversationTreeManager.createBranch(currentTopic);
   }
 
   /**
@@ -248,7 +150,7 @@ class TreeFlowAgent {
    */
   getNodeBranches(nodeId) {
     const currentTopic = this.configManager.getCurrentTopic();
-    return this.topicManager.getNodeBranches(currentTopic, nodeId);
+    return this.conversationTreeManager.getNodeBranches(currentTopic, nodeId);
   }
 
   /**
@@ -258,7 +160,7 @@ class TreeFlowAgent {
    */
   getTopicMessages(topicId) {
     const tid = topicId || this.configManager.getCurrentTopic();
-    return this.topicManager.getConversationMessages(tid);
+    return this.conversationTreeManager.getConversationMessages(tid);
   }
 
   /**
@@ -268,7 +170,7 @@ class TreeFlowAgent {
    */
   switchToBranch(branchId) {
     const currentTopic = this.configManager.getCurrentTopic();
-    return this.topicManager.switchToBranch(currentTopic, branchId);
+    return this.conversationTreeManager.switchToBranch(currentTopic, branchId);
   }
 
   /**
@@ -277,7 +179,7 @@ class TreeFlowAgent {
    */
   getCurrentBranch() {
     const currentTopic = this.configManager.getCurrentTopic();
-    const branchId = this.topicManager.getCurrentBranch(currentTopic);
+    const branchId = this.conversationTreeManager.getCurrentBranch(currentTopic);
     logger.info('TreeFlowAgent', '获取当前分支', { branchId, topic: currentTopic });
     return branchId;
   }
@@ -288,44 +190,9 @@ class TreeFlowAgent {
    */
   getConversationTree() {
     const currentTopic = this.configManager.getCurrentTopic();
-    const tree = this.topicManager.getConversationTree(currentTopic);
+    const tree = this.conversationTreeManager.getConversationTree(currentTopic);
     logger.info('TreeFlowAgent', '获取对话树', { topic: currentTopic });
     return tree;
-  }
-
-  /**
-   * 创建话题
-   * @param {string} name - 话题名称
-   * @returns {string} - 创建话题的结果信息
-   */
-  createTopic(name) {
-    return this.topicManager.createTopic(name);
-  }
-
-  /**
-   * 切换话题
-   * @param {string} topicId - 话题ID
-   * @returns {string} - 切换话题的结果信息
-   */
-  switchTopic(topicId) {
-    const result = this.topicManager.switchTopic(topicId);
-    if (result !== '话题不存在' && result !== '切换话题失败') {
-      this.configManager.setCurrentTopic(topicId);
-    }
-    return result;
-  }
-
-  /**
-   * 获取话题列表
-   * @returns {Array} - 话题列表
-   */
-  listTopics() {
-    const topics = this.topicManager.getTopics().map(topic => ({
-      id: topic.id,
-      name: topic.name
-    }));
-    logger.info('TreeFlowAgent', '获取话题列表', { topicCount: topics.length });
-    return topics;
   }
 
   /**
@@ -349,8 +216,17 @@ class TreeFlowAgent {
    * @returns {Object} - 当前话题信息
    */
   getCurrentTopic() {
-    const topicId = this.configManager.getCurrentTopic();
-    const topic = this.topicManager.getTopic(topicId);
+    let topicId = this.configManager.getCurrentTopic();
+    let topic = this.topicManager.getTopic(topicId);
+    
+    // 如果当前话题不存在，切换到默认话题
+    if (!topic) {
+      logger.warn('TreeFlowAgent', '当前话题不存在，切换到默认话题', { topicId });
+      topicId = 'default';
+      topic = this.topicManager.getTopic(topicId);
+      this.configManager.setCurrentTopic(topicId);
+    }
+    
     const topicInfo = {
       id: topicId,
       name: topic ? topic.name : '默认话题'
@@ -366,22 +242,6 @@ class TreeFlowAgent {
   updateProviders(providers) {
     this.configManager.setProviders(providers);
     this.apiManager.updateProviders(providers);
-  }
-
-  /**
-   * 获取当前主题
-   * @returns {string} - 主题名称
-   */
-  getTheme() {
-    return this.configManager.getTheme();
-  }
-
-  /**
-   * 设置当前主题
-   * @param {string} theme - 主题名称
-   */
-  setTheme(theme) {
-    this.configManager.setTheme(theme);
   }
 }
 

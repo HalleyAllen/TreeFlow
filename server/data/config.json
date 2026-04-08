@@ -1,7 +1,7 @@
 {
   "currentModel": "qvq-max-2025-03-25",
   "ollamaBaseUrl": "http://localhost:11434",
-  "ollamaEnabled": true,
+  "ollamaEnabled": false,
   "currentTopic": "default",
   "theme": "light",
   "providers": {
@@ -65,6 +65,28 @@
         ]
       },
       "responsePath": "candidates[0].content.parts[0].text"
+    },
+    "阿里云": {
+      "apiUrl": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {{token}}"
+      },
+      "requestBody": {
+        "model": "{{model}}",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a helpful assistant."
+          },
+          {
+            "role": "user",
+            "content": "{{question}}"
+          }
+        ]
+      },
+      "responsePath": "choices[0].message.content"
     },
     "default": "OpenAI"
   }

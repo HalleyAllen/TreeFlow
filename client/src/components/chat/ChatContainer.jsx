@@ -1,11 +1,13 @@
-import { useState, useRef, useEffect } from 'react'
-import { Box, Typography, Paper, TextField, Button, IconButton, Tooltip, Fade, Chip } from '@mui/material'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { Box, Typography, Paper, TextField, Button, IconButton, Tooltip, Fade, Chip, Snackbar, Alert } from '@mui/material'
 import CallSplitIcon from '@mui/icons-material/CallSplit'
 import CloseIcon from '@mui/icons-material/Close'
 import SendIcon from '@mui/icons-material/Send'
+import FormatQuoteIcon from '@mui/icons-material/FormatQuote'
 import SkillSelector from '../common/SkillSelector'
-import MindMap from '../mindmap/MindMap'
+import X6MindMap from '../mindmap/X6MindMap'
 import { useMindMap } from '../../hooks/useMindMap'
+import * as treeApi from '../../services/api/tree.api'
 
 const ChatContainer = ({
   currentTopic,
@@ -17,8 +19,10 @@ const ChatContainer = ({
   showModelDropdown,
   branchMode,
   branchFromIndex,
+  nodeCreated,
   skills,
   activeSkill,
+  quotedTexts,
   onInputChange,
   onKeyPress,
   onSend,
@@ -27,7 +31,9 @@ const ChatContainer = ({
   onEnterBranchMode,
   onExitBranchMode,
   onSelectSkill,
-  onClearSkill
+  onClearSkill,
+  onQuoteText,
+  onRemoveQuote
 }) => {
   const [hoveredMsgIndex, setHoveredMsgIndex] = useState(-1)
   const [showSkillSelector, setShowSkillSelector] = useState(false)
@@ -44,6 +50,58 @@ const ChatContainer = ({
     refreshTree 
   } = useMindMap()
 
+  // 通知状态
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
+
+  // 显示通知
+  const showNotification = useCallback((message, severity = 'success') => {
+    setSnackbar({ open: true, message, severity })
+  }, [])
+
+  // 关闭通知
+  const handleCloseSnackbar = useCallback(() => {
+    setSnackbar(prev => ({ ...prev, open: false }))
+  }, [])
+
+  // 编辑节点
+  const handleEditNode = useCallback(async (nodeId, question, answer) => {
+    if (!currentTopic?.id) return { success: false }
+    const result = await treeApi.editNode(nodeId, currentTopic.id, question, answer)
+    if (result.success) {
+      showNotification('节点已更新')
+      refreshTree(currentTopic.id)
+    } else {
+      showNotification(result.error || '编辑失败', 'error')
+    }
+    return result
+  }, [currentTopic?.id, refreshTree, showNotification])
+
+  // 复制节点
+  const handleCopyNode = useCallback(async (nodeId) => {
+    if (!currentTopic?.id) return { success: false }
+    const result = await treeApi.copyNode(nodeId, currentTopic.id)
+    if (result.success) {
+      showNotification('节点已复制')
+      refreshTree(currentTopic.id)
+    } else {
+      showNotification(result.error || '复制失败', 'error')
+    }
+    return result
+  }, [currentTopic?.id, refreshTree, showNotification])
+
+  // 删除节点
+  const handleDeleteNode = useCallback(async (nodeId) => {
+    if (!currentTopic?.id) return { success: false }
+    const result = await treeApi.deleteNode(nodeId, currentTopic.id)
+    if (result.success) {
+      showNotification('节点已删除')
+      refreshTree(currentTopic.id)
+    } else {
+      showNotification(result.error || '删除失败', 'error')
+    }
+    return result
+  }, [currentTopic?.id, refreshTree, showNotification])
+
   // 话题切换时加载树数据
   useEffect(() => {
     if (currentTopic?.id) {
@@ -51,12 +109,19 @@ const ChatContainer = ({
     }
   }, [currentTopic?.id, loadTree])
 
-  // 消息更新时刷新树
+  // 消息数量变化时刷新树（新节点创建或更新）
   useEffect(() => {
-    if (currentTopic?.id && messages.length > 0) {
+    if (currentTopic?.id) {
       refreshTree(currentTopic.id)
     }
-  }, [messages.length])
+  }, [messages.length, currentTopic?.id, refreshTree])
+
+  // 节点创建标志变化时刷新树
+  useEffect(() => {
+    if (currentTopic?.id && nodeCreated) {
+      refreshTree(currentTopic.id)
+    }
+  }, [nodeCreated, currentTopic?.id, refreshTree])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -159,11 +224,11 @@ const ChatContainer = ({
         </Paper>
       </Fade>
 
-      {/* 脑图视图 */}
+      {/* 脑图视图 - AntV X6 */}
       <Box sx={{ flex: 1, mb: 2, borderRadius: 2, overflow: 'hidden', border: '1px solid var(--border-color)' }}>
-        <MindMap
+        <X6MindMap
           treeData={treeData}
-          currentNodeId={currentNodeId}
+          topicId={currentTopic?.id}
           loading={treeLoading || isLoading}
           onNodeSelect={(nodeData) => {
             // 节点选中处理
@@ -176,8 +241,32 @@ const ChatContainer = ({
               onEnterBranchMode(index, nodeData.id)
             }
           }}
+          onQuoteText={onQuoteText}
+          onEditNode={handleEditNode}
+          onCopyNode={handleCopyNode}
+          onDeleteNode={handleDeleteNode}
         />
       </Box>
+
+      {/* 通知提示 */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{
+            bgcolor: snackbar.severity === 'success' ? 'var(--success-color, #22c55e)' : 'var(--error-color, #ef4444)',
+            color: 'white',
+            '& .MuiAlert-icon': { color: 'white' }
+          }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
 
       {/* 输入区域 */}
       <Paper
@@ -223,6 +312,28 @@ const ChatContainer = ({
               '& .MuiChip-deleteIcon': { color: 'white', fontSize: 16 }
             }}
           />
+        )}
+
+        {/* 引用内容显示 - 支持多个引用 */}
+        {quotedTexts && quotedTexts.length > 0 && (
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
+            {quotedTexts.map((quote, index) => (
+              <Chip
+                key={quote.id}
+                icon={<FormatQuoteIcon sx={{ fontSize: 14 }} />}
+                label={`引用${index + 1}: ${quote.text.substring(0, 20)}${quote.text.length > 20 ? '...' : ''}`}
+                onDelete={() => onRemoveQuote && onRemoveQuote(quote.id)}
+                size="small"
+                sx={{
+                  bgcolor: 'var(--hover-bg)',
+                  color: 'var(--primary-color)',
+                  border: '1px solid var(--primary-color)',
+                  fontSize: '0.75rem',
+                  '& .MuiChip-deleteIcon': { color: 'var(--primary-color)', fontSize: 14 }
+                }}
+              />
+            ))}
+          </Box>
         )}
 
         <TextField

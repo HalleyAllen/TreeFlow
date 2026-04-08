@@ -29,5 +29,8 @@ module.exports = (agent) => {
   // 获取当前话题
   router.get('/current', asyncHandler((req, res) => controller.getCurrentTopic(req, res)));
 
+  // 获取话题消息列表
+  router.get('/:topicId/messages', asyncHandler((req, res) => controller.getTopicMessages(req, res)));
+
   return router;
 };

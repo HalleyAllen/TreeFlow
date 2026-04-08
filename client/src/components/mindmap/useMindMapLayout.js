@@ -1,15 +1,16 @@
 /**
  * 脑图布局算法 Hook
- * 实现放射状树形布局计算
+ * 实现多种树形布局计算
  */
 import { useMemo } from 'react';
 import { hierarchy, tree, cluster } from 'd3-hierarchy';
 
 const NODE_WIDTH = 280;
 const NODE_HEIGHT = 140;
-const VERTICAL_SPACING = 200;
+const VERTICAL_SPACING = 180;  // 垂直间距减小
 const HORIZONTAL_SPACING = 320;
 const RADIAL_RADIUS = 250;
+const BRANCH_VERTICAL_SPACING = 160; // 分支垂直间距
 
 /**
  * 计算放射状布局
@@ -153,11 +154,137 @@ function calculateHorizontalLayout(rootNode, options = {}) {
 }
 
 /**
+ * 计算文档流式混合布局
+ * 主流程垂直向下（文档阅读顺序）
+ * 分支节点从父节点右侧水平展开
+ * 
+ * 结构示意：
+ *    [根节点]
+ *       |
+ *    [节点A] --→-- [分支A1]
+ *       |            |
+ *       |         [分支A1-1]
+ *       |
+ *    [节点B] --→-- [分支B1]
+ *       |
+ *    [节点C]
+ */
+function calculateDocumentLayout(rootNode, options = {}) {
+  const { 
+    nodeWidth = NODE_WIDTH, 
+    nodeHeight = NODE_HEIGHT,
+    levelSpacing = HORIZONTAL_SPACING,  // 子节点水平间距
+    siblingSpacing = VERTICAL_SPACING,  // 主流程垂直间距
+    branchSpacing = HORIZONTAL_SPACING * 0.8  // 分支水平间距
+  } = options;
+
+  const nodes = [];
+  const edges = [];
+  
+  /**
+   * 递归计算节点位置
+   * @param {Object} node - 当前节点数据
+   * @param {number} x - 当前节点X坐标
+   * @param {number} y - 当前节点Y坐标
+   * @param {number} depth - 层级深度
+   * @param {boolean} isBranch - 是否为分支节点（非主流程）
+   * @returns {number} - 返回该子树占用的总高度
+   */
+  function layoutNode(node, x, y, depth = 0, isBranch = false) {
+    const nodeId = node.id;
+    
+    // 记录节点
+    nodes.push({
+      id: nodeId,
+      position: { x, y },
+      data: node,
+      depth,
+      isBranch
+    });
+    
+    let subtreeHeight = 0;
+    
+    // 处理子节点
+    if (node.children && node.children.length > 0) {
+      // 分离主流程子节点（第一个继续主线）和分支子节点
+      const mainChild = node.children[0]; // 第一个子节点走主流程（垂直向下）
+      const branchChildren = node.children.slice(1); // 其他子节点作为分支（向右展开）
+      
+      // 主流程子节点继续垂直向下
+      if (mainChild) {
+        const mainChildHeight = layoutNode(
+          mainChild,
+          x,  // 主流程保持相同X坐标
+          y + siblingSpacing,  // 垂直向下
+          depth + 1,
+          false
+        );
+        
+        // 引用节点的连线用橙色虚线标识
+        const isQuote = mainChild.branchType === 'quote' || mainChild.isQuoteBranch;
+        edges.push({
+          id: `${nodeId}-${mainChild.id}`,
+          source: nodeId,
+          target: mainChild.id,
+          type: 'smoothstep',
+          ...(isQuote && {
+            style: { stroke: 'var(--warning-color, #f59e0b)', strokeWidth: 2, strokeDasharray: '5,5' }
+          })
+        });
+        
+        subtreeHeight = mainChildHeight + siblingSpacing;
+      }
+      
+      // 其他子节点作为分支：从当前节点向右水平展开
+      branchChildren.forEach((child, index) => {
+        // 分支节点在父节点右侧，垂直方向错开
+        const branchX = x + branchSpacing;
+        const branchY = y + (index + 1) * BRANCH_VERTICAL_SPACING;
+        
+        layoutNode(child, branchX, branchY, depth + 1, true);
+        
+        // 引用分支也用橙色虚线标识
+        const isQuote = child.branchType === 'quote' || child.isQuoteBranch;
+        edges.push({
+          id: `${nodeId}-${child.id}`,
+          source: nodeId,
+          target: child.id,
+          type: 'smoothstep',
+          ...(isQuote && {
+            style: { stroke: 'var(--warning-color, #f59e0b)', strokeWidth: 2, strokeDasharray: '5,5' }
+          })
+        });
+        
+        // 更新子树高度
+        const branchBottom = branchY + BRANCH_VERTICAL_SPACING;
+        if (branchBottom > subtreeHeight) {
+          subtreeHeight = branchBottom;
+        }
+      });
+    } else {
+      // 叶子节点
+      subtreeHeight = siblingSpacing;
+    }
+    
+    return subtreeHeight;
+  }
+  
+  // 从根节点开始布局
+  layoutNode(rootNode, 0, 0, 0, false);
+  
+  return { nodes, edges };
+}
+
+/**
  * 主 Hook
  */
-export function useMindMapLayout(treeData, layoutType = 'radial') {
+export function useMindMapLayout(treeData, layoutType = 'document') {
   return useMemo(() => {
-    if (!treeData) return { nodes: [], edges: [] };
+    // 如果没有树数据，返回空节点和边
+    if (!treeData) {
+      console.log('useMindMapLayout: 无树数据，返回空布局');
+      return { nodes: [], edges: [] };
+    }
 
     switch (layoutType) {
       case 'radial':
@@ -166,6 +293,8 @@ export function useMindMapLayout(treeData, layoutType = 'radial') {
         return calculateVerticalLayout(treeData);
       case 'horizontal':
         return calculateHorizontalLayout(treeData);
+      case 'document':
+        return calculateDocumentLayout(treeData);
       default:
         return calculateRadialLayout(treeData);
     }

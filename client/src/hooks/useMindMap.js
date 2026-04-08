@@ -22,9 +22,17 @@ export function useMindMap() {
     
     try {
       const result = await treeApi.getTree(topicId);
+      console.log('useMindMap loadTree result:', result ? {
+        success: result.success,
+        hasTree: !!result.tree,
+        treeId: result.tree?.id,
+        childrenCount: result.tree?.children?.length
+      } : 'null');
+      
       if (result.success) {
-        setTreeData(result.data.tree);
-        setCurrentNodeId(result.data.currentNodeId);
+        // tree 可能为 null（新话题无节点）
+        setTreeData(result.tree || null);
+        setCurrentNodeId(result.currentNodeId);
       } else {
         setError(result.error || '加载失败');
       }

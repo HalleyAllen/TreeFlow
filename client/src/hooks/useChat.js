@@ -10,9 +10,10 @@ export const useChat = () => {
   const [loading, setLoading] = useState(false);
   const [branchMode, setBranchMode] = useState(false);
   const [branchFromNodeId, setBranchFromNodeId] = useState(null);
+  const [nodeCreated, setNodeCreated] = useState(false); // 用于触发脑图刷新
 
-  // 发送消息
-  const sendMessage = useCallback(async (question, skillId = null) => {
+  // 发送消息（支持引用分支）
+  const sendMessage = useCallback(async (question, skillId = null, model = null, provider = null, branchType = null, quoteNodeIds = []) => {
     const tempNodeId = `temp-${Date.now()}`;
     
     // 先立即显示用户问题和加载状态
@@ -22,10 +23,26 @@ export const useChat = () => {
       { type: 'ai', content: '', nodeId: tempNodeId, status: 'loading' }
     ]);
     setLoading(true);
+    setNodeCreated(false); // 重置节点创建标志
     
     try {
-      const fromNodeId = branchMode ? branchFromNodeId : null;
-      const result = await chatApi.sendMessage(question, fromNodeId, skillId);
+      // 确定分支来源节点
+      let fromNodeId = branchMode ? branchFromNodeId : null;
+      
+      // 如果是引用分支，使用最后一个引用的节点作为来源
+      if (branchType === 'quote' && quoteNodeIds.length > 0) {
+        fromNodeId = quoteNodeIds[quoteNodeIds.length - 1];
+      }
+      
+      const result = await chatApi.sendMessage(
+        question, 
+        fromNodeId, 
+        skillId, 
+        model, 
+        provider,
+        branchType,
+        quoteNodeIds
+      );
       
       if (result.error) {
         // 更新为错误状态
@@ -67,6 +84,7 @@ export const useChat = () => {
       return { success: false, error: error.message };
     } finally {
       setLoading(false);
+      setNodeCreated(true); // 标记节点已创建/更新，触发脑图刷新
     }
   }, [branchMode, branchFromNodeId]);
 
@@ -132,6 +150,7 @@ export const useChat = () => {
     loading,
     branchMode,
     branchFromNodeId,
+    nodeCreated, // 导出用于触发脑图刷新
     sendMessage,
     loadMessages,
     enterBranchMode,
