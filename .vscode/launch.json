@@ -1,7 +1,42 @@
 {
-    // 使用 IntelliSense 了解相关属性。 
+    // 使用 IntelliSense 了解相关属性。
     // 悬停以查看现有属性的描述。
     // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
-
+    "configurations": [
+        {
+            "name": "启动服务器",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/server",
+            "runtimeExecutable": "node",
+            "args": ["server.js"],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "启动客户端",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/client",
+            "runtimeExecutable": "npm",
+            "args": ["run", "dev"],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "同时启动前后端",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "npm",
+            "args": ["run", "dev"],
+            "console": "integratedTerminal"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "一键启动调试",
+            "configurations": ["启动服务器", "启动客户端"],
+            "stopAll": true
+        }
+    ]
 }

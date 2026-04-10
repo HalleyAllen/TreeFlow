@@ -1886,3 +1886,181 @@
 [2026-04-08T09:27:13.522Z] [ERROR] [API] 请求错误: POST /api/ollama/enabled {"error":"agent.setOllamaEnabled is not a function","stack":"TypeError: agent.setOllamaEnabled is not a function\n    at E:\\code\\TreeFlow\\server\\server\\routes\\ollama.routes.js:33:26\n    at E:\\code\\TreeFlow\\server\\server\\middleware\\errorHandler.js:11:19\n    at Layer.handle [as handle_request] (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at Function.handle (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:175:3)"}
 [2026-04-08T09:27:13.907Z] [ERROR] [API] 请求错误: POST /api/ollama/enabled {"error":"agent.setOllamaEnabled is not a function","stack":"TypeError: agent.setOllamaEnabled is not a function\n    at E:\\code\\TreeFlow\\server\\server\\routes\\ollama.routes.js:33:26\n    at E:\\code\\TreeFlow\\server\\server\\middleware\\errorHandler.js:11:19\n    at Layer.handle [as handle_request] (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at Function.handle (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:175:3)"}
 [2026-04-08T09:27:13.905Z] [ERROR] [API] 请求错误: POST /api/ollama/enabled {"error":"agent.setOllamaEnabled is not a function","stack":"TypeError: agent.setOllamaEnabled is not a function\n    at E:\\code\\TreeFlow\\server\\server\\routes\\ollama.routes.js:33:26\n    at E:\\code\\TreeFlow\\server\\server\\middleware\\errorHandler.js:11:19\n    at Layer.handle [as handle_request] (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at Function.handle (E:\\code\\TreeFlow\\server\\node_modules\\express\\lib\\router\\index.js:175:3)"}
+[2026-04-10T02:09:05.010Z] [INFO] [SkillManager] 技能加载成功 {"count":5}
+[2026-04-10T02:09:04.969Z] [INFO] [ConfigManager] 加载配置成功 {"currentModel":"qvq-max-2025-03-25","ollamaBaseUrl":"http://localhost:11434","currentTopic":"default","providers":["OpenAI","Anthropic","Google","阿里云","default"]}
+[2026-04-10T02:09:04.989Z] [INFO] [TopicManager] 加载话题成功 {"topicCount":1}
+[2026-04-10T02:09:05.010Z] [INFO] [TreeFlowAgent] TreeFlowAgent初始化完成
+[2026-04-10T02:09:05.010Z] [INFO] [TreeFlowAgent] 初始化TreeFlowAgent
+[2026-04-10T02:09:05.015Z] [INFO] [Server] 服务器运行在 http://localhost:3003
+[2026-04-10T02:09:06.391Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:09:06.397Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:28:27.574Z] [INFO] [ConfigManager] 加载配置成功 {"currentModel":"qvq-max-2025-03-25","ollamaBaseUrl":"http://localhost:11434","currentTopic":"default","providers":["OpenAI","Anthropic","Google","阿里云","default"]}
+[2026-04-10T02:28:27.579Z] [INFO] [TopicManager] 加载话题成功 {"topicCount":1}
+[2026-04-10T02:28:27.580Z] [INFO] [SkillManager] 技能加载成功 {"count":5}
+[2026-04-10T02:28:27.580Z] [INFO] [TreeFlowAgent] 初始化TreeFlowAgent
+[2026-04-10T02:28:27.580Z] [INFO] [TreeFlowAgent] TreeFlowAgent初始化完成
+[2026-04-10T02:28:27.584Z] [INFO] [Server] 服务器运行在 http://localhost:3003
+[2026-04-10T02:28:30.813Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:28:30.818Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:29:03.376Z] [INFO] [ConfigManager] 加载配置成功 {"currentModel":"qvq-max-2025-03-25","ollamaBaseUrl":"http://localhost:11434","currentTopic":"default","providers":["OpenAI","Anthropic","Google","阿里云","default"]}
+[2026-04-10T02:29:03.382Z] [INFO] [TopicManager] 加载话题成功 {"topicCount":1}
+[2026-04-10T02:29:03.382Z] [INFO] [SkillManager] 技能加载成功 {"count":5}
+[2026-04-10T02:29:03.382Z] [INFO] [TreeFlowAgent] 初始化TreeFlowAgent
+[2026-04-10T02:29:03.383Z] [INFO] [TreeFlowAgent] TreeFlowAgent初始化完成
+[2026-04-10T02:29:03.389Z] [INFO] [Server] 服务器运行在 http://localhost:3003
+[2026-04-10T02:29:06.675Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:29:06.680Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:29:09.831Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:29:09.839Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:29:26.288Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:29:26.293Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:44:57.197Z] [INFO] [ConfigManager] 加载配置成功 {"currentModel":"qvq-max-2025-03-25","ollamaBaseUrl":"http://localhost:11434","currentTopic":"default","providers":["OpenAI","Anthropic","Google","阿里云","default"]}
+[2026-04-10T02:44:57.201Z] [INFO] [TopicManager] 加载话题成功 {"topicCount":1}
+[2026-04-10T02:44:57.202Z] [INFO] [TreeFlowAgent] 初始化TreeFlowAgent
+[2026-04-10T02:44:57.202Z] [INFO] [TreeFlowAgent] TreeFlowAgent初始化完成
+[2026-04-10T02:44:57.202Z] [INFO] [SkillManager] 技能加载成功 {"count":5}
+[2026-04-10T02:44:57.206Z] [INFO] [Server] 服务器运行在 http://localhost:3003
+[2026-04-10T02:45:06.256Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:45:06.263Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:47:05.870Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:47:05.877Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:51:02.234Z] [INFO] [TopicManager] 加载话题成功 {"topicCount":1}
+[2026-04-10T02:51:02.236Z] [INFO] [SkillManager] 技能加载成功 {"count":5}
+[2026-04-10T02:51:02.236Z] [INFO] [TreeFlowAgent] 初始化TreeFlowAgent
+[2026-04-10T02:51:02.236Z] [INFO] [TreeFlowAgent] TreeFlowAgent初始化完成
+[2026-04-10T02:51:02.243Z] [INFO] [Server] 服务器运行在 http://localhost:3003
+[2026-04-10T02:51:02.231Z] [INFO] [ConfigManager] 加载配置成功 {"currentModel":"qvq-max-2025-03-25","ollamaBaseUrl":"http://localhost:11434","currentTopic":"default","providers":["OpenAI","Anthropic","Google","阿里云","default"]}
+[2026-04-10T02:51:05.242Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:51:05.252Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:51:28.652Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:51:28.657Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:53:45.351Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:53:45.356Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:58:57.905Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:58:57.910Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:59:11.326Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:59:11.331Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:59:31.921Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T02:59:31.926Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T05:59:23.021Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T05:59:23.028Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T06:00:23.077Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T06:00:23.086Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T06:27:45.265Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T06:27:45.272Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T06:30:49.424Z] [INFO] [ConfigManager] 加载配置成功 {"currentModel":"qvq-max-2025-03-25","ollamaBaseUrl":"http://localhost:11434","currentTopic":"default","providers":["OpenAI","Anthropic","Google","阿里云","default"]}
+[2026-04-10T06:30:49.438Z] [INFO] [TopicManager] 加载话题成功 {"topicCount":1}
+[2026-04-10T06:30:49.465Z] [INFO] [SkillManager] 技能加载成功 {"count":5}
+[2026-04-10T06:30:49.465Z] [INFO] [TreeFlowAgent] 初始化TreeFlowAgent
+[2026-04-10T06:30:49.466Z] [INFO] [TreeFlowAgent] TreeFlowAgent初始化完成
+[2026-04-10T06:30:49.472Z] [INFO] [Server] 服务器运行在 http://localhost:3003
+[2026-04-10T06:32:02.350Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T06:32:02.363Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T06:37:58.527Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T06:37:58.535Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T06:38:01.883Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T06:38:01.889Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T06:38:44.650Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T06:38:44.656Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T06:39:15.035Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T06:39:15.746Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T06:45:50.245Z] [INFO] [TopicManager] 加载话题成功 {"topicCount":1}
+[2026-04-10T06:45:50.246Z] [INFO] [SkillManager] 技能加载成功 {"count":5}
+[2026-04-10T06:45:50.241Z] [INFO] [ConfigManager] 加载配置成功 {"currentModel":"qvq-max-2025-03-25","ollamaBaseUrl":"http://localhost:11434","currentTopic":"default","providers":["OpenAI","Anthropic","Google","阿里云","default"]}
+[2026-04-10T06:45:50.246Z] [INFO] [TreeFlowAgent] TreeFlowAgent初始化完成
+[2026-04-10T06:45:50.252Z] [INFO] [Server] 服务器运行在 http://localhost:3003
+[2026-04-10T06:45:50.246Z] [INFO] [TreeFlowAgent] 初始化TreeFlowAgent
+[2026-04-10T06:45:56.808Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T06:45:56.819Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T07:26:46.998Z] [INFO] [ConfigManager] 加载配置成功 {"currentModel":"qvq-max-2025-03-25","ollamaBaseUrl":"http://localhost:11434","currentTopic":"default","providers":["OpenAI","Anthropic","Google","阿里云","default"]}
+[2026-04-10T07:26:47.004Z] [INFO] [TopicManager] 加载话题成功 {"topicCount":1}
+[2026-04-10T07:26:47.004Z] [INFO] [SkillManager] 技能加载成功 {"count":5}
+[2026-04-10T07:26:47.005Z] [INFO] [TreeFlowAgent] 初始化TreeFlowAgent
+[2026-04-10T07:26:47.010Z] [INFO] [Server] 服务器运行在 http://localhost:3003
+[2026-04-10T07:26:47.005Z] [INFO] [TreeFlowAgent] TreeFlowAgent初始化完成
+[2026-04-10T07:27:00.561Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T07:27:01.722Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:12:15.861Z] [INFO] [ConfigManager] 加载配置成功 {"currentModel":"qvq-max-2025-03-25","ollamaBaseUrl":"http://localhost:11434","currentTopic":"default","providers":["OpenAI","Anthropic","Google","阿里云","default"]}
+[2026-04-10T08:12:15.902Z] [INFO] [TreeFlowAgent] 初始化TreeFlowAgent
+[2026-04-10T08:12:15.901Z] [INFO] [SkillManager] 技能加载成功 {"count":5}
+[2026-04-10T08:12:15.875Z] [INFO] [TopicManager] 加载话题成功 {"topicCount":1}
+[2026-04-10T08:12:15.902Z] [INFO] [TreeFlowAgent] TreeFlowAgent初始化完成
+[2026-04-10T08:12:15.906Z] [INFO] [Server] 服务器运行在 http://localhost:3003
+[2026-04-10T08:13:39.384Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:13:39.391Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:14:21.452Z] [INFO] [ConfigManager] 加载配置成功 {"currentModel":"qvq-max-2025-03-25","ollamaBaseUrl":"http://localhost:11434","currentTopic":"default","providers":["OpenAI","Anthropic","Google","阿里云","default"]}
+[2026-04-10T08:14:21.457Z] [INFO] [TopicManager] 加载话题成功 {"topicCount":1}
+[2026-04-10T08:14:21.457Z] [INFO] [SkillManager] 技能加载成功 {"count":5}
+[2026-04-10T08:14:21.458Z] [INFO] [TreeFlowAgent] 初始化TreeFlowAgent
+[2026-04-10T08:14:21.458Z] [INFO] [TreeFlowAgent] TreeFlowAgent初始化完成
+[2026-04-10T08:14:21.462Z] [INFO] [Server] 服务器运行在 http://localhost:3003
+[2026-04-10T08:14:23.938Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:14:23.951Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:14:30.288Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:14:30.293Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:25:34.279Z] [INFO] [ConfigManager] 加载配置成功 {"currentModel":"qvq-max-2025-03-25","ollamaBaseUrl":"http://localhost:11434","currentTopic":"default","providers":["OpenAI","Anthropic","Google","阿里云","default"]}
+[2026-04-10T08:25:34.284Z] [INFO] [TopicManager] 加载话题成功 {"topicCount":1}
+[2026-04-10T08:25:34.285Z] [INFO] [SkillManager] 技能加载成功 {"count":5}
+[2026-04-10T08:25:34.285Z] [INFO] [TreeFlowAgent] 初始化TreeFlowAgent
+[2026-04-10T08:25:34.285Z] [INFO] [TreeFlowAgent] TreeFlowAgent初始化完成
+[2026-04-10T08:25:34.290Z] [INFO] [Server] 服务器运行在 http://localhost:3003
+[2026-04-10T08:25:37.627Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:25:37.636Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:31:55.655Z] [INFO] [ConfigManager] 加载配置成功 {"currentModel":"qvq-max-2025-03-25","ollamaBaseUrl":"http://localhost:11434","currentTopic":"default","providers":["OpenAI","Anthropic","Google","阿里云","default"]}
+[2026-04-10T08:31:55.659Z] [INFO] [TopicManager] 加载话题成功 {"topicCount":1}
+[2026-04-10T08:31:55.660Z] [INFO] [TreeFlowAgent] TreeFlowAgent初始化完成
+[2026-04-10T08:31:55.666Z] [INFO] [Server] 服务器运行在 http://localhost:3003
+[2026-04-10T08:31:55.660Z] [INFO] [SkillManager] 技能加载成功 {"count":5}
+[2026-04-10T08:31:55.660Z] [INFO] [TreeFlowAgent] 初始化TreeFlowAgent
+[2026-04-10T08:31:59.058Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:31:59.065Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:32:55.166Z] [INFO] [TopicManager] 加载话题成功 {"topicCount":1}
+[2026-04-10T08:32:55.161Z] [INFO] [ConfigManager] 加载配置成功 {"currentModel":"qvq-max-2025-03-25","ollamaBaseUrl":"http://localhost:11434","currentTopic":"default","providers":["OpenAI","Anthropic","Google","阿里云","default"]}
+[2026-04-10T08:32:55.166Z] [INFO] [SkillManager] 技能加载成功 {"count":5}
+[2026-04-10T08:32:55.172Z] [INFO] [Server] 服务器运行在 http://localhost:3003
+[2026-04-10T08:32:55.166Z] [INFO] [TreeFlowAgent] TreeFlowAgent初始化完成
+[2026-04-10T08:32:55.166Z] [INFO] [TreeFlowAgent] 初始化TreeFlowAgent
+[2026-04-10T08:32:57.666Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:32:57.676Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:34:11.867Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:34:11.873Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:36:34.012Z] [INFO] [TopicManager] 加载话题成功 {"topicCount":1}
+[2026-04-10T08:36:34.007Z] [INFO] [ConfigManager] 加载配置成功 {"currentModel":"qvq-max-2025-03-25","ollamaBaseUrl":"http://localhost:11434","currentTopic":"default","providers":["OpenAI","Anthropic","Google","阿里云","default"]}
+[2026-04-10T08:36:34.013Z] [INFO] [SkillManager] 技能加载成功 {"count":5}
+[2026-04-10T08:36:34.013Z] [INFO] [TreeFlowAgent] 初始化TreeFlowAgent
+[2026-04-10T08:36:34.013Z] [INFO] [TreeFlowAgent] TreeFlowAgent初始化完成
+[2026-04-10T08:36:34.018Z] [INFO] [Server] 服务器运行在 http://localhost:3003
+[2026-04-10T08:36:37.807Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:36:37.817Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:40:00.576Z] [INFO] [ConfigManager] 加载配置成功 {"currentModel":"qvq-max-2025-03-25","ollamaBaseUrl":"http://localhost:11434","currentTopic":"default","providers":["OpenAI","Anthropic","Google","阿里云","default"]}
+[2026-04-10T08:40:00.580Z] [INFO] [TopicManager] 加载话题成功 {"topicCount":1}
+[2026-04-10T08:40:00.581Z] [INFO] [SkillManager] 技能加载成功 {"count":5}
+[2026-04-10T08:40:00.581Z] [INFO] [TreeFlowAgent] TreeFlowAgent初始化完成
+[2026-04-10T08:40:00.581Z] [INFO] [TreeFlowAgent] 初始化TreeFlowAgent
+[2026-04-10T08:40:00.587Z] [INFO] [Server] 服务器运行在 http://localhost:3003
+[2026-04-10T08:40:03.214Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:40:03.223Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:43:30.314Z] [INFO] [ConfigManager] 加载配置成功 {"currentModel":"qvq-max-2025-03-25","ollamaBaseUrl":"http://localhost:11434","currentTopic":"default","providers":["OpenAI","Anthropic","Google","阿里云","default"]}
+[2026-04-10T08:43:30.318Z] [INFO] [TopicManager] 加载话题成功 {"topicCount":1}
+[2026-04-10T08:43:30.319Z] [INFO] [TreeFlowAgent] TreeFlowAgent初始化完成
+[2026-04-10T08:43:30.325Z] [INFO] [Server] 服务器运行在 http://localhost:3003
+[2026-04-10T08:43:30.319Z] [INFO] [TreeFlowAgent] 初始化TreeFlowAgent
+[2026-04-10T08:43:30.319Z] [INFO] [SkillManager] 技能加载成功 {"count":5}
+[2026-04-10T08:43:33.898Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:43:33.912Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:43:36.511Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:43:36.516Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:46:56.156Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:46:56.166Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":3,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:50:57.423Z] [INFO] [TopicManager] 保存话题成功 {"topicCount":1}
+[2026-04-10T08:50:57.423Z] [INFO] [ConversationTreeManager] 删除节点 {"topic":"默认话题","nodeId":"node-1775619023834"}
+[2026-04-10T08:50:57.423Z] [INFO] [TreeController] 删除节点成功 {"nodeId":"node-1775619023834","topicId":"default"}
+[2026-04-10T08:50:57.433Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":2,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:53:04.942Z] [INFO] [ConfigManager] 加载配置成功 {"currentModel":"qvq-max-2025-03-25","ollamaBaseUrl":"http://localhost:11434","currentTopic":"default","providers":["OpenAI","Anthropic","Google","阿里云","default"]}
+[2026-04-10T08:53:04.946Z] [INFO] [TopicManager] 加载话题成功 {"topicCount":1}
+[2026-04-10T08:53:04.971Z] [INFO] [SkillManager] 技能加载成功 {"count":5}
+[2026-04-10T08:53:04.971Z] [INFO] [TreeFlowAgent] 初始化TreeFlowAgent
+[2026-04-10T08:53:04.971Z] [INFO] [TreeFlowAgent] TreeFlowAgent初始化完成
+[2026-04-10T08:53:04.976Z] [INFO] [Server] 服务器运行在 http://localhost:3003
+[2026-04-10T08:53:07.578Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":2,"currentNodeId":"node-1775640229800"}
+[2026-04-10T08:53:07.588Z] [INFO] [TreeController] 获取对话树 {"topicId":"default","topicName":"默认话题","rootChildrenCount":2,"currentNodeId":"node-1775640229800"}

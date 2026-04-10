@@ -47,18 +47,6 @@
           "status": "completed"
         },
         {
-          "id": "node-1775619023834",
-          "parentId": "node-1775612239152",
-          "message": "[引用1: \"你好\"]\n你好",
-          "response": "",
-          "children": [],
-          "status": "loading",
-          "branchType": "quote",
-          "quoteNodeIds": [
-            "node-1775612239152"
-          ]
-        },
-        {
           "id": "node-1775619679250",
           "parentId": "node-1775612239152",
           "message": "[引用1: \"高兴\"]\n你怎么高兴？",

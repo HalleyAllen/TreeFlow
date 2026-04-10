@@ -3,12 +3,54 @@
  * 双区域布局：上半部分问题，下半部分回答
  * 功能：选中文字引用、展开/收起回答
  */
-import { memo, useState, useCallback, useRef } from 'react';
-import { Box, Typography, Paper, IconButton, Tooltip } from '@mui/material';
-import { ExpandMore, ExpandLess, FormatQuote } from '@mui/icons-material';
+import { memo, useState, useCallback, useRef, useEffect } from 'react';
+import { Box, Typography, Paper, IconButton, Tooltip, Divider } from '@mui/material';
+import { ExpandMore, ExpandLess, FormatQuote, ContentCopy, Edit, Delete, AccountTree } from '@mui/icons-material';
+
+/**
+ * 自定义 Hook：管理节点展开/收起状态
+ * 抽象化展开功能，使每个节点独立管理自己的展开状态
+ * @param {boolean} initialExpanded - 初始展开状态
+ * @returns {Object} { isExpanded, toggleExpand }
+ */
+function useNodeExpand(initialExpanded = false) {
+  const [isExpanded, setIsExpanded] = useState(initialExpanded);
+
+  const toggleExpand = useCallback((event) => {
+    event?.stopPropagation?.();
+    event?.preventDefault?.();
+    setIsExpanded(prev => !prev);
+  }, []);
+
+  return { isExpanded, toggleExpand };
+}
+
+/**
+ * 展开/收起按钮组件
+ * 独立的 UI 组件，可复用
+ */
+const ExpandToggleButton = memo(({ isExpanded, onToggle, visible }) => {
+  if (!visible) return null;
+
+  return (
+    <Tooltip title={isExpanded ? '收起' : '展开'} placement="right">
+      <IconButton
+        type="button"
+        size="small"
+        onClick={onToggle}
+        sx={{ padding: '2px', color: '#6b7280', marginTop: '-4px', marginRight: '-4px' }}
+      >
+        {isExpanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
+      </IconButton>
+    </Tooltip>
+  );
+});
+
+ExpandToggleButton.displayName = 'ExpandToggleButton';
 
 const X6MindMapNode = memo(({ node }) => {
   const nodeRef = useRef(null);
+  const contentRef = useRef(null);
   const [selectedText, setSelectedText] = useState('');
   const [showQuoteButton, setShowQuoteButton] = useState(false);
   const [quoteButtonPos, setQuoteButtonPos] = useState({ x: 0, y: 0 });
@@ -19,7 +61,6 @@ const X6MindMapNode = memo(({ node }) => {
   const {
     question,
     answer,
-    answerSummary,
     depth = 0,
     branchType,
     status,
@@ -28,9 +69,27 @@ const X6MindMapNode = memo(({ node }) => {
     selected = false,
     onQuoteText,
     onNodeSelect,
-    isExpanded = false, // 从节点数据中获取展开状态
-    onToggleExpand, // 展开状态切换回调
+    onCopyNode,
+    onEditNode,
+    onDeleteNode,
+    onDeleteBranch,
   } = data;
+
+  // 使用自定义 Hook 管理展开状态（节点内部自管理）
+  const { isExpanded, toggleExpand } = useNodeExpand(false);
+
+  // 根据展开状态动态计算并更新底部连接桩位置
+  useEffect(() => {
+    if (!node || !contentRef.current) return;
+
+    // 获取内容实际高度
+    const contentHeight = contentRef.current.scrollHeight;
+    // 底部连接桩应该在内容底部
+    const bottomY = isExpanded ? Math.max(264, contentHeight) : 264;
+
+    // 更新底部连接桩位置
+    node.setPortProp('bottom', 'position/args', { x: 140, y: bottomY });
+  }, [isExpanded, node]);
 
   const isRoot = depth === 0;
   const isQuote = branchType === 'quote';
@@ -41,7 +100,11 @@ const X6MindMapNode = memo(({ node }) => {
   // 显示内容
   const displayQuestion = (isRoot && !question) ? '开始' : (question || '');
   const fullAnswer = isError ? (error || '请求失败') : (answer || '');
-  const shortAnswer = answerSummary || (answer ? answer.substring(0, 100) + '...' : '');
+  // 摘要：前100字 + 省略号
+  const shortAnswer = fullAnswer.length > 100 
+    ? fullAnswer.substring(0, 100) + '...' 
+    : fullAnswer;
+  // 展开显示全文，收起显示摘要
   const displayAnswer = isExpanded ? fullAnswer : shortAnswer;
 
   // 样式配置
@@ -123,7 +186,9 @@ const X6MindMapNode = memo(({ node }) => {
   }, []);
 
   // 处理引用
-  const handleQuote = useCallback(() => {
+  const handleQuote = useCallback((event) => {
+    event?.stopPropagation?.();
+    event?.preventDefault?.();
     if (selectedText && onQuoteText) {
       onQuoteText(data.id, selectedText);
     }
@@ -131,31 +196,55 @@ const X6MindMapNode = memo(({ node }) => {
     window.getSelection()?.removeAllRanges();
   }, [selectedText, onQuoteText, data.id]);
 
-  // 切换展开/收起
-  const toggleExpand = useCallback((event) => {
-    event?.stopPropagation?.(); // 阻止事件冒泡，防止重复触发 node:click
-    
-    // 通知父组件更新展开状态
-    if (onToggleExpand && data.id) {
-      onToggleExpand(data.id);
+  // 处理复制节点
+  const handleCopy = useCallback((event) => {
+    event?.stopPropagation?.();
+    event?.preventDefault?.();
+    if (onCopyNode && data.id) {
+      onCopyNode(data.id);
     }
-    
-    // 同时触发节点选中
-    if (onNodeSelect && data.id) {
-      onNodeSelect(data);
-    }
-  }, [onToggleExpand, onNodeSelect, data.id, data]);
+  }, [onCopyNode, data.id]);
 
-  // 是否需要展开按钮
-  const needsExpand = fullAnswer.length > 100;
+  // 处理编辑节点
+  const handleEdit = useCallback((event) => {
+    event?.stopPropagation?.();
+    event?.preventDefault?.();
+    if (onEditNode && data.id) {
+      onEditNode(data);
+    }
+  }, [onEditNode, data.id, data]);
+
+  // 处理删除单个节点
+  const handleDelete = useCallback((event) => {
+    event?.stopPropagation?.();
+    event?.preventDefault?.();
+    if (onDeleteNode && data.id) {
+      onDeleteNode(data.id);
+    }
+  }, [onDeleteNode, data.id]);
+
+  // 处理删除支线（节点及其所有子节点）
+  const handleDeleteBranch = useCallback((event) => {
+    event?.stopPropagation?.();
+    event?.preventDefault?.();
+    if (onDeleteBranch && data.id) {
+      onDeleteBranch(data.id);
+    }
+  }, [onDeleteBranch, data.id]);
+
+  // 是否需要展开按钮（回答内容较长时）
+  const needsExpand = fullAnswer.length > 50;
+  // 是否有操作权限（非根节点或有子节点时显示删除支线）
+  const canDeleteBranch = hasChildren && !isRoot;
+
+
 
   return (
     <Box
       ref={nodeRef}
       sx={{
         width: 280,
-        height: isExpanded ? 'auto' : 180,
-        minHeight: 180,
+        minHeight: 264,
         position: 'relative',
       }}
       onMouseUp={handleTextSelection}
@@ -177,6 +266,7 @@ const X6MindMapNode = memo(({ node }) => {
           }}
         >
           <IconButton
+            type="button"
             size="small"
             onClick={handleQuote}
             sx={{ color: 'white', padding: '2px' }}
@@ -194,11 +284,12 @@ const X6MindMapNode = memo(({ node }) => {
       )}
 
       <Paper
+        ref={contentRef}
         className="nodrag"
         sx={{
           width: 280,
-          height: isExpanded ? 'auto' : 180,
-          minHeight: 180,
+          minHeight: 264,
+          height: isExpanded ? 'auto' : 264,
           border: styles.border,
           borderRadius: 3,
           boxShadow: styles.boxShadow,
@@ -214,25 +305,33 @@ const X6MindMapNode = memo(({ node }) => {
             pb: 1,
             height: 60,
             backgroundColor: styles.questionBg,
-            borderBottom: '1px solid',
+            borderBottom: isExpanded ? '1px solid' : 'none',
             borderColor: isQuote ? '#fde68a' : (isRoot ? '#bfdbfe' : '#e5e7eb'),
             boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
           }}
         >
-          <Typography
-            variant="caption"
-            sx={{
-              fontSize: '0.65rem',
-              fontWeight: 700,
-              color: styles.typeColor,
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              display: 'block',
-              mb: 0.5,
-            }}
-          >
-            {typeLabel}
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <Typography
+              variant="caption"
+              sx={{
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                color: styles.typeColor,
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+              }}
+            >
+              {typeLabel}
+            </Typography>
+            <ExpandToggleButton 
+              isExpanded={isExpanded} 
+              onToggle={toggleExpand} 
+              visible={needsExpand} 
+            />
+          </Box>
           <Typography
             variant="body2"
             sx={{
@@ -252,7 +351,13 @@ const X6MindMapNode = memo(({ node }) => {
         </Box>
 
         {/* 下半部分：回答区域 */}
-        <Box sx={{ p: 1.5, pt: 1, height: isExpanded ? 'auto' : 120, boxSizing: 'border-box' }}>
+        <Box
+          sx={{
+            p: 1.5,
+            pt: 1,
+            boxSizing: 'border-box',
+          }}
+        >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
             <Typography
               variant="caption"
@@ -266,17 +371,6 @@ const X6MindMapNode = memo(({ node }) => {
             >
               {statusLabel}
             </Typography>
-            {needsExpand && (
-              <Tooltip title={isExpanded ? '收起' : '展开'} placement="right">
-                <IconButton
-                  size="small"
-                  onClick={toggleExpand}
-                  sx={{ padding: '2px', color: '#6b7280' }}
-                >
-                  {isExpanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
-                </IconButton>
-              </Tooltip>
-            )}
           </Box>
           <Typography
             variant="body2"
@@ -284,63 +378,126 @@ const X6MindMapNode = memo(({ node }) => {
               fontSize: '0.75rem',
               color: isError ? '#dc2626' : '#374151',
               lineHeight: 1.4,
-              overflow: isExpanded ? 'visible' : 'hidden',
-              textOverflow: isExpanded ? 'clip' : 'ellipsis',
-              display: isExpanded ? 'block' : '-webkit-box',
-              WebkitLineClamp: isExpanded ? 'unset' : 2,
-              WebkitBoxOrient: 'vertical',
-              whiteSpace: isExpanded ? 'pre-wrap' : 'normal',
+              whiteSpace: 'pre-wrap',
               wordBreak: 'break-word',
             }}
           >
             {displayAnswer}
           </Typography>
 
-          {/* 分支数量或状态 */}
-          {(hasChildren || isLoading) && !isExpanded && (
+          {/* 分支状态/操作按钮栏 */}
+          <>
+            <Divider sx={{ my: 1, borderColor: '#e5e7eb' }} />
             <Box
               sx={{
-                mt: 1,
-                pt: 0.75,
-                borderTop: '1px solid #e5e7eb',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 0.5,
+                justifyContent: 'space-between',
+                mt: 1,
               }}
             >
-              {isLoading ? (
-                <>
-                  <Box
-                    sx={{
-                      width: 12,
-                      height: 12,
-                      border: '2px solid #2563eb',
-                      borderTopColor: 'transparent',
-                      borderRadius: '50%',
-                      animation: 'spin 1s linear infinite',
-                    }}
-                  />
-                  <Typography variant="caption" sx={{ fontSize: '0.75rem', color: '#2563eb' }}>
-                    AI 正在思考...
-                  </Typography>
-                </>
-              ) : (
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontSize: '0.75rem',
-                    color: '#6b7280',
-                    backgroundColor: '#f3f4f6',
-                    px: 1,
-                    py: 0.25,
-                    borderRadius: 1,
-                  }}
-                >
-                  📌 {childrenCount} 分支
-                </Typography>
+              {/* 分支数量或状态 - 只在收起时显示 */}
+              {(hasChildren || isLoading) && !isExpanded && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  {isLoading ? (
+                    <>
+                      <Box
+                        sx={{
+                          width: 12,
+                          height: 12,
+                          border: '2px solid #2563eb',
+                          borderTopColor: 'transparent',
+                          borderRadius: '50%',
+                          animation: 'spin 1s linear infinite',
+                        }}
+                      />
+                      <Typography variant="caption" sx={{ fontSize: '0.75rem', color: '#2563eb' }}>
+                        AI 正在思考...
+                      </Typography>
+                    </>
+                  ) : (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontSize: '0.75rem',
+                        color: '#6b7280',
+                        backgroundColor: '#f3f4f6',
+                        px: 1,
+                        py: 0.25,
+                        borderRadius: 1,
+                      }}
+                    >
+                      📌 {childrenCount} 分支
+                    </Typography>
+                  )}
+                </Box>
               )}
+              {/* 占位元素，当没有分支标签时保持按钮靠右 */}
+              {(!hasChildren && !isLoading) || isExpanded ? <Box /> : null}
+
+              {/* 操作按钮 */}
+              <Box sx={{ display: 'flex', gap: 0.5 }}>
+                <Tooltip title="复制节点" placement="top">
+                  <IconButton
+                    type="button"
+                    size="small"
+                    onClick={handleCopy}
+                    sx={{
+                      padding: '4px',
+                      color: '#6b7280',
+                      '&:hover': { color: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)' },
+                    }}
+                  >
+                    <ContentCopy fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="编辑" placement="top">
+                  <IconButton
+                    type="button"
+                    size="small"
+                    onClick={handleEdit}
+                    sx={{
+                      padding: '4px',
+                      color: '#6b7280',
+                      '&:hover': { color: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)' },
+                    }}
+                  >
+                    <Edit fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="删除节点" placement="top">
+                  <IconButton
+                    type="button"
+                    size="small"
+                    onClick={handleDelete}
+                    sx={{
+                      padding: '4px',
+                      color: '#6b7280',
+                      '&:hover': { color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)' },
+                    }}
+                  >
+                    <Delete fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                {canDeleteBranch && (
+                  <Tooltip title="删除支线" placement="top">
+                    <IconButton
+                      type="button"
+                      size="small"
+                      onClick={handleDeleteBranch}
+                      sx={{
+                        padding: '4px',
+                        color: '#6b7280',
+                        '&:hover': { color: '#dc2626', backgroundColor: 'rgba(220, 38, 38, 0.1)' },
+                      }}
+                    >
+                      <AccountTree fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </Box>
             </Box>
-          )}
+          </>
         </Box>
 
         <style>{`

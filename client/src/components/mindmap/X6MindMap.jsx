@@ -2,64 +2,61 @@
  * AntV X6 脑图组件 - 使用 React Shape 自定义节点
  */
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Graph } from '@antv/x6';
+import { Graph, MiniMap } from '@antv/x6';
 import { register } from '@antv/x6-react-shape';
 import { Box, IconButton, Tooltip } from '@mui/material';
 import { Map as MapIcon, FitScreen } from '@mui/icons-material';
 import X6MindMapNode from './X6MindMapNode';
 
-// MiniMap 插件
-import { MiniMap } from '@antv/x6-plugin-minimap';
-
 // 注册 React 节点
 register({
   shape: 'mind-map-node',
   width: 280,
-  height: 180,
+  height: 264,
   component: X6MindMapNode,
   ports: {
     groups: {
       top: {
-        position: 'top',
+        position: { name: 'absolute', args: { x: 140, y: 0 } },
         attrs: {
           circle: {
-            r: 1,
+            r: 0,
             magnet: true,
-            stroke: 'transparent',
-            fill: 'transparent',
+            stroke: 'none',
+            fill: 'none',
           },
         },
       },
       bottom: {
-        position: 'bottom',
+        position: { name: 'absolute', args: { x: 140, y: 264 } },
         attrs: {
           circle: {
-            r: 1,
+            r: 0,
             magnet: true,
-            stroke: 'transparent',
-            fill: 'transparent',
+            stroke: 'none',
+            fill: 'none',
           },
         },
       },
       left: {
-        position: 'left',
+        position: { name: 'absolute', args: { x: 0, y: 132 } },
         attrs: {
           circle: {
-            r: 1,
+            r: 0,
             magnet: true,
-            stroke: 'transparent',
-            fill: 'transparent',
+            stroke: 'none',
+            fill: 'none',
           },
         },
       },
       right: {
-        position: 'right',
+        position: { name: 'absolute', args: { x: 280, y: 132 } },
         attrs: {
           circle: {
-            r: 1,
+            r: 0,
             magnet: true,
-            stroke: 'transparent',
-            fill: 'transparent',
+            stroke: 'none',
+            fill: 'none',
           },
         },
       },
@@ -131,33 +128,35 @@ Graph.registerEdge(
 );
 
 const NODE_WIDTH = 280;
-const NODE_HEIGHT = 180;
-const VERTICAL_SPACING = 220;
-const HORIZONTAL_SPACING = 340;
-const BRANCH_VERTICAL_SPACING = 180;
+const NODE_HEIGHT = 264; // 节点固定高度（展开/收起由节点内部管理，不影响布局高度）
+const VERTICAL_SPACING = 240;
+const HORIZONTAL_SPACING = 360;
+const BRANCH_VERTICAL_SPACING = 200;
 
 /**
  * 计算文档流式布局
  * 主流程垂直向下，分支向右展开
  */
-function calculateLayout(rootNode, selectedNodeId = null, onQuoteText = null, onNodeSelect = null, expandedNodeIds = new Set(), onToggleExpand = null) {
+function calculateLayout(rootNode, selectedNodeId = null, callbacks = {}) {
+  const { onQuoteText, onNodeSelect, onCopyNode, onEditNode, onDeleteNode, onDeleteBranch } = callbacks;
   const nodes = [];
   const edges = [];
 
   function layoutNode(node, x, y, depth = 0, isBranch = false) {
     const nodeId = node.id;
     const isSelected = nodeId === selectedNodeId;
-    const isExpanded = expandedNodeIds.has(nodeId);
 
     const data = {
       ...node,
       depth,
       isBranch,
       selected: isSelected,
-      isExpanded,
       onQuoteText,
       onNodeSelect,
-      onToggleExpand,
+      onCopyNode,
+      onEditNode,
+      onDeleteNode,
+      onDeleteBranch,
     };
 
     nodes.push({
@@ -191,26 +190,24 @@ function calculateLayout(rootNode, selectedNodeId = null, onQuoteText = null, on
         const mainChildHeight = layoutNode(
           mainChild,
           x,
-          y + VERTICAL_SPACING,
+          y + NODE_HEIGHT + 40, // 使用固定高度 + 间距
           depth + 1,
           false
         );
 
-        subtreeHeight = mainChildHeight + VERTICAL_SPACING;
+        subtreeHeight = mainChildHeight + NODE_HEIGHT + 40;
       }
 
       // 分支子节点 - 向右展开（从右侧到左侧）
-      // 计算分支节点整体布局，使其与父节点垂直居中对齐
-      const branchCount = branchChildren.length;
-      const totalBranchesHeight = branchCount * NODE_HEIGHT + (branchCount - 1) * BRANCH_VERTICAL_SPACING;
+      const totalBranchesHeight = branchChildren.length * NODE_HEIGHT +
+        (branchChildren.length - 1) * BRANCH_VERTICAL_SPACING;
       // 起始Y坐标：以父节点中心为基准，向上偏移一半高度
       const startY = y + (NODE_HEIGHT - totalBranchesHeight) / 2;
 
-      branchChildren.forEach((child, index) => {
+      let currentBranchY = startY;
+      branchChildren.forEach((child) => {
         const isQuote = child.branchType === 'quote';
         const branchX = x + HORIZONTAL_SPACING;
-        // 每个分支节点的Y坐标
-        const branchY = startY + index * (NODE_HEIGHT + BRANCH_VERTICAL_SPACING);
 
         edges.push({
           id: `${nodeId}-${child.id}`,
@@ -219,15 +216,17 @@ function calculateLayout(rootNode, selectedNodeId = null, onQuoteText = null, on
           shape: isQuote ? 'quote-edge' : 'mind-map-edge',
         });
 
-        layoutNode(child, branchX, branchY, depth + 1, true);
+        layoutNode(child, branchX, currentBranchY, depth + 1, true);
 
-        const branchBottom = branchY + NODE_HEIGHT;
+        const branchBottom = currentBranchY + NODE_HEIGHT;
         if (branchBottom > subtreeHeight) {
           subtreeHeight = branchBottom;
         }
+
+        currentBranchY += NODE_HEIGHT + BRANCH_VERTICAL_SPACING;
       });
     } else {
-      subtreeHeight = VERTICAL_SPACING;
+      subtreeHeight = NODE_HEIGHT + 40;
     }
 
     return subtreeHeight;
@@ -248,26 +247,15 @@ export default function X6MindMap({
   onEditNode,
   onCopyNode,
   onDeleteNode,
+  onDeleteBranch,
 }) {
   const containerRef = useRef(null);
   const graphRef = useRef(null);
   const miniMapRef = useRef(null);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [showMiniMap, setShowMiniMap] = useState(true);
-  const [expandedNodeIds, setExpandedNodeIds] = useState(new Set());
-
-  // 处理节点展开/收起
-  const handleToggleExpand = useCallback((nodeId) => {
-    setExpandedNodeIds((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(nodeId)) {
-        newSet.delete(nodeId);
-      } else {
-        newSet.add(nodeId);
-      }
-      return newSet;
-    });
-  }, []);
+  // 注意：展开/收起状态现在由节点内部自行管理（useNodeExpand Hook）
+  // 父组件不再维护 expandedNodeIds 状态
 
   // 初始化 Graph
   useEffect(() => {
@@ -359,7 +347,7 @@ export default function X6MindMap({
     };
   }, []);
 
-  // 更新数据
+  // 更新数据（仅在 treeData 变化时重建图）
   useEffect(() => {
     if (!graphRef.current || !treeData) return;
 
@@ -368,27 +356,57 @@ export default function X6MindMap({
     // 清空现有内容
     graph.clearCells();
 
-    // 计算布局
-    const { nodes, edges } = calculateLayout(treeData, selectedNodeId, onQuoteText, onNodeSelect, expandedNodeIds, handleToggleExpand);
+    // 计算布局（展开/收起状态现在由节点内部自行管理）
+    const { nodes, edges } = calculateLayout(treeData, selectedNodeId, {
+      onQuoteText,
+      onNodeSelect,
+      onCopyNode,
+      onEditNode,
+      onDeleteNode,
+      onDeleteBranch,
+    });
 
-    // 添加节点，设置 zIndex 确保节点显示在边上方
+    // 使用 requestAnimationFrame 延迟添加新节点，确保旧节点完全卸载
+    // 避免 X6 React Shape 组件异步卸载时与新节点渲染冲突导致重复节点
+    requestAnimationFrame(() => {
+      // 添加节点，设置 zIndex 确保节点显示在边上方
+      nodes.forEach((node) => {
+        graph.addNode({
+          ...node,
+          zIndex: 2, // 节点层级高于边（边默认是 1）
+        });
+      });
+
+      // 添加边
+      edges.forEach((edge) => {
+        graph.addEdge({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          shape: edge.shape,
+        });
+      });
+    });
+  }, [treeData, onQuoteText, onNodeSelect, onCopyNode, onEditNode, onDeleteNode, onDeleteBranch]);
+
+  // 单独处理选中状态变化，只更新节点样式而不重建图
+  useEffect(() => {
+    if (!graphRef.current) return;
+
+    const graph = graphRef.current;
+    const nodes = graph.getNodes();
+
     nodes.forEach((node) => {
-      graph.addNode({
-        ...node,
-        zIndex: 2, // 节点层级高于边（边默认是 1）
-      });
-    });
+      const nodeId = node.id;
+      const isSelected = nodeId === selectedNodeId;
+      const data = node.getData() || {};
 
-    // 添加边
-    edges.forEach((edge) => {
-      graph.addEdge({
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
-        shape: edge.shape,
-      });
+      // 只更新选中状态，不重建节点
+      if (data.selected !== isSelected) {
+        node.setData({ ...data, selected: isSelected });
+      }
     });
-  }, [treeData, selectedNodeId, onNodeSelect, expandedNodeIds, handleToggleExpand]);
+  }, [selectedNodeId]);
 
   // 适应画布
   const handleFitView = useCallback(() => {
