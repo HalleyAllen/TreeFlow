@@ -1051,6 +1051,68 @@ nav button:hover {
   height: 100%;
 }
 
+/* ===== X6 文字选择支持 ===== */
+/* 确保 X6 foreignObject 内的文字可以被选中 */
+.x6-node {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+.x6-node * {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+/* X6 内部 Typography 文字光标 - 使用更高优先级选择器 */
+.x6-node .MuiTypography-root,
+.x6-node [class*="MuiTypography"],
+.x6-node .MuiTypography-caption,
+.x6-node .MuiTypography-body2 {
+  cursor: text !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+/* X6 文字悬停时光标 */
+.x6-node .MuiTypography-root:hover,
+.x6-node .MuiTypography-caption:hover,
+.x6-node .MuiTypography-body2:hover {
+  cursor: text !important;
+}
+
+/* X6 Paper 容器 */
+.x6-node .MuiPaper-root {
+  cursor: default;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+/* X6 Box 容器 */
+.x6-node .MuiBox-root {
+  cursor: default;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+/* 禁用 X6 内部的 pointer-events 拦截 */
+.x6-node-content {
+  pointer-events: auto !important;
+}
+
+/* X6 foreignObject 内部文字光标 - 最强优先级 */
+.x6-node foreignObject .MuiTypography-root,
+.x6-node foreignObject p,
+.x6-node foreignObject span {
+  cursor: text !important;
+}
+
+/* X6 React Shape 文字光标 */
+.x6-react-shape-body .MuiTypography-root,
+.x6-react-shape-body p,
+.x6-react-shape-body span {
+  cursor: text !important;
+}
+
 /* ===== 画布层 ===== */
 .react-flow__container {
   user-select: none;
@@ -1082,6 +1144,39 @@ nav button:hover {
   cursor: default;
   user-select: text !important;
   -webkit-user-select: text !important;
+}
+
+/* ===== 节点内容文字可选中 - 核心修复 ===== */
+/* 确保节点内所有文字元素可以被鼠标选中 */
+.mindmap-flow .react-flow__node .MuiPaper-root,
+.mindmap-flow .react-flow__node .MuiBox-root {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+}
+
+/* 问题区域和回答区域文字可选 */
+.mindmap-flow .react-flow__node .MuiTypography-root {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  cursor: text !important;
+}
+
+/* 确保所有文字内容都可选中 */
+.mindmap-flow .react-flow__node [class*="MuiTypography"] {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+/* 节点内所有文本元素 */
+.mindmap-flow .react-flow__node span,
+.mindmap-flow .react-flow__node p {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  cursor: text !important;
 }
 
 /* 移除 selectable 类的选择行为 */
@@ -1120,10 +1215,15 @@ nav button:hover {
   user-select: text !important;
   -webkit-user-select: text !important;
 }
-.MuiBox-root{
+/* .MuiBox-root{
   padding: 8px 8px 4px 8px !important;
   margin-bottom: 0 !important;
-}
+} */
+
+/* #root>.MuiBox-main{
+  padding: 8px 8px 4px 8px !important;
+  margin-bottom: 0 !important;
+} */
 
 /* 文字悬停时显示 I-beam 光标 */
 .mindmap-flow .MuiTypography-root:hover,
@@ -1165,6 +1265,26 @@ nav button:hover {
 .mindmap-flow .react-flow__node .MuiBox-root * {
   user-select: text !important;
   -webkit-user-select: text !important;
+}
+
+/* ===== 文字光标样式 - 核心修复 ===== */
+/* 确保鼠标移到文字上时显示 I-beam 光标 */
+.mindmap-flow .react-flow__node .MuiPaper-root,
+.mindmap-flow .react-flow__node .MuiBox-root {
+  cursor: text !important;
+}
+
+/* 问题和回答区域的文字光标 */
+.mindmap-flow .react-flow__node .MuiTypography-root,
+.mindmap-flow .react-flow__node .MuiTypography-caption,
+.mindmap-flow .react-flow__node .MuiTypography-body1,
+.mindmap-flow .react-flow__node .MuiTypography-body2 {
+  cursor: text !important;
+}
+
+/* 悬停时保持文本光标 */
+.mindmap-flow .react-flow__node .MuiTypography-root:hover {
+  cursor: text !important;
 }
 
 /* ==================== 响应式设计 ==================== */

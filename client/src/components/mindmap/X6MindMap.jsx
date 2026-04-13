@@ -321,6 +321,22 @@ export default function X6MindMap({
       },
       interacting: {
         nodeMovable: true, // 启用节点拖拽
+        edgeMovable: false,
+        edgeLabelMovable: false,
+        arrowheadMovable: false,
+        vertexMovable: false,
+        magnetConnectable: false,
+        stopDelegateOnDragging: true, // 拖拽时停止事件传递到内部元素
+      },
+      // 确保 foreignObject 内的文字可以被选中
+      onPortRendered: () => {},
+      // 禁用画布默认的选中行为，允许文字选择
+      selecting: {
+        enabled: false, // 禁用画布框选
+      },
+      // 禁用画布上的 rubberband 框选
+      rubberband: {
+        enabled: false,
       },
     });
 
@@ -624,11 +640,13 @@ export default function X6MindMap({
   return (
     <Box
       ref={containerRef}
+      className="x6-mindmap-container"
       sx={{
         width: '100%',
         height: '100%',
         position: 'relative',
         overflow: 'hidden',
+        padding: '4px 8px 4px 8px !important',
       }}
     >
       {/* 控制按钮组 */}

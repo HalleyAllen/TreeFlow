@@ -296,7 +296,6 @@ const X6MindMapNode = memo(({ node }) => {
 
       <Paper
         ref={contentRef}
-        className="nodrag"
         sx={{
           width: 280,
           minHeight: 220,
@@ -327,12 +326,16 @@ const X6MindMapNode = memo(({ node }) => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <Typography
               variant="caption"
+              onMouseDown={(e) => e.stopPropagation()}
               sx={{
                 fontSize: '0.65rem',
                 fontWeight: 700,
                 color: styles.typeColor,
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
+                cursor: 'text',
+                userSelect: 'text',
+                WebkitUserSelect: 'text',
               }}
             >
               {typeLabel}
@@ -345,6 +348,7 @@ const X6MindMapNode = memo(({ node }) => {
           </Box>
           <Typography
             variant="body2"
+            onMouseDown={(e) => e.stopPropagation()}
             sx={{
               fontSize: '0.8rem',
               fontWeight: 600,
@@ -355,6 +359,9 @@ const X6MindMapNode = memo(({ node }) => {
               display: '-webkit-box',
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical',
+              cursor: 'text',
+              userSelect: 'text',
+              WebkitUserSelect: 'text',
             }}
           >
             {displayQuestion}
@@ -372,12 +379,16 @@ const X6MindMapNode = memo(({ node }) => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
             <Typography
               variant="caption"
+              onMouseDown={(e) => e.stopPropagation()}
               sx={{
                 fontSize: '0.65rem',
                 fontWeight: 700,
                 color: statusColor,
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
+                cursor: 'text',
+                userSelect: 'text',
+                WebkitUserSelect: 'text',
               }}
             >
               {statusLabel}
@@ -385,6 +396,7 @@ const X6MindMapNode = memo(({ node }) => {
           </Box>
           <Typography
             variant="body2"
+            onMouseDown={(e) => e.stopPropagation()}
             sx={{
               fontSize: '0.75rem',
               color: isError ? '#dc2626' : '#374151',
@@ -398,6 +410,9 @@ const X6MindMapNode = memo(({ node }) => {
               display: '-webkit-box',
               WebkitLineClamp: isExpanded ? 'unset' : 3,
               WebkitBoxOrient: 'vertical',
+              cursor: 'text',
+              userSelect: 'text',
+              WebkitUserSelect: 'text',
             }}
           >
             {fullAnswer}

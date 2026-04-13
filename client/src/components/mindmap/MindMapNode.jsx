@@ -197,7 +197,7 @@ const MindMapNode = memo(({ data, selected }) => {
           maxHeight: isExpanded ? 500 : 140,
           overflow: isExpanded ? 'auto' : 'hidden',
           borderRadius: 2,
-          cursor: 'default',
+          cursor: 'text',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           position: 'relative',
           '&.expanded': {
@@ -277,7 +277,9 @@ const MindMapNode = memo(({ data, selected }) => {
             pb: 1,
             borderBottom: '1px solid var(--border-color)',
             bgcolor: isRoot ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
-            cursor: 'text'
+            cursor: 'text',
+            userSelect: 'text',
+            WebkitUserSelect: 'text'
           }}
         >
           <Typography
@@ -288,7 +290,9 @@ const MindMapNode = memo(({ data, selected }) => {
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
               display: 'block',
-              mb: 0.5
+              mb: 0.5,
+              userSelect: 'text',
+              WebkitUserSelect: 'text'
             }}
           >
             {isRoot ? 'START' : 'QUESTION'}
@@ -305,7 +309,9 @@ const MindMapNode = memo(({ data, selected }) => {
               display: '-webkit-box',
               WebkitLineClamp: isExpanded ? undefined : 2,
               WebkitBoxOrient: 'vertical',
-              cursor: 'text'
+              cursor: 'text',
+              userSelect: 'text',
+              WebkitUserSelect: 'text'
             }}
           >
             {displayQuestion}
@@ -318,7 +324,9 @@ const MindMapNode = memo(({ data, selected }) => {
           sx={{ 
             p: 1.5, 
             pt: 1,
-            cursor: 'text'
+            cursor: 'text',
+            userSelect: 'text',
+            WebkitUserSelect: 'text'
           }}
         >
           <Typography
@@ -329,7 +337,9 @@ const MindMapNode = memo(({ data, selected }) => {
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
               display: 'block',
-              mb: 0.5
+              mb: 0.5,
+              userSelect: 'text',
+              WebkitUserSelect: 'text'
             }}
           >
             {isLoading ? 'THINKING...' : isError ? 'ERROR' : 'ANSWER'}
@@ -342,7 +352,9 @@ const MindMapNode = memo(({ data, selected }) => {
                 variant="body2"
                 sx={{
                   color: 'var(--text-secondary)',
-                  fontSize: '0.875rem'
+                  fontSize: '0.875rem',
+                  userSelect: 'text',
+                  WebkitUserSelect: 'text'
                 }}
               >
                 AI 正在思考...
@@ -360,7 +372,9 @@ const MindMapNode = memo(({ data, selected }) => {
                   textOverflow: 'ellipsis',
                   display: '-webkit-box',
                   WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical'
+                  WebkitBoxOrient: 'vertical',
+                  userSelect: 'text',
+                  WebkitUserSelect: 'text'
                 }}
               >
                 {error || '请求失败'}
@@ -403,7 +417,9 @@ const MindMapNode = memo(({ data, selected }) => {
                   WebkitLineClamp: isExpanded ? undefined : 2,
                   WebkitBoxOrient: 'vertical',
                   cursor: 'text',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  userSelect: 'text',
+                  WebkitUserSelect: 'text'
                 }}
               >
                 {displayAnswer || '...'}

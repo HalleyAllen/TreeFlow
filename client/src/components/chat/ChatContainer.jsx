@@ -176,12 +176,12 @@ const ChatContainer = ({
   }
 
   return (
-    <Box sx={{ flex: 1, p: 3, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ flex: 1, p: '4px 8px 4px 8px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       {/* 分支模式提示条 */}
       <Fade in={branchMode}>
         <Paper
           sx={{
-            mb: 2,
+            mb: 0,
             p: 1.5,
             borderRadius: 1.5,
             bgcolor: 'var(--card-background)',
@@ -204,7 +204,7 @@ const ChatContainer = ({
       </Fade>
 
       {/* 脑图视图 - AntV X6 */}
-      <Box sx={{ flex: 1, mb: 2, borderRadius: 2, overflow: 'hidden', border: '1px solid var(--border-color)', position: 'relative' }}>
+      <Box sx={{ flex: 1, mb: 0, borderRadius: 2, overflow: 'hidden', border: '1px solid var(--border-color)', position: 'relative' }}>
         {/* 标题栏 - 悬浮在脑图上层 */}
         <Box sx={{
           position: 'absolute',
