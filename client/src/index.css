@@ -76,7 +76,7 @@
 }
 
 body {
-  min-width: 320px;
+  min-width: 300px;
   /* min-height: 100vh; */
   background-color: var(--background-color);
   color: var(--text-color);

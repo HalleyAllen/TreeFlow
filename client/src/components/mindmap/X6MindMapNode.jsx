@@ -100,7 +100,7 @@ const X6MindMapNode = memo(({ node }) => {
       // 获取内容实际高度
       const contentHeight = contentRef.current.scrollHeight;
       // 底部连接桩应该在内容底部
-      const bottomY = isExpanded ? Math.max(208, contentHeight) : 208;
+      const bottomY = isExpanded ? Math.max(220, contentHeight) : 234;
 
       console.log('[Port Update]', { isExpanded, contentHeight, bottomY });
 
@@ -262,7 +262,7 @@ const X6MindMapNode = memo(({ node }) => {
       ref={nodeRef}
       sx={{
         width: 280,
-        minHeight: 208,
+        minHeight: 220,
         position: 'relative',
       }}
       onMouseUp={handleTextSelection}
@@ -306,8 +306,8 @@ const X6MindMapNode = memo(({ node }) => {
         className="nodrag"
         sx={{
           width: 280,
-          minHeight: 208,
-          height: isExpanded ? 'auto' : 208,
+          minHeight: 220,
+          height: isExpanded ? 'auto' : 220,
           border: styles.border,
           borderRadius: 3,
           boxShadow: styles.boxShadow,

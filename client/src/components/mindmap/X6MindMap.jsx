@@ -15,7 +15,7 @@ const radius  = 2 // 连接桩半径
 register({
   shape: 'mind-map-node',
   width: 280,
-  height: 208,
+  height: 220,
   component: X6MindMapNode,
   ports: {
     groups: {
@@ -31,7 +31,7 @@ register({
         },
       },
       bottom: {
-        position: { name: 'absolute', args: { x: 140, y: 208 } },
+        position: { name: 'absolute', args: { x: 140, y: 220 } },
         attrs: {
           circle: {
             r: radius,
@@ -42,7 +42,7 @@ register({
         },
       },
       left: {
-        position: { name: 'absolute', args: { x: 0, y: 132 } },
+        position: { name: 'absolute', args: { x: 0, y: 140 } },
         attrs: {
           circle: {
             r: radius,
@@ -53,7 +53,7 @@ register({
         },
       },
       right: {
-        position: { name: 'absolute', args: { x: 280, y: 132 } },
+        position: { name: 'absolute', args: { x: 280, y: 140 } },
         attrs: {
           circle: {
             r: radius,
@@ -131,7 +131,7 @@ Graph.registerEdge(
 );
 
 const NODE_WIDTH = 280;
-const NODE_HEIGHT = 208; // 节点固定高度（展开/收起由节点内部管理，不影响布局高度）
+const NODE_HEIGHT = 220; // 节点固定高度（展开/收起由节点内部管理，不影响布局高度）
 const HORIZONTAL_SPACING = 360;
 const BRANCH_VERTICAL_SPACING = 200;
 
