@@ -7,8 +7,8 @@ const Header = ({ onTokenManagerClick, theme, onToggleTheme }) => {
   const isDark = theme === 'dark'
 
   return (
-    <AppBar position="static" sx={{ backgroundColor: 'var(--header-bg)', borderBottom: '1px solid var(--border-color)', width: '100%', padding: '8px' }}>
-      <Toolbar sx={{ width: '100%' }}>
+    <AppBar position="static" elevation={0} sx={{ backgroundColor: 'var(--header-bg)', borderBottom: '1px solid var(--border-color)', width: '100%', padding: 0, boxShadow: 'none' }}>
+      <Toolbar sx={{ width: '100%', minHeight: '56px' }}>
         <Typography variant="h6" component="div" sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-color)', fontWeight: 'bold' }}>
           🌳 TreeFlow
         </Typography>

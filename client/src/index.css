@@ -388,7 +388,7 @@ nav button:hover {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 2rem;
+  padding: 1rem;
   overflow: hidden;
   background-color: var(--background-color);
   position: relative;
@@ -1119,6 +1119,10 @@ nav button:hover {
 .mindmap-flow .MuiPaper-root {
   user-select: text !important;
   -webkit-user-select: text !important;
+}
+.MuiBox-root{
+  padding: 8px 8px 4px 8px !important;
+  margin-bottom: 0 !important;
 }
 
 /* 文字悬停时显示 I-beam 光标 */

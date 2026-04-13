@@ -15,7 +15,7 @@ const Sidebar = ({
 }) => {
   return (
     <Paper sx={{ 
-      width: '280px', 
+      width: '240px', 
       bgcolor: 'var(--sidebar-bg)', 
       borderRight: '1px solid var(--border-color)', 
       p: 2, 

@@ -177,27 +177,6 @@ const ChatContainer = ({
 
   return (
     <Box sx={{ flex: 1, p: 3, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      {/* 标题栏 */}
-      <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Typography variant="h6" component="h2" sx={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-color)' }}>
-          💬 {currentTopic?.name || '默认话题'}
-        </Typography>
-        {branchMode && (
-          <Chip
-            icon={<CallSplitIcon sx={{ color: 'var(--primary-color)' }} />}
-            label="分支模式"
-            onDelete={onExitBranchMode}
-            sx={{
-              bgcolor: 'var(--hover-bg)',
-              color: 'var(--primary-color)',
-              border: '1px solid var(--primary-color)',
-              fontWeight: 500,
-              '& .MuiChip-deleteIcon': { color: 'var(--primary-color)' }
-            }}
-          />
-        )}
-      </Box>
-
       {/* 分支模式提示条 */}
       <Fade in={branchMode}>
         <Paper
@@ -225,7 +204,42 @@ const ChatContainer = ({
       </Fade>
 
       {/* 脑图视图 - AntV X6 */}
-      <Box sx={{ flex: 1, mb: 2, borderRadius: 2, overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+      <Box sx={{ flex: 1, mb: 2, borderRadius: 2, overflow: 'hidden', border: '1px solid var(--border-color)', position: 'relative' }}>
+        {/* 标题栏 - 悬浮在脑图上层 */}
+        <Box sx={{
+          position: 'absolute',
+          top: 16,
+          left: 24,
+          zIndex: 10,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 2,
+          px: 2,
+          py: 1,
+          borderRadius: 2,
+          bgcolor: 'rgba(var(--card-background-rgb, 255, 255, 255), 0.9)',
+          backdropFilter: 'blur(8px)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }}>
+          <Typography variant="h6" component="h2" sx={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-color)', fontSize: '1.1rem' }}>
+            💬 {currentTopic?.name || '默认话题'}
+          </Typography>
+          {branchMode && (
+            <Chip
+              icon={<CallSplitIcon sx={{ color: 'var(--primary-color)' }} />}
+              label="分支模式"
+              onDelete={onExitBranchMode}
+              sx={{
+                bgcolor: 'var(--hover-bg)',
+                color: 'var(--primary-color)',
+                border: '1px solid var(--primary-color)',
+                fontWeight: 500,
+                '& .MuiChip-deleteIcon': { color: 'var(--primary-color)' }
+              }}
+            />
+          )}
+        </Box>
         <X6MindMap
           treeData={treeData}
           topicId={currentTopic?.id}
@@ -268,23 +282,30 @@ const ChatContainer = ({
         </Alert>
       </Snackbar>
 
-      {/* 输入区域 */}
+      {/* 输入区域 - 悬浮在脑图上方 */}
       <Paper
         onClick={() => inputRef.current?.focus()}
         sx={{
+          position: 'absolute',
+          bottom: 24,
+          left: '57%',
+          transform: 'translateX(-50%)',
+          width: '100%',
+          maxWidth: 720,
           p: 2,
           borderRadius: 2.5,
           border: branchMode ? '2px solid rgba(59, 130, 246, 0.5)' : '1px solid var(--border-color)',
           bgcolor: 'var(--card-background)',
           transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
-          boxShadow: branchMode ? '0 0 20px rgba(59, 130, 246, 0.1)' : 'none',
+          boxShadow: branchMode ? '0 4px 20px rgba(59, 130, 246, 0.25)' : '0 4px 20px rgba(0, 0, 0, 0.15)',
           cursor: 'text',
+          zIndex: 10,
           '&:hover': {
             borderColor: branchMode ? 'rgba(59, 130, 246, 0.5)' : 'var(--border-color)'
           },
           '&:focus-within': {
             borderColor: 'var(--primary-color)',
-            boxShadow: '0 0 0 2px rgba(59, 130, 246, 0.2)'
+            boxShadow: '0 4px 24px rgba(59, 130, 246, 0.3)'
           }
         }}
       >
