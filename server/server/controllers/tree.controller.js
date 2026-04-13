@@ -279,6 +279,92 @@ class TreeController {
       res.status(500).json({ success: false, error: error.message });
     }
   }
+
+  /**
+   * 获取话题的节点位置
+   * GET /api/tree/positions/:topicId
+   */
+  getNodePositions = (req, res) => {
+    try {
+      const { topicId } = req.params;
+
+      const topic = this.topicManager.getTopic(topicId);
+      if (!topic) {
+        return res.status(404).json({ success: false, error: '话题不存在' });
+      }
+
+      const positions = this.topicManager.getNodePositions(topicId);
+
+      res.json({
+        success: true,
+        data: positions
+      });
+    } catch (error) {
+      logger.error('TreeController', '获取节点位置失败:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  /**
+   * 保存话题的节点位置
+   * POST /api/tree/positions/:topicId
+   */
+  saveNodePositions = (req, res) => {
+    try {
+      const { topicId } = req.params;
+      const { positions } = req.body;
+
+      if (!positions || typeof positions !== 'object') {
+        return res.status(400).json({ success: false, error: '缺少positions参数或格式错误' });
+      }
+
+      const topic = this.topicManager.getTopic(topicId);
+      if (!topic) {
+        return res.status(404).json({ success: false, error: '话题不存在' });
+      }
+
+      const success = this.topicManager.saveNodePositions(topicId, positions);
+      if (!success) {
+        return res.status(500).json({ success: false, error: '保存节点位置失败' });
+      }
+
+      res.json({
+        success: true,
+        message: '节点位置已保存'
+      });
+    } catch (error) {
+      logger.error('TreeController', '保存节点位置失败:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  /**
+   * 重置话题的节点位置
+   * DELETE /api/tree/positions/:topicId
+   */
+  resetNodePositions = (req, res) => {
+    try {
+      const { topicId } = req.params;
+
+      const topic = this.topicManager.getTopic(topicId);
+      if (!topic) {
+        return res.status(404).json({ success: false, error: '话题不存在' });
+      }
+
+      const success = this.topicManager.resetNodePositions(topicId);
+      if (!success) {
+        return res.status(500).json({ success: false, error: '重置节点位置失败' });
+      }
+
+      res.json({
+        success: true,
+        message: '节点位置已重置'
+      });
+    } catch (error) {
+      logger.error('TreeController', '重置节点位置失败:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
 }
 
 module.exports = TreeController;

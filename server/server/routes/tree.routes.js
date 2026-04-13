@@ -23,6 +23,15 @@ function createTreeRoutes(agent) {
   // 删除节点
   router.delete('/node/:nodeId', controller.deleteNode);
 
+  // 获取话题的节点位置
+  router.get('/positions/:topicId', controller.getNodePositions);
+
+  // 保存话题的节点位置
+  router.post('/positions/:topicId', controller.saveNodePositions);
+
+  // 重置话题的节点位置
+  router.delete('/positions/:topicId', controller.resetNodePositions);
+
   return router;
 }
 

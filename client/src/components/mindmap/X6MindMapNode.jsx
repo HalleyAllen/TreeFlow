@@ -38,6 +38,8 @@ const ExpandToggleButton = memo(({ isExpanded, onToggle, visible }) => {
         type="button"
         size="small"
         onClick={onToggle}
+        className="expand-toggle-btn"
+        data-expand-toggle="true"
         sx={{ padding: '2px', color: '#6b7280', marginTop: '-4px', marginRight: '-4px' }}
       >
         {isExpanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
@@ -59,6 +61,7 @@ const X6MindMapNode = memo(({ node }) => {
   const data = node?.getData?.() || node?.data || {};
 
   const {
+    id: nodeId,
     question,
     answer,
     depth = 0,
@@ -67,28 +70,48 @@ const X6MindMapNode = memo(({ node }) => {
     error,
     childrenCount = 0,
     selected = false,
+    initialExpanded = false,
     onQuoteText,
     onNodeSelect,
     onCopyNode,
     onEditNode,
     onDeleteNode,
     onDeleteBranch,
+    onToggleExpand,
   } = data;
 
-  // 使用自定义 Hook 管理展开状态（节点内部自管理）
-  const { isExpanded, toggleExpand } = useNodeExpand(false);
+  // 使用自定义 Hook 管理展开状态（接收持久化的初始状态）
+  const { isExpanded, toggleExpand: originalToggleExpand } = useNodeExpand(initialExpanded);
+
+  // 包装 toggleExpand，添加持久化逻辑
+  const toggleExpand = useCallback((event) => {
+    const newState = !isExpanded;
+    originalToggleExpand(event);
+    // 持久化到 localStorage
+    if (onToggleExpand && nodeId) {
+      onToggleExpand(nodeId, newState);
+    }
+  }, [isExpanded, originalToggleExpand, onToggleExpand, nodeId]);
 
   // 根据展开状态动态计算并更新底部连接桩位置
   useEffect(() => {
     if (!node || !contentRef.current) return;
 
-    // 获取内容实际高度
-    const contentHeight = contentRef.current.scrollHeight;
-    // 底部连接桩应该在内容底部
-    const bottomY = isExpanded ? Math.max(264, contentHeight) : 264;
+      // 获取内容实际高度
+      const contentHeight = contentRef.current.scrollHeight;
+      // 底部连接桩应该在内容底部
+      const bottomY = isExpanded ? Math.max(208, contentHeight) : 208;
 
-    // 更新底部连接桩位置
-    node.setPortProp('bottom', 'position/args', { x: 140, y: bottomY });
+      console.log('[Port Update]', { isExpanded, contentHeight, bottomY });
+
+      // 更新底部连接桩位置
+      node.setPortProp('bottom', 'args', { x: 140, y: bottomY });
+
+      // 触发从该节点出发的边重新路由
+      const outgoingEdges = node.getOutgoingEdges?.() || [];
+      outgoingEdges.forEach(edge => {
+        edge.setTarget(edge.getTarget());
+      });
   }, [isExpanded, node]);
 
   const isRoot = depth === 0;
@@ -100,12 +123,7 @@ const X6MindMapNode = memo(({ node }) => {
   // 显示内容
   const displayQuestion = (isRoot && !question) ? '开始' : (question || '');
   const fullAnswer = isError ? (error || '请求失败') : (answer || '');
-  // 摘要：前100字 + 省略号
-  const shortAnswer = fullAnswer.length > 100 
-    ? fullAnswer.substring(0, 100) + '...' 
-    : fullAnswer;
-  // 展开显示全文，收起显示摘要
-  const displayAnswer = isExpanded ? fullAnswer : shortAnswer;
+  // 收起时显示完整内容，通过 CSS 限制三行显示
 
   // 样式配置
   const getStyles = () => {
@@ -244,7 +262,7 @@ const X6MindMapNode = memo(({ node }) => {
       ref={nodeRef}
       sx={{
         width: 280,
-        minHeight: 264,
+        minHeight: 208,
         position: 'relative',
       }}
       onMouseUp={handleTextSelection}
@@ -288,8 +306,8 @@ const X6MindMapNode = memo(({ node }) => {
         className="nodrag"
         sx={{
           width: 280,
-          minHeight: 264,
-          height: isExpanded ? 'auto' : 264,
+          minHeight: 208,
+          height: isExpanded ? 'auto' : 208,
           border: styles.border,
           borderRadius: 3,
           boxShadow: styles.boxShadow,
@@ -380,9 +398,16 @@ const X6MindMapNode = memo(({ node }) => {
               lineHeight: 1.4,
               whiteSpace: 'pre-wrap',
               wordBreak: 'break-word',
+              // 收起时固定三行高度，展开时自适应
+              height: isExpanded ? 'auto' : 'calc(0.75rem * 1.4 * 3)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              display: '-webkit-box',
+              WebkitLineClamp: isExpanded ? 'unset' : 3,
+              WebkitBoxOrient: 'vertical',
             }}
           >
-            {displayAnswer}
+            {fullAnswer}
           </Typography>
 
           {/* 分支状态/操作按钮栏 */}

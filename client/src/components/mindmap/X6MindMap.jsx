@@ -1,18 +1,21 @@
 /**
  * AntV X6 脑图组件 - 使用 React Shape 自定义节点
+ * 节点位置持久化存储到服务器 topics.json
  */
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Graph, MiniMap } from '@antv/x6';
 import { register } from '@antv/x6-react-shape';
 import { Box, IconButton, Tooltip } from '@mui/material';
-import { Map as MapIcon, FitScreen } from '@mui/icons-material';
+import { Map as MapIcon, FitScreen, Restore } from '@mui/icons-material';
 import X6MindMapNode from './X6MindMapNode';
+import * as treeApi from '../../services/api/tree.api';
 
 // 注册 React 节点
+const radius  = 2 // 连接桩半径
 register({
   shape: 'mind-map-node',
   width: 280,
-  height: 264,
+  height: 208,
   component: X6MindMapNode,
   ports: {
     groups: {
@@ -20,7 +23,7 @@ register({
         position: { name: 'absolute', args: { x: 140, y: 0 } },
         attrs: {
           circle: {
-            r: 0,
+            r: radius,
             magnet: true,
             stroke: 'none',
             fill: 'none',
@@ -28,10 +31,10 @@ register({
         },
       },
       bottom: {
-        position: { name: 'absolute', args: { x: 140, y: 264 } },
+        position: { name: 'absolute', args: { x: 140, y: 208 } },
         attrs: {
           circle: {
-            r: 0,
+            r: radius,
             magnet: true,
             stroke: 'none',
             fill: 'none',
@@ -42,7 +45,7 @@ register({
         position: { name: 'absolute', args: { x: 0, y: 132 } },
         attrs: {
           circle: {
-            r: 0,
+            r: radius,
             magnet: true,
             stroke: 'none',
             fill: 'none',
@@ -53,7 +56,7 @@ register({
         position: { name: 'absolute', args: { x: 280, y: 132 } },
         attrs: {
           circle: {
-            r: 0,
+            r: radius,
             magnet: true,
             stroke: 'none',
             fill: 'none',
@@ -128,8 +131,7 @@ Graph.registerEdge(
 );
 
 const NODE_WIDTH = 280;
-const NODE_HEIGHT = 264; // 节点固定高度（展开/收起由节点内部管理，不影响布局高度）
-const VERTICAL_SPACING = 240;
+const NODE_HEIGHT = 208; // 节点固定高度（展开/收起由节点内部管理，不影响布局高度）
 const HORIZONTAL_SPACING = 360;
 const BRANCH_VERTICAL_SPACING = 200;
 
@@ -137,33 +139,41 @@ const BRANCH_VERTICAL_SPACING = 200;
  * 计算文档流式布局
  * 主流程垂直向下，分支向右展开
  */
-function calculateLayout(rootNode, selectedNodeId = null, callbacks = {}) {
-  const { onQuoteText, onNodeSelect, onCopyNode, onEditNode, onDeleteNode, onDeleteBranch } = callbacks;
+function calculateLayout(rootNode, selectedNodeId = null, callbacks = {}, expandedStates = {}, positionStates = {}) {
+  const { onQuoteText, onNodeSelect, onCopyNode, onEditNode, onDeleteNode, onDeleteBranch, onToggleExpand } = callbacks;
   const nodes = [];
   const edges = [];
 
   function layoutNode(node, x, y, depth = 0, isBranch = false) {
     const nodeId = node.id;
     const isSelected = nodeId === selectedNodeId;
+    // 从持久化状态中获取展开状态，默认为 false
+    const initialExpanded = expandedStates[nodeId] ?? false;
+    // 优先使用保存的位置
+    const savedPosition = positionStates[nodeId];
+    const finalX = savedPosition ? savedPosition.x : x;
+    const finalY = savedPosition ? savedPosition.y : y;
 
     const data = {
       ...node,
       depth,
       isBranch,
       selected: isSelected,
+      initialExpanded,
       onQuoteText,
       onNodeSelect,
       onCopyNode,
       onEditNode,
       onDeleteNode,
       onDeleteBranch,
+      onToggleExpand,
     };
 
     nodes.push({
       id: nodeId,
       shape: 'mind-map-node',
-      x,
-      y,
+      x: finalX,
+      y: finalY,
       width: NODE_WIDTH,
       height: NODE_HEIGHT,
       data,
@@ -252,10 +262,43 @@ export default function X6MindMap({
   const containerRef = useRef(null);
   const graphRef = useRef(null);
   const miniMapRef = useRef(null);
+  const handleNodePositionChangeRef = useRef(null);
+  const positionStatesRef = useRef({}); // 使用 ref 存储位置，避免触发重渲染
+  const expandedStatesRef = useRef({}); // 使用 ref 存储展开状态，避免触发重渲染
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [showMiniMap, setShowMiniMap] = useState(true);
-  // 注意：展开/收起状态现在由节点内部自行管理（useNodeExpand Hook）
-  // 父组件不再维护 expandedNodeIds 状态
+  
+  // 初始数据加载标志
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
+
+  // 保存节点展开状态（仅更新 ref，不触发重渲染）
+  const handleToggleExpand = useCallback((nodeId, isExpanded) => {
+    expandedStatesRef.current[nodeId] = isExpanded;
+    console.log(`[展开状态] 节点 ${nodeId}: ${isExpanded ? '展开' : '收起'}`);
+  }, []);
+
+  // 保存节点位置到服务器（不触发状态更新，避免重渲染）
+  const handleNodePositionChange = useCallback(async (nodeId, x, y) => {
+    if (!topicId) return;
+    
+    // 直接更新内存中的位置状态，不触发 React 重渲染
+    positionStatesRef.current[nodeId] = { x, y };
+    
+    // 保存到服务器
+    try {
+      const result = await treeApi.saveNodePositions(topicId, { [nodeId]: { x, y } });
+      if (result.success) {
+        console.log(`[保存成功] 节点 ${nodeId} 位置: x=${x}, y=${y}`);
+      } else {
+        console.error(`[保存失败] 节点 ${nodeId}:`, result.error);
+      }
+    } catch (error) {
+      console.error('[保存错误]', error);
+    }
+  }, [topicId]);
+  
+  // 将回调函数存入 ref，确保事件监听能访问到最新版本
+  handleNodePositionChangeRef.current = handleNodePositionChange;
 
   // 初始化 Graph
   useEffect(() => {
@@ -275,6 +318,9 @@ export default function X6MindMap({
       mousewheel: {
         enabled: true,
         zoomAtMousePosition: true,
+      },
+      interacting: {
+        nodeMovable: true, // 启用节点拖拽
       },
     });
 
@@ -316,13 +362,34 @@ export default function X6MindMap({
       onNodeSelect?.(null);
     });
 
-    // 点击节点选中
-    graph.on('node:click', ({ node }) => {
+    // 点击节点选中并居中
+    graph.on('node:click', ({ node, e }) => {
       if (node && node.id) {
+        // 如果点击的是展开/收起按钮或其子元素，不执行居中
+        const target = e?.target;
+        if (target) {
+          const isExpandButton = target.closest('.expand-toggle-btn') ||
+            target.closest('[data-expand-toggle="true"]') ||
+            target.closest('svg[data-testid="ExpandMoreIcon"]') ||
+            target.closest('svg[data-testid="ExpandLessIcon"]');
+          if (isExpandButton) return;
+        }
+
         const nodeId = node.id;
         setSelectedNodeId(nodeId);
         const data = node.getData ? node.getData() : {};
         onNodeSelect?.(data);
+        // 将点击的节点移动到画布中央
+        graph.centerCell(node);
+      }
+    });
+
+    // 节点拖拽结束，保存位置（通过 ref 调用，避免闭包问题）
+    graph.on('node:moved', ({ node }) => {
+      if (node && node.id) {
+        const position = node.getPosition();
+        // 使用 ref 调用，确保获取到最新的函数
+        handleNodePositionChangeRef.current?.(node.id, position.x, position.y);
       }
     });
 
@@ -347,6 +414,23 @@ export default function X6MindMap({
     };
   }, []);
 
+  // 话题切换时从服务器加载节点位置
+  useEffect(() => {
+    if (topicId) {
+      // 重置状态
+      expandedStatesRef.current = {};
+      positionStatesRef.current = {};
+      setInitialDataLoaded(false);
+      // 从服务器加载节点位置
+      treeApi.getNodePositions(topicId).then(result => {
+        if (result.success) {
+          positionStatesRef.current = result.positions || {};
+          setInitialDataLoaded(true);
+        }
+      });
+    }
+  }, [topicId]);
+
   // 更新数据（仅在 treeData 变化时重建图）
   useEffect(() => {
     if (!graphRef.current || !treeData) return;
@@ -356,7 +440,7 @@ export default function X6MindMap({
     // 清空现有内容
     graph.clearCells();
 
-    // 计算布局（展开/收起状态现在由节点内部自行管理）
+    // 计算布局（传入持久化的展开状态和位置）
     const { nodes, edges } = calculateLayout(treeData, selectedNodeId, {
       onQuoteText,
       onNodeSelect,
@@ -364,7 +448,8 @@ export default function X6MindMap({
       onEditNode,
       onDeleteNode,
       onDeleteBranch,
-    });
+      onToggleExpand: handleToggleExpand,
+    }, expandedStatesRef.current, positionStatesRef.current);
 
     // 使用 requestAnimationFrame 延迟添加新节点，确保旧节点完全卸载
     // 避免 X6 React Shape 组件异步卸载时与新节点渲染冲突导致重复节点
@@ -387,7 +472,7 @@ export default function X6MindMap({
         });
       });
     });
-  }, [treeData, onQuoteText, onNodeSelect, onCopyNode, onEditNode, onDeleteNode, onDeleteBranch]);
+  }, [treeData, selectedNodeId, initialDataLoaded, onQuoteText, onNodeSelect, onCopyNode, onEditNode, onDeleteNode, onDeleteBranch, handleToggleExpand]);
 
   // 单独处理选中状态变化，只更新节点样式而不重建图
   useEffect(() => {
@@ -423,6 +508,47 @@ export default function X6MindMap({
       return newValue;
     });
   }, []);
+
+  // 重置布局（清除服务器保存的位置）
+  const handleResetLayout = useCallback(async () => {
+    if (topicId) {
+      try {
+        await treeApi.resetNodePositions(topicId);
+        positionStatesRef.current = {}; // 清空 ref
+        // 重新加载树以应用自动布局
+        if (treeData) {
+          const graph = graphRef.current;
+          if (graph) {
+            graph.clearCells();
+            const { nodes, edges } = calculateLayout(treeData, selectedNodeId, {
+              onQuoteText,
+              onNodeSelect,
+              onCopyNode,
+              onEditNode,
+              onDeleteNode,
+              onDeleteBranch,
+              onToggleExpand: handleToggleExpand,
+            }, expandedStatesRef.current, {});
+            requestAnimationFrame(() => {
+              nodes.forEach((node) => {
+                graph.addNode({ ...node, zIndex: 2 });
+              });
+              edges.forEach((edge) => {
+                graph.addEdge({
+                  id: edge.id,
+                  source: edge.source,
+                  target: edge.target,
+                  shape: edge.shape,
+                });
+              });
+            });
+          }
+        }
+      } catch (error) {
+        console.error('重置布局失败:', error);
+      }
+    }
+  }, [topicId, treeData, selectedNodeId, onQuoteText, onNodeSelect, onCopyNode, onEditNode, onDeleteNode, onDeleteBranch, handleToggleExpand]);
 
   return (
     <Box
@@ -473,6 +599,20 @@ export default function X6MindMap({
             }}
           >
             <MapIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="重置布局">
+          <IconButton
+            size="small"
+            onClick={handleResetLayout}
+            sx={{
+              bgcolor: 'var(--card-background, #ffffff)',
+              border: '1px solid var(--border-color, #e5e7eb)',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              '&:hover': { bgcolor: 'var(--hover-color, #f3f4f6)' },
+            }}
+          >
+            <Restore fontSize="small" />
           </IconButton>
         </Tooltip>
       </Box>

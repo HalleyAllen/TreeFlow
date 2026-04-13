@@ -15,7 +15,8 @@ class TopicManager {
         id: 'default',
         name: '默认话题',
         conversationTree: null,  // 初始为空，等用户提问时再创建
-        currentNode: null
+        currentNode: null,
+        nodePositions: {}  // 节点位置持久化存储
       }
     };
   }
@@ -89,7 +90,8 @@ class TopicManager {
         id: topicId,
         name: name,
         conversationTree: null,  // 初始为空，等用户提问时再创建
-        currentNode: null
+        currentNode: null,
+        nodePositions: {}  // 节点位置持久化存储
       };
       this.saveTopics();
       logger.info('TopicManager', '创建话题', { topicId, name });
@@ -192,6 +194,65 @@ class TopicManager {
     const topic = this.topics[topicId];
     if (!topic) return false;
     return topic.conversationTree !== null;
+  }
+
+  /**
+   * 获取话题的节点位置
+   * @param {string} topicId - 话题ID
+   * @returns {Object} - 节点位置对象 { nodeId: { x, y }, ... }
+   */
+  getNodePositions(topicId) {
+    const topic = this.topics[topicId];
+    if (!topic) {
+      logger.warn('TopicManager', '话题不存在，无法获取节点位置', { topicId });
+      return {};
+    }
+    return topic.nodePositions || {};
+  }
+
+  /**
+   * 保存话题的节点位置
+   * @param {string} topicId - 话题ID
+   * @param {Object} positions - 节点位置对象 { nodeId: { x, y }, ... }
+   * @returns {boolean} - 是否保存成功
+   */
+  saveNodePositions(topicId, positions) {
+    try {
+      const topic = this.topics[topicId];
+      if (!topic) {
+        logger.warn('TopicManager', '话题不存在，无法保存节点位置', { topicId });
+        return false;
+      }
+      topic.nodePositions = { ...topic.nodePositions, ...positions };
+      this.saveTopics();
+      logger.info('TopicManager', '保存节点位置成功', { topicId, positionCount: Object.keys(positions).length });
+      return true;
+    } catch (error) {
+      logger.error('TopicManager', '保存节点位置失败:', { error: error.message, topicId });
+      return false;
+    }
+  }
+
+  /**
+   * 重置话题的节点位置（清除所有保存的位置）
+   * @param {string} topicId - 话题ID
+   * @returns {boolean} - 是否重置成功
+   */
+  resetNodePositions(topicId) {
+    try {
+      const topic = this.topics[topicId];
+      if (!topic) {
+        logger.warn('TopicManager', '话题不存在，无法重置节点位置', { topicId });
+        return false;
+      }
+      topic.nodePositions = {};
+      this.saveTopics();
+      logger.info('TopicManager', '重置节点位置成功', { topicId });
+      return true;
+    } catch (error) {
+      logger.error('TopicManager', '重置节点位置失败:', { error: error.message, topicId });
+      return false;
+    }
   }
 }
 
