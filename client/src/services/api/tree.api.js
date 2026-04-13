@@ -190,3 +190,67 @@ export async function resetNodePositions(topicId) {
     return { success: false, error: error.message };
   }
 }
+
+/**
+ * 获取话题的视口位置
+ * @param {string} topicId - 话题ID
+ * @returns {Promise<Object>} - 视口位置 { x, y, zoom } 或 null
+ */
+export async function getViewport(topicId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/tree/viewport/${topicId}`);
+    const data = await response.json();
+    if (data.success) {
+      return { success: true, viewport: data.data };
+    }
+    return { success: false, error: data.error || '获取视口位置失败' };
+  } catch (error) {
+    logger.error('TreeAPI', '获取视口位置失败:', { error: error.message });
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 保存话题的视口位置
+ * @param {string} topicId - 话题ID
+ * @param {Object} viewport - 视口位置 { x, y, zoom }
+ * @returns {Promise<Object>} - 保存结果
+ */
+export async function saveViewport(topicId, viewport) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/tree/viewport/${topicId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ viewport })
+    });
+    const data = await response.json();
+    if (data.success) {
+      return { success: true, message: data.message };
+    }
+    return { success: false, error: data.error || '保存视口位置失败' };
+  } catch (error) {
+    logger.error('TreeAPI', '保存视口位置失败:', { error: error.message });
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 重置话题的视口位置
+ * @param {string} topicId - 话题ID
+ * @returns {Promise<Object>} - 重置结果
+ */
+export async function resetViewport(topicId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/tree/viewport/${topicId}`, {
+      method: 'DELETE'
+    });
+    const data = await response.json();
+    if (data.success) {
+      return { success: true, message: data.message };
+    }
+    return { success: false, error: data.error || '重置视口位置失败' };
+  } catch (error) {
+    logger.error('TreeAPI', '重置视口位置失败:', { error: error.message });
+    return { success: false, error: error.message };
+  }
+}

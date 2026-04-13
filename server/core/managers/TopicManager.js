@@ -16,7 +16,8 @@ class TopicManager {
         name: '默认话题',
         conversationTree: null,  // 初始为空，等用户提问时再创建
         currentNode: null,
-        nodePositions: {}  // 节点位置持久化存储
+        nodePositions: {},  // 节点位置持久化存储
+        viewport: null  // 视口位置持久化存储 { x, y, zoom }
       }
     };
   }
@@ -91,7 +92,8 @@ class TopicManager {
         name: name,
         conversationTree: null,  // 初始为空，等用户提问时再创建
         currentNode: null,
-        nodePositions: {}  // 节点位置持久化存储
+        nodePositions: {},  // 节点位置持久化存储
+        viewport: null  // 视口位置持久化存储
       };
       this.saveTopics();
       logger.info('TopicManager', '创建话题', { topicId, name });
@@ -251,6 +253,65 @@ class TopicManager {
       return true;
     } catch (error) {
       logger.error('TopicManager', '重置节点位置失败:', { error: error.message, topicId });
+      return false;
+    }
+  }
+
+  /**
+   * 获取话题的视口位置
+   * @param {string} topicId - 话题ID
+   * @returns {Object|null} - 视口位置 { x, y, zoom } 或 null
+   */
+  getViewport(topicId) {
+    const topic = this.topics[topicId];
+    if (!topic) {
+      logger.warn('TopicManager', '话题不存在，无法获取视口位置', { topicId });
+      return null;
+    }
+    return topic.viewport || null;
+  }
+
+  /**
+   * 保存话题的视口位置
+   * @param {string} topicId - 话题ID
+   * @param {Object} viewport - 视口位置 { x, y, zoom }
+   * @returns {boolean} - 是否保存成功
+   */
+  saveViewport(topicId, viewport) {
+    try {
+      const topic = this.topics[topicId];
+      if (!topic) {
+        logger.warn('TopicManager', '话题不存在，无法保存视口位置', { topicId });
+        return false;
+      }
+      topic.viewport = viewport;
+      this.saveTopics();
+      logger.info('TopicManager', '保存视口位置成功', { topicId, viewport });
+      return true;
+    } catch (error) {
+      logger.error('TopicManager', '保存视口位置失败:', { error: error.message, topicId });
+      return false;
+    }
+  }
+
+  /**
+   * 重置话题的视口位置
+   * @param {string} topicId - 话题ID
+   * @returns {boolean} - 是否重置成功
+   */
+  resetViewport(topicId) {
+    try {
+      const topic = this.topics[topicId];
+      if (!topic) {
+        logger.warn('TopicManager', '话题不存在，无法重置视口位置', { topicId });
+        return false;
+      }
+      topic.viewport = null;
+      this.saveTopics();
+      logger.info('TopicManager', '重置视口位置成功', { topicId });
+      return true;
+    } catch (error) {
+      logger.error('TopicManager', '重置视口位置失败:', { error: error.message, topicId });
       return false;
     }
   }

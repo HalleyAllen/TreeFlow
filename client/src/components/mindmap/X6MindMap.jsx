@@ -393,6 +393,34 @@ export default function X6MindMap({
       }
     });
 
+    // 监听视口变化，保存视口位置
+    let viewportDebounceTimer = null;
+    graph.on('translate', () => {
+      if (!topicId) return;
+      clearTimeout(viewportDebounceTimer);
+      viewportDebounceTimer = setTimeout(() => {
+        const matrix = graph.transform.getMatrix();
+        treeApi.saveViewport(topicId, {
+          x: matrix.e,
+          y: matrix.f,
+          zoom: matrix.a
+        });
+      }, 500);
+    });
+
+    graph.on('scale', () => {
+      if (!topicId) return;
+      clearTimeout(viewportDebounceTimer);
+      viewportDebounceTimer = setTimeout(() => {
+        const matrix = graph.transform.getMatrix();
+        treeApi.saveViewport(topicId, {
+          x: matrix.e,
+          y: matrix.f,
+          zoom: matrix.a
+        });
+      }, 500);
+    });
+
     // 响应窗口大小变化
     const handleResize = () => {
       if (containerRef.current && graphRef.current) {
@@ -403,18 +431,49 @@ export default function X6MindMap({
       }
     };
 
+    // 监听 Ctrl+S 保存位置和视口
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (!topicId || !graphRef.current) return;
+
+        // 保存视口位置
+        const matrix = graphRef.current.transform.getMatrix();
+        treeApi.saveViewport(topicId, {
+          x: matrix.e,
+          y: matrix.f,
+          zoom: matrix.a
+        });
+
+        // 保存所有节点位置
+        const nodes = graphRef.current.getNodes();
+        const positions = {};
+        nodes.forEach(node => {
+          const pos = node.getPosition();
+          positions[node.id] = { x: pos.x, y: pos.y };
+        });
+        if (Object.keys(positions).length > 0) {
+          treeApi.saveNodePositions(topicId, positions);
+        }
+
+        console.log('[Ctrl+S] 已保存视口位置和节点位置');
+      }
+    };
+
     window.addEventListener('resize', handleResize);
+    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('keydown', handleKeyDown);
       if (miniMapRef.current && containerRef.current) {
         containerRef.current.removeChild(miniMapRef.current);
       }
       graph.dispose();
     };
-  }, []);
+  }, [topicId]);
 
-  // 话题切换时从服务器加载节点位置
+  // 话题切换时从服务器加载节点位置和视口
   useEffect(() => {
     if (topicId) {
       // 重置状态
@@ -426,6 +485,15 @@ export default function X6MindMap({
         if (result.success) {
           positionStatesRef.current = result.positions || {};
           setInitialDataLoaded(true);
+        }
+      });
+      // 从服务器加载视口位置
+      treeApi.getViewport(topicId).then(result => {
+        if (result.success && result.viewport && graphRef.current) {
+          const { x, y, zoom } = result.viewport;
+          // 使用 scale 和 translate 恢复视口
+          graphRef.current.scale(zoom || 1, zoom || 1);
+          graphRef.current.translate(x || 0, y || 0);
         }
       });
     }
@@ -509,11 +577,12 @@ export default function X6MindMap({
     });
   }, []);
 
-  // 重置布局（清除服务器保存的位置）
+  // 重置布局（清除服务器保存的位置和视口）
   const handleResetLayout = useCallback(async () => {
     if (topicId) {
       try {
         await treeApi.resetNodePositions(topicId);
+        await treeApi.resetViewport(topicId);
         positionStatesRef.current = {}; // 清空 ref
         // 重新加载树以应用自动布局
         if (treeData) {
@@ -542,6 +611,8 @@ export default function X6MindMap({
                 });
               });
             });
+            // 重置视口到居中
+            graph.centerContent();
           }
         }
       } catch (error) {

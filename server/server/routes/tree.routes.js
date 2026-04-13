@@ -32,6 +32,15 @@ function createTreeRoutes(agent) {
   // 重置话题的节点位置
   router.delete('/positions/:topicId', controller.resetNodePositions);
 
+  // 获取话题的视口位置
+  router.get('/viewport/:topicId', controller.getViewport);
+
+  // 保存话题的视口位置
+  router.post('/viewport/:topicId', controller.saveViewport);
+
+  // 重置话题的视口位置
+  router.delete('/viewport/:topicId', controller.resetViewport);
+
   return router;
 }
 

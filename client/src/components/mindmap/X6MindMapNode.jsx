@@ -159,14 +159,7 @@ const X6MindMapNode = memo(({ node }) => {
         typeColor: '#d97706',
       };
     }
-    if (isRoot) {
-      return {
-        border: '2px solid #3b82f6',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-        questionBg: '#dbeafe',
-        typeColor: '#2563eb',
-      };
-    }
+    // 根节点使用普通节点样式
     return {
       border: '2px solid #d1d5db',
       boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
