@@ -185,16 +185,25 @@ const X6MindMapNode = memo(({ node }) => {
       const nodeRect = nodeRef.current?.getBoundingClientRect();
 
       if (nodeRect) {
+        // 获取画布缩放比例
+        const graphInstance = node?.model?.graph || node?.getGraph?.();
+        const scale = graphInstance?.transform?.getScale?.() || { sx: 1, sy: 1 };
+        const zoom = Math.max(scale.sx, 0.5); // 最小缩放限制，避免按钮太大
+
+        // 按钮宽度约 46px，根据缩放比例调整偏移
+        const buttonWidth = 46 / zoom;
+        const buttonHeight = 20 / zoom;
+
         setQuoteButtonPos({
-          x: rect.left - nodeRect.left + rect.width / 2 - 20,
-          y: rect.top - nodeRect.top - 35,
+          x: (rect.left - nodeRect.left + rect.width / 2) / zoom - buttonWidth / 2,
+          y: (rect.top - nodeRect.top) / zoom - buttonHeight - 8 / zoom,
         });
         setShowQuoteButton(true);
       }
     } else {
       setShowQuoteButton(false);
     }
-  }, []);
+  }, [node]);
 
   // 处理引用
   const handleQuote = useCallback((event) => {
@@ -243,12 +252,34 @@ const X6MindMapNode = memo(({ node }) => {
     }
   }, [onDeleteBranch, data.id]);
 
+  // 点击外部区域隐藏引用按钮
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showQuoteButton && nodeRef.current) {
+        // 检查点击是否在引用按钮内
+        const isInsideNode = nodeRef.current.contains(event.target);
+        if (!isInsideNode) {
+          setShowQuoteButton(false);
+          window.getSelection()?.removeAllRanges();
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showQuoteButton]);
+
   // 是否需要展开按钮（回答内容较长时）
   const needsExpand = fullAnswer.length > 50;
   // 是否有操作权限（非根节点或有子节点时显示删除支线）
   const canDeleteBranch = hasChildren && !isRoot;
 
-
+  // 获取当前缩放比例
+  const graph = node?.model?.graph || node?.getGraph?.();
+  const scale = graph?.transform?.getScale?.() || { sx: 1, sy: 1 };
+  const zoom = Math.max(scale.sx, 0.5);
 
   return (
     <Box
@@ -263,31 +294,31 @@ const X6MindMapNode = memo(({ node }) => {
       {/* 引用按钮浮动层 */}
       {showQuoteButton && (
         <Box
+          onMouseDown={(e) => e.stopPropagation()}
           sx={{
             position: 'absolute',
             left: quoteButtonPos.x,
             top: quoteButtonPos.y,
             zIndex: 1000,
             backgroundColor: '#3b82f6',
-            borderRadius: 1,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+            borderRadius: `calc(4px / ${zoom})`,
+            boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
             display: 'flex',
             alignItems: 'center',
-            padding: '2px 4px',
+            justifyContent: 'center',
+            padding: `calc(1px / ${zoom}) calc(6px / ${zoom})`,
+            height: `calc(20px / ${zoom})`,
+            cursor: 'pointer',
+            '&:hover': {
+              backgroundColor: '#2563eb',
+            },
           }}
+          onClick={handleQuote}
         >
-          <IconButton
-            type="button"
-            size="small"
-            onClick={handleQuote}
-            sx={{ color: 'white', padding: '2px' }}
-          >
-            <FormatQuote fontSize="small" />
-          </IconButton>
+          <FormatQuote sx={{ color: 'white', fontSize: `calc(12px / ${zoom})`, mr: 0.3 / zoom }} />
           <Typography
             variant="caption"
-            sx={{ color: 'white', fontSize: '0.7rem', ml: 0.5, cursor: 'pointer' }}
-            onClick={handleQuote}
+            sx={{ color: 'white', fontSize: `calc(11px / ${zoom})`, lineHeight: 1 }}
           >
             引用
           </Typography>
