@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Graph, MiniMap } from '@antv/x6';
 import { register } from '@antv/x6-react-shape';
 import { Box, IconButton, Tooltip } from '@mui/material';
-import { Map as MapIcon, FitScreen, Restore } from '@mui/icons-material';
+import { Map as MapIcon, FitScreen, Restore, Add, Remove } from '@mui/icons-material';
 import X6MindMapNode from './X6MindMapNode';
 import * as treeApi from '../../services/api/tree.api';
 
@@ -582,6 +582,22 @@ export default function X6MindMap({
     graphRef.current?.centerContent();
   }, []);
 
+  // 放大
+  const handleZoomIn = useCallback(() => {
+    graphRef.current?.zoom(0.2);
+  }, []);
+
+  // 缩小
+  const handleZoomOut = useCallback(() => {
+    graphRef.current?.zoom(-0.2);
+  }, []);
+
+  // 重置缩放
+  const handleResetZoom = useCallback(() => {
+    graphRef.current?.zoomTo(1);
+    graphRef.current?.centerContent();
+  }, []);
+
   // 切换小地图显示
   const toggleMiniMap = useCallback(() => {
     setShowMiniMap((prev) => {
@@ -649,6 +665,62 @@ export default function X6MindMap({
         padding: '4px 8px 4px 8px !important',
       }}
     >
+      {/* 左下角缩放控制按钮组 */}
+      <Box
+        sx={{
+          position: 'absolute',
+          left: 16,
+          bottom: 16,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1,
+          zIndex: 101,
+        }}
+      >
+        <Tooltip title="放大">
+          <IconButton
+            size="small"
+            onClick={handleZoomIn}
+            sx={{
+              bgcolor: 'var(--card-background, #ffffff)',
+              border: '1px solid var(--border-color, #e5e7eb)',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              '&:hover': { bgcolor: 'var(--hover-color, #f3f4f6)' },
+            }}
+          >
+            <Add fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="缩小">
+          <IconButton
+            size="small"
+            onClick={handleZoomOut}
+            sx={{
+              bgcolor: 'var(--card-background, #ffffff)',
+              border: '1px solid var(--border-color, #e5e7eb)',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              '&:hover': { bgcolor: 'var(--hover-color, #f3f4f6)' },
+            }}
+          >
+            <Remove fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="重置缩放">
+          <IconButton
+            size="small"
+            onClick={handleResetZoom}
+            sx={{
+              bgcolor: 'var(--card-background, #ffffff)',
+              border: '1px solid var(--border-color, #e5e7eb)',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              '&:hover': { bgcolor: 'var(--hover-color, #f3f4f6)' },
+            }}
+          >
+            <FitScreen fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Box>
+
       {/* 控制按钮组 */}
       <Box
         sx={{

@@ -1,2 +1,6 @@
 node_modules
 .codebuddy/
+
+# Data and logs
+server/data/topics.json
+server/logs/
