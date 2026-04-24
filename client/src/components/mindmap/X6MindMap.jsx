@@ -537,15 +537,7 @@ export default function X6MindMap({
     // 使用 requestAnimationFrame 延迟添加新节点，确保旧节点完全卸载
     // 避免 X6 React Shape 组件异步卸载时与新节点渲染冲突导致重复节点
     requestAnimationFrame(() => {
-      // 添加节点，设置 zIndex 确保节点显示在边上方
-      nodes.forEach((node) => {
-        graph.addNode({
-          ...node,
-          zIndex: 2, // 节点层级高于边（边默认是 1）
-        });
-      });
-
-      // 添加边
+      // 添加边（先添加边，避免遮挡节点动画）
       edges.forEach((edge) => {
         graph.addEdge({
           id: edge.id,
@@ -553,6 +545,39 @@ export default function X6MindMap({
           target: edge.target,
           shape: edge.shape,
         });
+      });
+
+      // 添加节点，设置 zIndex 确保节点显示在边上方
+      nodes.forEach((node, index) => {
+        const cell = graph.addNode({
+          ...node,
+          zIndex: 2,
+        });
+
+        // 延迟动画，创建错落有致的进入效果（淡入 + 轻微缩放）
+        // 先隐藏节点
+        cell.attr('opacity', 0);
+        
+        setTimeout(() => {
+          // 手动动画：淡入效果
+          const duration = 300;
+          const startTime = Date.now();
+          
+          const animateFadeIn = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            // easeOutCubic
+            const easeProgress = 1 - Math.pow(1 - progress, 3);
+            
+            cell.attr('opacity', easeProgress);
+            
+            if (progress < 1) {
+              requestAnimationFrame(animateFadeIn);
+            }
+          };
+          
+          requestAnimationFrame(animateFadeIn);
+        }, index * 30); // 每个节点延迟 30ms
       });
     });
   }, [treeData, initialDataLoaded, onQuoteText, handleNodeSelectInternal, onCopyNode, onEditNode, onDeleteNode, onDeleteBranch, handleToggleExpand]);
@@ -662,8 +687,8 @@ export default function X6MindMap({
         if (treeData) {
           const graph = graphRef.current;
           if (graph) {
-            graph.clearCells();
-            const { nodes, edges } = calculateLayout(treeData, selectedNodeId, {
+            // 计算新布局
+            const { nodes } = calculateLayout(treeData, selectedNodeId, {
               onQuoteText,
               onNodeSelect: handleNodeSelectInternal,
               onCopyNode,
@@ -672,22 +697,58 @@ export default function X6MindMap({
               onDeleteBranch,
               onToggleExpand: handleToggleExpand,
             }, expandedStatesRef.current, {});
-            requestAnimationFrame(() => {
-              nodes.forEach((node) => {
-                graph.addNode({ ...node, zIndex: 2 });
-              });
-              edges.forEach((edge) => {
-                graph.addEdge({
-                  id: edge.id,
-                  source: edge.source,
-                  target: edge.target,
-                  shape: edge.shape,
-                });
-              });
+
+            // 获取现有节点位置
+            const existingNodes = graph.getNodes();
+            const oldPositions = {};
+            existingNodes.forEach(node => {
+              const pos = node.getPosition();
+              oldPositions[node.id] = pos;
             });
+
+            // 只移动现有节点，不增删节点和边
+            const nodesToAnimate = [];
+            nodes.forEach((nodeData) => {
+              const existingNode = graph.getCellById(nodeData.id);
+              if (existingNode) {
+                const oldPos = oldPositions[nodeData.id];
+                if (oldPos && (oldPos.x !== nodeData.x || oldPos.y !== nodeData.y)) {
+                  nodesToAnimate.push({
+                    node: existingNode,
+                    oldPos,
+                    newPos: { x: nodeData.x, y: nodeData.y },
+                  });
+                }
+              }
+            });
+
+            // 动画移动节点（边会自动跟随）
+            if (nodesToAnimate.length > 0) {
+              const duration = 400;
+              const startTime = Date.now();
+
+              const animateAll = () => {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+
+                nodesToAnimate.forEach(({ node, oldPos, newPos }) => {
+                  const currentX = oldPos.x + (newPos.x - oldPos.x) * easeProgress;
+                  const currentY = oldPos.y + (newPos.y - oldPos.y) * easeProgress;
+                  node.setPosition(currentX, currentY);
+                });
+
+                if (progress < 1) {
+                  requestAnimationFrame(animateAll);
+                }
+              };
+
+              requestAnimationFrame(animateAll);
+            }
+
+            console.log('[重置节点] 节点位置已重置，视口保持不变');
           }
         }
-        console.log('[重置节点] 节点位置已重置，视口保持不变');
       } catch (error) {
         console.error('重置节点失败:', error);
       }
