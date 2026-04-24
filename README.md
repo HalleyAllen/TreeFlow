@@ -78,11 +78,15 @@ npm run install-client
 ### 启动开发服务器
 
 ```bash
+# 一键启动前后端（推荐）
+npm run dev
+
+# 或者分别启动：
 # 启动后端（端口 3003）
 npm start
 
 # 在另一个终端启动前端（端口 5173）
-npm run client
+npm run dev:client
 ```
 
 ### 命令行界面（CLI）

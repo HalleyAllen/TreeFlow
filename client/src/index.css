@@ -1058,6 +1058,17 @@ nav button:hover {
   -webkit-user-select: text !important;
 }
 
+/* 文本选中高亮样式 */
+.x6-node ::selection {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+
+.x6-node ::-moz-selection {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+
 .x6-node * {
   user-select: text !important;
   -webkit-user-select: text !important;

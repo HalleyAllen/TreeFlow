@@ -7,6 +7,11 @@ import { memo, useState, useCallback, useRef, useEffect } from 'react';
 import { Box, Typography, Paper, IconButton, Tooltip, Divider } from '@mui/material';
 import { ExpandMore, ExpandLess, FormatQuote, ContentCopy, Edit, Delete, AccountTree } from '@mui/icons-material';
 
+// 节点尺寸常量（与 X6MindMap 共享）
+export const NODE_WIDTH = 280;
+export const NODE_HEIGHT = 220;
+export const QUESTION_AREA_HEIGHT = 60; // 上半部分问题区域高度
+
 /**
  * 自定义 Hook：管理节点展开/收起状态
  * 抽象化展开功能，使每个节点独立管理自己的展开状态
@@ -97,21 +102,21 @@ const X6MindMapNode = memo(({ node }) => {
   useEffect(() => {
     if (!node || !contentRef.current) return;
 
-      // 获取内容实际高度
-      const contentHeight = contentRef.current.scrollHeight;
-      // 底部连接桩应该在内容底部
-      const bottomY = isExpanded ? Math.max(220, contentHeight) : 234;
+    // 获取内容实际高度
+    const contentHeight = contentRef.current.scrollHeight;
+    // 底部连接桩应该在内容底部（收起时在 NODE_HEIGHT + 14，展开时随内容自适应）
+    const bottomY = isExpanded ? Math.max(NODE_HEIGHT, contentHeight) : NODE_HEIGHT + 14;
 
-      console.log('[Port Update]', { isExpanded, contentHeight, bottomY });
+    console.log('[Port Update]', { isExpanded, contentHeight, bottomY });
 
-      // 更新底部连接桩位置
-      node.setPortProp('bottom', 'args', { x: 140, y: bottomY });
+    // 更新底部连接桩位置（x 为节点宽度的一半）
+    node.setPortProp('bottom', 'args', { x: NODE_WIDTH / 2, y: bottomY });
 
-      // 触发从该节点出发的边重新路由
-      const outgoingEdges = node.getOutgoingEdges?.() || [];
-      outgoingEdges.forEach(edge => {
-        edge.setTarget(edge.getTarget());
-      });
+    // 触发从该节点出发的边重新路由
+    const outgoingEdges = node.getOutgoingEdges?.() || [];
+    outgoingEdges.forEach(edge => {
+      edge.setTarget(edge.getTarget());
+    });
   }, [isExpanded, node]);
 
   const isRoot = depth === 0;
@@ -129,8 +134,8 @@ const X6MindMapNode = memo(({ node }) => {
   const getStyles = () => {
     if (selected) {
       return {
-        border: '2px solid #3b82f6',
-        boxShadow: '0 8px 24px rgba(59, 130, 246, 0.25)',
+        border: '3px solid #2563eb',
+        boxShadow: '0 0 0 4px rgba(59, 130, 246, 0.3), 0 8px 24px rgba(59, 130, 246, 0.4)',
         questionBg: '#dbeafe',
         typeColor: '#2563eb',
       };
@@ -281,15 +286,39 @@ const X6MindMapNode = memo(({ node }) => {
   const scale = graph?.transform?.getScale?.() || { sx: 1, sy: 1 };
   const zoom = Math.max(scale.sx, 0.5);
 
+  // 处理节点点击选中（排除按钮等交互元素）
+  const handleNodeClick = useCallback((event) => {
+    // 检查点击的是否是按钮或交互元素，如果是则不触发选中
+    const target = event?.target;
+    if (target) {
+      const isInteractiveElement =
+        target.closest('button') ||
+        target.closest('[role="button"]') ||
+        target.closest('.MuiIconButton-root') ||
+        target.closest('.MuiButtonBase-root') ||
+        target.closest('svg') ||
+        target.closest('.expand-toggle-btn') ||
+        target.closest('[data-expand-toggle="true"]');
+
+      if (isInteractiveElement) return;
+    }
+
+    // 调用选中回调
+    if (onNodeSelect && nodeId) {
+      onNodeSelect(data);
+    }
+  }, [nodeId, data, onNodeSelect]);
+
   return (
     <Box
       ref={nodeRef}
       sx={{
-        width: 280,
-        minHeight: 220,
+        width: NODE_WIDTH,
+        minHeight: NODE_HEIGHT,
         position: 'relative',
       }}
       onMouseUp={handleTextSelection}
+      onClick={handleNodeClick}
     >
       {/* 引用按钮浮动层 */}
       {showQuoteButton && (
@@ -328,9 +357,9 @@ const X6MindMapNode = memo(({ node }) => {
       <Paper
         ref={contentRef}
         sx={{
-          width: 280,
-          minHeight: 220,
-          height: isExpanded ? 'auto' : 220,
+          width: NODE_WIDTH,
+          minHeight: NODE_HEIGHT,
+          height: isExpanded ? 'auto' : NODE_HEIGHT,
           border: styles.border,
           borderRadius: 3,
           boxShadow: styles.boxShadow,
@@ -344,7 +373,7 @@ const X6MindMapNode = memo(({ node }) => {
           sx={{
             p: 1.5,
             pb: 1,
-            height: 60,
+            height: QUESTION_AREA_HEIGHT,
             backgroundColor: styles.questionBg,
             borderBottom: isExpanded ? '1px solid' : 'none',
             borderColor: isQuote ? '#fde68a' : (isRoot ? '#bfdbfe' : '#e5e7eb'),

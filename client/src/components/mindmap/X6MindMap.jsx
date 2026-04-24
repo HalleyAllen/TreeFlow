@@ -6,24 +6,27 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Graph, MiniMap } from '@antv/x6';
 import { register } from '@antv/x6-react-shape';
 import { Box, IconButton, Tooltip } from '@mui/material';
-import { Map as MapIcon, FitScreen, Restore, Add, Remove } from '@mui/icons-material';
-import X6MindMapNode from './X6MindMapNode';
+import { Map as MapIcon, FitScreen, Restore, Add, Remove, RestartAlt } from '@mui/icons-material';
+import X6MindMapNode, { NODE_WIDTH, NODE_HEIGHT } from './X6MindMapNode';
 import * as treeApi from '../../services/api/tree.api';
 
+// 连接桩配置常量
+const PORT_RADIUS = 1;
+const PORT_OFFSET = { x: 140, y: 110 }; // 节点中心位置
+
 // 注册 React 节点
-const radius  = 2 // 连接桩半径
 register({
   shape: 'mind-map-node',
-  width: 280,
-  height: 220,
+  width: NODE_WIDTH,
+  height: NODE_HEIGHT,
   component: X6MindMapNode,
   ports: {
     groups: {
       top: {
-        position: { name: 'absolute', args: { x: 140, y: 0 } },
+        position: { name: 'absolute', args: { x: PORT_OFFSET.x, y: 0 } },
         attrs: {
           circle: {
-            r: radius,
+            r: PORT_RADIUS,
             magnet: true,
             stroke: 'none',
             fill: 'none',
@@ -31,10 +34,10 @@ register({
         },
       },
       bottom: {
-        position: { name: 'absolute', args: { x: 140, y: 220 } },
+        position: { name: 'absolute', args: { x: PORT_OFFSET.x, y: NODE_HEIGHT } },
         attrs: {
           circle: {
-            r: radius,
+            r: PORT_RADIUS,
             magnet: true,
             stroke: 'none',
             fill: 'none',
@@ -42,10 +45,10 @@ register({
         },
       },
       left: {
-        position: { name: 'absolute', args: { x: 0, y: 140 } },
+        position: { name: 'absolute', args: { x: 0, y: PORT_OFFSET.y } },
         attrs: {
           circle: {
-            r: radius,
+            r: PORT_RADIUS,
             magnet: true,
             stroke: 'none',
             fill: 'none',
@@ -53,10 +56,10 @@ register({
         },
       },
       right: {
-        position: { name: 'absolute', args: { x: 280, y: 140 } },
+        position: { name: 'absolute', args: { x: NODE_WIDTH, y: PORT_OFFSET.y } },
         attrs: {
           circle: {
-            r: radius,
+            r: PORT_RADIUS,
             magnet: true,
             stroke: 'none',
             fill: 'none',
@@ -130,10 +133,10 @@ Graph.registerEdge(
   true
 );
 
-const NODE_WIDTH = 280;
-const NODE_HEIGHT = 220; // 节点固定高度（展开/收起由节点内部管理，不影响布局高度）
-const HORIZONTAL_SPACING = 360;
-const BRANCH_VERTICAL_SPACING = 200;
+// 节点间距配置（NODE_WIDTH/NODE_HEIGHT 从 X6MindMapNode 导入）
+const MAIN_VERTICAL_SPACING = 40;    // 主流程节点之间的垂直间距
+const HORIZONTAL_SPACING = 360;      // 分支的水平间距
+const BRANCH_VERTICAL_SPACING = 200; // 分支之间的垂直间距
 
 /**
  * 计算文档流式布局
@@ -200,12 +203,12 @@ function calculateLayout(rootNode, selectedNodeId = null, callbacks = {}, expand
         const mainChildHeight = layoutNode(
           mainChild,
           x,
-          y + NODE_HEIGHT + 40, // 使用固定高度 + 间距
+          y + NODE_HEIGHT + MAIN_VERTICAL_SPACING, // 使用固定高度 + 间距
           depth + 1,
           false
         );
 
-        subtreeHeight = mainChildHeight + NODE_HEIGHT + 40;
+        subtreeHeight = mainChildHeight + NODE_HEIGHT + MAIN_VERTICAL_SPACING;
       }
 
       // 分支子节点 - 向右展开（从右侧到左侧）
@@ -236,7 +239,7 @@ function calculateLayout(rootNode, selectedNodeId = null, callbacks = {}, expand
         currentBranchY += NODE_HEIGHT + BRANCH_VERTICAL_SPACING;
       });
     } else {
-      subtreeHeight = NODE_HEIGHT + 40;
+      subtreeHeight = NODE_HEIGHT + MAIN_VERTICAL_SPACING;
     }
 
     return subtreeHeight;
@@ -276,6 +279,17 @@ export default function X6MindMap({
     expandedStatesRef.current[nodeId] = isExpanded;
     console.log(`[展开状态] 节点 ${nodeId}: ${isExpanded ? '展开' : '收起'}`);
   }, []);
+
+  // 处理节点选中（更新内部状态并通知外部）
+  const handleNodeSelectInternal = useCallback((nodeData) => {
+    if (nodeData && nodeData.id) {
+      setSelectedNodeId(nodeData.id);
+    } else {
+      setSelectedNodeId(null);
+    }
+    // 通知外部
+    onNodeSelect?.(nodeData);
+  }, [onNodeSelect]);
 
   // 保存节点位置到服务器（不触发状态更新，避免重渲染）
   const handleNodePositionChange = useCallback(async (nodeId, x, y) => {
@@ -372,32 +386,16 @@ export default function X6MindMap({
 
     graph.use(miniMap);
 
-    // 点击空白处取消选中
-    graph.on('blank:click', () => {
+    // 点击空白处取消选中（使用 mousedown 比 click 更灵敏）
+    graph.on('blank:mousedown', () => {
       setSelectedNodeId(null);
       onNodeSelect?.(null);
     });
 
-    // 点击节点选中并居中
-    graph.on('node:click', ({ node, e }) => {
-      if (node && node.id) {
-        // 如果点击的是展开/收起按钮或其子元素，不执行居中
-        const target = e?.target;
-        if (target) {
-          const isExpandButton = target.closest('.expand-toggle-btn') ||
-            target.closest('[data-expand-toggle="true"]') ||
-            target.closest('svg[data-testid="ExpandMoreIcon"]') ||
-            target.closest('svg[data-testid="ExpandLessIcon"]');
-          if (isExpandButton) return;
-        }
-
-        const nodeId = node.id;
-        setSelectedNodeId(nodeId);
-        const data = node.getData ? node.getData() : {};
-        onNodeSelect?.(data);
-        // 将点击的节点移动到画布中央
-        graph.centerCell(node);
-      }
+    // 点击空白处取消选中
+    graph.on('blank:click', () => {
+      setSelectedNodeId(null);
+      onNodeSelect?.(null);
     });
 
     // 节点拖拽结束，保存位置（通过 ref 调用，避免闭包问题）
@@ -516,6 +514,7 @@ export default function X6MindMap({
   }, [topicId]);
 
   // 更新数据（仅在 treeData 变化时重建图）
+  // 注意：selectedNodeId 不在这里，避免点击节点时重建图
   useEffect(() => {
     if (!graphRef.current || !treeData) return;
 
@@ -527,7 +526,7 @@ export default function X6MindMap({
     // 计算布局（传入持久化的展开状态和位置）
     const { nodes, edges } = calculateLayout(treeData, selectedNodeId, {
       onQuoteText,
-      onNodeSelect,
+      onNodeSelect: handleNodeSelectInternal,
       onCopyNode,
       onEditNode,
       onDeleteNode,
@@ -556,7 +555,7 @@ export default function X6MindMap({
         });
       });
     });
-  }, [treeData, selectedNodeId, initialDataLoaded, onQuoteText, onNodeSelect, onCopyNode, onEditNode, onDeleteNode, onDeleteBranch, handleToggleExpand]);
+  }, [treeData, initialDataLoaded, onQuoteText, handleNodeSelectInternal, onCopyNode, onEditNode, onDeleteNode, onDeleteBranch, handleToggleExpand]);
 
   // 单独处理选中状态变化，只更新节点样式而不重建图
   useEffect(() => {
@@ -623,7 +622,7 @@ export default function X6MindMap({
             graph.clearCells();
             const { nodes, edges } = calculateLayout(treeData, selectedNodeId, {
               onQuoteText,
-              onNodeSelect,
+              onNodeSelect: handleNodeSelectInternal,
               onCopyNode,
               onEditNode,
               onDeleteNode,
@@ -651,21 +650,74 @@ export default function X6MindMap({
         console.error('重置布局失败:', error);
       }
     }
-  }, [topicId, treeData, selectedNodeId, onQuoteText, onNodeSelect, onCopyNode, onEditNode, onDeleteNode, onDeleteBranch, handleToggleExpand]);
+  }, [topicId, treeData, selectedNodeId, onQuoteText, handleNodeSelectInternal, onCopyNode, onEditNode, onDeleteNode, onDeleteBranch, handleToggleExpand]);
+
+  // 重置节点（只清除节点位置，保留视口，重新应用自动布局）
+  const handleResetNodes = useCallback(async () => {
+    if (topicId) {
+      try {
+        await treeApi.resetNodePositions(topicId);
+        positionStatesRef.current = {}; // 清空位置 ref
+        // 重新加载树以应用自动布局（保留当前视口）
+        if (treeData) {
+          const graph = graphRef.current;
+          if (graph) {
+            graph.clearCells();
+            const { nodes, edges } = calculateLayout(treeData, selectedNodeId, {
+              onQuoteText,
+              onNodeSelect: handleNodeSelectInternal,
+              onCopyNode,
+              onEditNode,
+              onDeleteNode,
+              onDeleteBranch,
+              onToggleExpand: handleToggleExpand,
+            }, expandedStatesRef.current, {});
+            requestAnimationFrame(() => {
+              nodes.forEach((node) => {
+                graph.addNode({ ...node, zIndex: 2 });
+              });
+              edges.forEach((edge) => {
+                graph.addEdge({
+                  id: edge.id,
+                  source: edge.source,
+                  target: edge.target,
+                  shape: edge.shape,
+                });
+              });
+            });
+          }
+        }
+        console.log('[重置节点] 节点位置已重置，视口保持不变');
+      } catch (error) {
+        console.error('重置节点失败:', error);
+      }
+    }
+  }, [topicId, treeData, selectedNodeId, onQuoteText, handleNodeSelectInternal, onCopyNode, onEditNode, onDeleteNode, onDeleteBranch, handleToggleExpand]);
 
   return (
     <Box
-      ref={containerRef}
-      className="x6-mindmap-container"
       sx={{
         width: '100%',
         height: '100%',
         position: 'relative',
-        overflow: 'hidden',
-        padding: '4px 8px 4px 8px !important',
+        overflow: 'visible',
       }}
     >
-      {/* 左下角缩放控制按钮组 */}
+      {/* X6 Graph 容器 */}
+      <Box
+        ref={containerRef}
+        className="x6-mindmap-container"
+        sx={{
+          width: '100%',
+          height: '100%',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          overflow: 'hidden',
+          padding: '4px 8px 4px 8px !important',
+        }}
+      />
+      {/* 左下角控制按钮组 */}
       <Box
         sx={{
           position: 'absolute',
@@ -674,106 +726,30 @@ export default function X6MindMap({
           display: 'flex',
           flexDirection: 'column',
           gap: 1,
-          zIndex: 101,
+          zIndex: 1001,
+          bgcolor: 'var(--card-background)',
+          borderRadius: 1,
+          p: 0.5,
         }}
       >
         <Tooltip title="放大">
-          <IconButton
-            size="small"
-            onClick={handleZoomIn}
-            sx={{
-              bgcolor: 'var(--card-background, #ffffff)',
-              border: '1px solid var(--border-color, #e5e7eb)',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              '&:hover': { bgcolor: 'var(--hover-color, #f3f4f6)' },
-            }}
-          >
+          <IconButton size="small" onClick={handleZoomIn} sx={{ color: 'var(--text-color)' }}>
             <Add fontSize="small" />
           </IconButton>
         </Tooltip>
         <Tooltip title="缩小">
-          <IconButton
-            size="small"
-            onClick={handleZoomOut}
-            sx={{
-              bgcolor: 'var(--card-background, #ffffff)',
-              border: '1px solid var(--border-color, #e5e7eb)',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              '&:hover': { bgcolor: 'var(--hover-color, #f3f4f6)' },
-            }}
-          >
+          <IconButton size="small" onClick={handleZoomOut} sx={{ color: 'var(--text-color)' }}>
             <Remove fontSize="small" />
           </IconButton>
         </Tooltip>
         <Tooltip title="重置缩放">
-          <IconButton
-            size="small"
-            onClick={handleResetZoom}
-            sx={{
-              bgcolor: 'var(--card-background, #ffffff)',
-              border: '1px solid var(--border-color, #e5e7eb)',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              '&:hover': { bgcolor: 'var(--hover-color, #f3f4f6)' },
-            }}
-          >
+          <IconButton size="small" onClick={handleResetZoom} sx={{ color: 'var(--text-color)' }}>
             <FitScreen fontSize="small" />
           </IconButton>
         </Tooltip>
-      </Box>
-
-      {/* 控制按钮组 */}
-      <Box
-        sx={{
-          position: 'absolute',
-          right: 16,
-          bottom: 16,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 1,
-          zIndex: 101,
-        }}
-      >
-        <Tooltip title="适应画布">
-          <IconButton
-            size="small"
-            onClick={handleFitView}
-            sx={{
-              bgcolor: 'var(--card-background, #ffffff)',
-              border: '1px solid var(--border-color, #e5e7eb)',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              '&:hover': { bgcolor: 'var(--hover-color, #f3f4f6)' },
-            }}
-          >
-            <FitScreen fontSize="small" />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title={showMiniMap ? '隐藏小地图' : '显示小地图'}>
-          <IconButton
-            size="small"
-            onClick={toggleMiniMap}
-            sx={{
-              bgcolor: 'var(--card-background, #ffffff)',
-              border: '1px solid var(--border-color, #e5e7eb)',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              '&:hover': { bgcolor: 'var(--hover-color, #f3f4f6)' },
-              color: showMiniMap ? '#3b82f6' : 'inherit',
-            }}
-          >
-            <MapIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="重置布局">
-          <IconButton
-            size="small"
-            onClick={handleResetLayout}
-            sx={{
-              bgcolor: 'var(--card-background, #ffffff)',
-              border: '1px solid var(--border-color, #e5e7eb)',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              '&:hover': { bgcolor: 'var(--hover-color, #f3f4f6)' },
-            }}
-          >
-            <Restore fontSize="small" />
+        <Tooltip title="重置节点">
+          <IconButton size="small" onClick={handleResetNodes} sx={{ color: 'var(--text-color)' }}>
+            <RestartAlt fontSize="small" />
           </IconButton>
         </Tooltip>
       </Box>
