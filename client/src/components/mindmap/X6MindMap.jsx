@@ -20,6 +20,14 @@ register({
   width: NODE_WIDTH,
   height: NODE_HEIGHT,
   component: X6MindMapNode,
+  // 允许节点内容溢出边界，确保展开后的文字可选中
+  attrs: {
+    root: {
+      style: {
+        overflow: 'visible',
+      },
+    },
+  },
   ports: {
     groups: {
       top: {
@@ -491,9 +499,10 @@ export default function X6MindMap({
   useEffect(() => {
     if (topicId) {
       // 重置状态
-      expandedStatesRef.current = {};
-      positionStatesRef.current = {};
-      setInitialDataLoaded(false);
+      // 切换话题时重置状态，避免旧话题数据污染新话题
+      expandedStatesRef.current = {};   // 清空节点展开/收起状态
+      positionStatesRef.current = {};   // 清空节点位置缓存
+      setInitialDataLoaded(false);      // 标记数据未加载，触发后续加载流程
       // 从服务器加载节点位置
       treeApi.getNodePositions(topicId).then(result => {
         if (result.success) {
@@ -764,6 +773,23 @@ export default function X6MindMap({
         overflow: 'visible',
       }}
     >
+      {/* 全局样式：覆盖 X6 节点容器，允许内容溢出和文字选择 */}
+      <style>{`
+        .x6-node foreignObject {
+          overflow: visible !important;
+        }
+        .x6-node-content {
+          overflow: visible !important;
+        }
+        .x6-node {
+          overflow: visible !important;
+        }
+        /* 确保 X6 节点内部文字可选中 */
+        .x6-node * {
+          user-select: text !important;
+          -webkit-user-select: text !important;
+        }
+      `}</style>
       {/* X6 Graph 容器 */}
       <Box
         ref={containerRef}

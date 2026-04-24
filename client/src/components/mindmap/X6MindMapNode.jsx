@@ -98,7 +98,7 @@ const X6MindMapNode = memo(({ node }) => {
     }
   }, [isExpanded, originalToggleExpand, onToggleExpand, nodeId]);
 
-  // 根据展开状态动态计算并更新底部连接桩位置
+  // 根据展开状态动态计算并更新底部连接桩位置和节点大小
   useEffect(() => {
     if (!node || !contentRef.current) return;
 
@@ -111,6 +111,13 @@ const X6MindMapNode = memo(({ node }) => {
 
     // 更新底部连接桩位置（x 为节点宽度的一半）
     node.setPortProp('bottom', 'args', { x: NODE_WIDTH / 2, y: bottomY });
+
+    // 动态调整 X6 节点大小，确保展开后内容可见
+    if (isExpanded && contentHeight > NODE_HEIGHT) {
+      node.resize(NODE_WIDTH, contentHeight);
+    } else {
+      node.resize(NODE_WIDTH, NODE_HEIGHT);
+    }
 
     // 触发从该节点出发的边重新路由
     const outgoingEdges = node.getOutgoingEdges?.() || [];
@@ -315,6 +322,8 @@ const X6MindMapNode = memo(({ node }) => {
       sx={{
         width: NODE_WIDTH,
         minHeight: NODE_HEIGHT,
+        // 展开时高度自适应，确保内容完全可见
+        height: isExpanded ? 'auto' : 'auto',
         position: 'relative',
       }}
       onMouseUp={handleTextSelection}
@@ -363,7 +372,8 @@ const X6MindMapNode = memo(({ node }) => {
           border: styles.border,
           borderRadius: 3,
           boxShadow: styles.boxShadow,
-          overflow: 'hidden',
+          // 展开时溢出可见，确保底部文字可选中；收起时隐藏溢出内容
+          overflow: isExpanded ? 'visible' : 'hidden',
           transition: 'all 0.2s ease',
           backgroundColor: isQuote ? '#fffbeb' : (isError ? '#fef2f2' : '#ffffff'),
         }}
@@ -406,26 +416,46 @@ const X6MindMapNode = memo(({ node }) => {
               visible={needsExpand} 
             />
           </Box>
-          <Typography
-            variant="body2"
-            onMouseDown={(e) => e.stopPropagation()}
-            sx={{
-              fontSize: '0.8rem',
-              fontWeight: 600,
-              color: '#1f2937',
-              lineHeight: 1.4,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              cursor: 'text',
-              userSelect: 'text',
-              WebkitUserSelect: 'text',
-            }}
-          >
-            {displayQuestion}
-          </Typography>
+          {isExpanded ? (
+            // 展开时：用 span 让容器只包裹实际文字
+            <Typography
+              variant="body2"
+              component="span"
+              onMouseDown={(e) => e.stopPropagation()}
+              sx={{
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                color: '#1f2937',
+                lineHeight: 1.4,
+                cursor: 'text',
+                userSelect: 'text',
+                WebkitUserSelect: 'text',
+              }}
+            >
+              {displayQuestion}
+            </Typography>
+          ) : (
+            // 收起时：用 -webkit-box 截断
+            <Typography
+              variant="body2"
+              onMouseDown={(e) => e.stopPropagation()}
+              sx={{
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                color: '#1f2937',
+                lineHeight: 1.4,
+                cursor: 'text',
+                userSelect: 'text',
+                WebkitUserSelect: 'text',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              }}
+            >
+              {displayQuestion}
+            </Typography>
+          )}
         </Box>
 
         {/* 下半部分：回答区域 */}
@@ -454,29 +484,48 @@ const X6MindMapNode = memo(({ node }) => {
               {statusLabel}
             </Typography>
           </Box>
-          <Typography
-            variant="body2"
-            onMouseDown={(e) => e.stopPropagation()}
-            sx={{
-              fontSize: '0.75rem',
-              color: isError ? '#dc2626' : '#374151',
-              lineHeight: 1.4,
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-              // 收起时固定三行高度，展开时自适应
-              height: isExpanded ? 'auto' : 'calc(0.75rem * 1.4 * 3)',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              display: '-webkit-box',
-              WebkitLineClamp: isExpanded ? 'unset' : 3,
-              WebkitBoxOrient: 'vertical',
-              cursor: 'text',
-              userSelect: 'text',
-              WebkitUserSelect: 'text',
-            }}
-          >
-            {fullAnswer}
-          </Typography>
+          {isExpanded ? (
+            // 展开时：用 span 让容器只包裹实际文字
+            <Typography
+              variant="body2"
+              component="span"
+              onMouseDown={(e) => e.stopPropagation()}
+              sx={{
+                fontSize: '0.75rem',
+                color: isError ? '#dc2626' : '#374151',
+                lineHeight: 1.4,
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                cursor: 'text',
+                userSelect: 'text',
+                WebkitUserSelect: 'text',
+              }}
+            >
+              {fullAnswer}
+            </Typography>
+          ) : (
+            // 收起时：用 -webkit-box 截断
+            <Typography
+              variant="body2"
+              onMouseDown={(e) => e.stopPropagation()}
+              sx={{
+                fontSize: '0.75rem',
+                color: isError ? '#dc2626' : '#374151',
+                lineHeight: 1.4,
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                cursor: 'text',
+                userSelect: 'text',
+                WebkitUserSelect: 'text',
+                display: '-webkit-box',
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              }}
+            >
+              {fullAnswer}
+            </Typography>
+          )}
 
           {/* 分支状态/操作按钮栏 */}
           <>
