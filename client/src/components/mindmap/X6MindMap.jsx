@@ -406,13 +406,19 @@ export default function X6MindMap({
       onNodeSelect?.(null);
     });
 
-    // 节点拖拽结束，保存位置（通过 ref 调用，避免闭包问题）
+    // 节点拖拽开始时禁用文本选择
+    graph.on('node:mousedown', () => {
+      document.body.classList.add('x6-dragging');
+    });
+
+    // 节点拖拽结束，保存位置并恢复文本选择（通过 ref 调用，避免闭包问题）
     graph.on('node:moved', ({ node }) => {
       if (node && node.id) {
         const position = node.getPosition();
         // 使用 ref 调用，确保获取到最新的函数
         handleNodePositionChangeRef.current?.(node.id, position.x, position.y);
       }
+      document.body.classList.remove('x6-dragging');
     });
 
     // 监听视口变化，保存视口位置
@@ -788,6 +794,11 @@ export default function X6MindMap({
         .x6-node * {
           user-select: text !important;
           -webkit-user-select: text !important;
+        }
+        /* 拖拽时禁用文本选择 */
+        .x6-dragging, .x6-dragging * {
+          user-select: none !important;
+          -webkit-user-select: none !important;
         }
       `}</style>
       {/* X6 Graph 容器 */}
