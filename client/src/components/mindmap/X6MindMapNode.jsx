@@ -228,14 +228,29 @@ const X6MindMapNode = memo(({ node }) => {
     window.getSelection()?.removeAllRanges();
   }, [selectedText, onQuoteText, data.id]);
 
-  // 处理复制节点
+  // 处理复制回答文字内容到剪贴板
   const handleCopy = useCallback((event) => {
     event?.stopPropagation?.();
     event?.preventDefault?.();
-    if (onCopyNode && data.id) {
-      onCopyNode(data.id);
+    // 复制回答文字内容
+    const textToCopy = fullAnswer || '';
+    if (textToCopy) {
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        console.log('[复制成功] 回答内容已复制到剪贴板');
+      }).catch((err) => {
+        console.error('[复制失败]', err);
+        // 降级方案：使用传统方法复制
+        const textarea = document.createElement('textarea');
+        textarea.value = textToCopy;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      });
     }
-  }, [onCopyNode, data.id]);
+  }, [fullAnswer]);
 
   // 处理编辑节点
   const handleEdit = useCallback((event) => {
@@ -583,7 +598,7 @@ const X6MindMapNode = memo(({ node }) => {
 
               {/* 操作按钮 */}
               <Box sx={{ display: 'flex', gap: 0.5 }}>
-                <Tooltip title="复制节点" placement="top">
+                <Tooltip title="复制回答" placement="top">
                   <IconButton
                     type="button"
                     size="small"

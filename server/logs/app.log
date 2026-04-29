@@ -4713,3 +4713,15 @@
 [2026-04-29T08:54:02.002Z] [INFO] [TopicManager] 保存话题成功 {"topicCount":2}
 [2026-04-29T08:54:05.110Z] [INFO] [TopicManager] 保存视口位置成功 {"topicId":"default","viewport":{"x":517.4638671875,"y":187.6534423828125,"zoom":0.5}}
 [2026-04-29T08:54:05.110Z] [INFO] [TopicManager] 保存话题成功 {"topicCount":2}
+[2026-04-29T08:54:27.344Z] [INFO] [TopicManager] 保存视口位置成功 {"topicId":"default","viewport":{"x":-457.68817138671875,"y":29.411691665649414,"zoom":1.4500000476837158}}
+[2026-04-29T08:54:27.344Z] [INFO] [TopicManager] 保存话题成功 {"topicCount":2}
+[2026-04-29T08:55:00.647Z] [INFO] [TopicManager] 保存话题成功 {"topicCount":2}
+[2026-04-29T08:55:00.647Z] [INFO] [TopicManager] 保存视口位置成功 {"topicId":"default","viewport":{"x":286.24688720703125,"y":-23.628494262695312,"zoom":0.6000000238418579}}
+[2026-04-29T08:55:02.477Z] [INFO] [TopicManager] 保存视口位置成功 {"topicId":"default","viewport":{"x":529.5257568359375,"y":33.30323791503906,"zoom":0.4000000059604645}}
+[2026-04-29T08:55:02.477Z] [INFO] [TopicManager] 保存话题成功 {"topicCount":2}
+[2026-04-29T08:55:03.372Z] [INFO] [TopicManager] 保存视口位置成功 {"topicId":"default","viewport":{"x":319.7469787597656,"y":-160.1284637451172,"zoom":0.6000000238418579}}
+[2026-04-29T08:55:03.372Z] [INFO] [TopicManager] 保存话题成功 {"topicCount":2}
+[2026-04-29T08:55:04.450Z] [INFO] [TopicManager] 保存视口位置成功 {"topicId":"default","viewport":{"x":106.27352142333984,"y":-394.8347473144531,"zoom":0.8500000238418579}}
+[2026-04-29T08:55:04.450Z] [INFO] [TopicManager] 保存话题成功 {"topicCount":2}
+[2026-04-29T08:59:32.639Z] [INFO] [TopicManager] 保存话题成功 {"topicCount":2}
+[2026-04-29T08:59:32.639Z] [INFO] [TopicManager] 保存视口位置成功 {"topicId":"default","viewport":{"x":247.27352905273438,"y":-547.834716796875,"zoom":0.8500000238418579}}
