@@ -104,8 +104,8 @@ const X6MindMapNode = memo(({ node }) => {
 
     // 获取内容实际高度
     const contentHeight = contentRef.current.scrollHeight;
-    // 底部连接桩应该在内容底部（收起时在 NODE_HEIGHT + 14，展开时随内容自适应）
-    const bottomY = isExpanded ? Math.max(NODE_HEIGHT, contentHeight) : NODE_HEIGHT + 14;
+    // 底部连接桩应该在内容底部（收起时在 NODE_HEIGHT，展开时随内容自适应）
+    const bottomY = isExpanded ? Math.max(NODE_HEIGHT, contentHeight) : NODE_HEIGHT;
 
     console.log('[Port Update]', { isExpanded, contentHeight, bottomY });
 
@@ -391,6 +391,10 @@ const X6MindMapNode = memo(({ node }) => {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
+            // 展开时隐藏溢出，防止背景色显示为直角超出圆角边框
+            overflow: 'hidden',
+            // 保持与 Paper 一致的上圆角
+            borderRadius: isExpanded ? '12px 12px 0 0' : '12px 12px 0 0',
           }}
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

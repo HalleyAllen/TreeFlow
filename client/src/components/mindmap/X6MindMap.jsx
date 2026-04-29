@@ -11,7 +11,7 @@ import X6MindMapNode, { NODE_WIDTH, NODE_HEIGHT } from './X6MindMapNode';
 import * as treeApi from '../../services/api/tree.api';
 
 // 连接桩配置常量
-const PORT_RADIUS = 1;
+const PORT_RADIUS = 3;
 const PORT_OFFSET = { x: 140, y: 110 }; // 节点中心位置
 
 // 注册 React 节点
