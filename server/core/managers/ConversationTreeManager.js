@@ -72,18 +72,24 @@ class ConversationTreeManager {
   }
 
   /**
-   * 获取对话路径（从 root 到当前节点的扁平消息列表）
+   * 获取对话路径（从 root 到指定节点的扁平消息列表）
    * @param {string} topicId - 话题ID
+   * @param {string} [endNodeId] - 可选，结束节点ID（默认使用 topic.currentNode）
    * @returns {Array} - 扁平消息数组 [{type:'user'|'ai', content, nodeId}]
    */
-  getConversationMessages(topicId) {
+  getConversationMessages(topicId, endNodeId = null) {
     const topic = this.topicManager.getTopic(topicId);
-    if (!topic || !topic.currentNode) return [];
+    if (!topic || !topic.conversationTree) return [];
 
     const path = [];
-    const current = topic.currentNode;
+    // 如果指定了 endNodeId，从树中查找该节点；否则使用 currentNode
+    let current = topic.currentNode;
+    if (endNodeId) {
+      current = this.findNodeById(topic.conversationTree, endNodeId);
+    }
+    if (!current) return [];
 
-    // 从 currentNode 回溯到 root
+    // 从指定节点回溯到 root
     const tracePath = (node) => {
       if (!node || node.id === 'root') return;
       const parent = node.parentId ? this.findNodeById(topic.conversationTree, node.parentId) : null;
@@ -105,10 +111,11 @@ class ConversationTreeManager {
   /**
    * 获取对话历史（用于AI上下文）
    * @param {string} topicId - 话题ID
+   * @param {string} [endNodeId] - 可选，结束节点ID（默认使用 topic.currentNode）
    * @returns {Array} - messages 数组 [{role:'user'|'assistant', content}]
    */
-  getConversationHistory(topicId) {
-    const messages = this.getConversationMessages(topicId);
+  getConversationHistory(topicId, endNodeId = null) {
+    const messages = this.getConversationMessages(topicId, endNodeId);
     return messages.map(msg => ({
       role: msg.type === 'user' ? 'user' : 'assistant',
       content: msg.content
@@ -285,23 +292,33 @@ class ConversationTreeManager {
       return rootNode;
     }
 
-    // 确定父节点
+    // 确定父节点：始终从 conversationTree 中查找真实引用，避免使用断裂的 currentNode 副本
     let parentNode = null;
     if (parentNodeId) {
       parentNode = this.findNodeById(topic.conversationTree, parentNodeId);
       if (!parentNode) {
-        logger.warn('ConversationTreeManager', '指定的父节点不存在，使用 currentNode', { parentNodeId });
+        logger.warn('ConversationTreeManager', '指定的父节点不存在，回退到 currentNode', { parentNodeId });
       }
     }
     
-    // 如果没有指定父节点或找不到，使用 currentNode
+    // 如果没有指定父节点或找不到，使用 currentNode（但必须重新从 conversationTree 中查找真实引用）
     if (!parentNode) {
       // 确保 currentNode 已初始化
       if (!topic.currentNode) {
         topic.currentNode = topic.conversationTree;
         logger.info('ConversationTreeManager', '初始化currentNode', { topicId, rootId: topic.conversationTree.id });
       }
-      parentNode = topic.currentNode;
+      // 关键修复：从 conversationTree 重新查找 currentNode 的真实引用，避免 JSON 加载后的引用断裂
+      parentNode = this.findNodeById(topic.conversationTree, topic.currentNode.id);
+      if (!parentNode) {
+        // currentNode 不在 conversationTree 中（数据异常），回退到 conversationTree 的根节点
+        logger.error('ConversationTreeManager', 'currentNode 不在 conversationTree 中，回退到根节点', {
+          topicId,
+          currentNodeId: topic.currentNode.id
+        });
+        parentNode = topic.conversationTree;
+        topic.currentNode = parentNode;
+      }
     }
 
     const newNode = {

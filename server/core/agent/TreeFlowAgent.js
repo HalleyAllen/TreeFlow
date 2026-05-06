@@ -79,15 +79,17 @@ class TreeFlowAgent {
         this.conversationTreeManager.createBranchFromNode(currentTopic, fromNodeId);
       }
       
+      // 获取对话历史用于上下文（必须在 addConversationNode 之前，否则新节点会被包含进历史）
+      // 引用分支：基于被引用节点(fromNodeId)回溯；其他情况：基于当前节点回溯
+      const historyEndNodeId = (branchType === 'quote' && fromNodeId) ? fromNodeId : null;
+      let conversationHistory = this.conversationTreeManager.getConversationHistory(currentTopic, historyEndNodeId);
+      
       newNode = this.conversationTreeManager.addConversationNode(currentTopic, question, '', nodeOptions, actualParentId);
       if (!newNode) {
         logger.error('TreeFlowAgent', '创建节点失败', { topic: currentTopic });
         throw new Error('创建对话节点失败');
       }
       logger.info('TreeFlowAgent', '创建对话节点', { nodeId: newNode.id, status: 'loading', branchType });
-      
-      // 获取对话历史用于上下文
-      let conversationHistory = this.conversationTreeManager.getConversationHistory(currentTopic);
       
       // 如果指定了技能，添加系统提示词
       let finalQuestion = question;

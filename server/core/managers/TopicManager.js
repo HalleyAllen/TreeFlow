@@ -25,6 +25,11 @@ class TopicManager {
   /**
    * 加载话题数据
    * 从topics.json文件加载话题数据，如果文件不存在则使用默认话题
+   * 
+   * 重要：JSON 序列化后 currentNode 和 conversationTree 的引用会断裂，
+   * 加载后必须重新同步 currentNode 到 conversationTree 的真实引用。
+   * 如果 currentNode 成为孤儿节点（不在 conversationTree 中），
+   * 尝试将其挂回 conversationTree 的最后一个叶子节点。
    */
   loadTopics() {
     try {
@@ -33,12 +38,63 @@ class TopicManager {
         const loadedTopics = JSON.parse(data);
         // 合并加载的话题，保留默认话题
         this.topics = { ...this.topics, ...loadedTopics };
-        // 初始化每个话题的currentNode
+        // 重新同步每个话题的 currentNode 引用
         Object.values(this.topics).forEach(topic => {
+          if (!topic.conversationTree) {
+            topic.currentNode = null;
+            return;
+          }
           if (!topic.currentNode) {
             topic.currentNode = topic.conversationTree;
+            return;
+          }
+          // 在 conversationTree 中查找 currentNode.id 对应的节点
+          const findNodeById = (node, id) => {
+            if (!node) return null;
+            if (node.id === id) return node;
+            for (const child of node.children) {
+              const found = findNodeById(child, id);
+              if (found) return found;
+            }
+            return null;
+          };
+          const foundNode = findNodeById(topic.conversationTree, topic.currentNode.id);
+          if (foundNode) {
+            // 引用正常，重新建立引用
+            topic.currentNode = foundNode;
+          } else {
+            // currentNode 是孤儿节点，不在 conversationTree 中
+            // 尝试找到其 parentId 对应的节点并挂回去
+            const parentNode = topic.currentNode.parentId
+              ? findNodeById(topic.conversationTree, topic.currentNode.parentId)
+              : null;
+            if (parentNode) {
+              parentNode.children.push(topic.currentNode);
+              topic.currentNode = topic.currentNode;
+              logger.warn('TopicManager', '孤儿节点已挂回父节点', {
+                topic: topic.name,
+                nodeId: topic.currentNode.id,
+                parentId: parentNode.id
+              });
+            } else {
+              // parentId 也找不到，挂到 conversationTree 的最后一个叶子节点
+              const findLastLeaf = (node) => {
+                if (!node.children || node.children.length === 0) return node;
+                return findLastLeaf(node.children[node.children.length - 1]);
+              };
+              const lastLeaf = findLastLeaf(topic.conversationTree);
+              topic.currentNode.parentId = lastLeaf.id;
+              lastLeaf.children.push(topic.currentNode);
+              topic.currentNode = topic.currentNode;
+              logger.warn('TopicManager', '孤儿节点已挂到最后一个叶子节点', {
+                topic: topic.name,
+                nodeId: topic.currentNode.id,
+                leafId: lastLeaf.id
+              });
+            }
           }
         });
+        this.saveTopics(); // 保存修复后的数据
         logger.info('TopicManager', '加载话题成功', { topicCount: Object.keys(this.topics).length });
       } else {
         logger.info('TopicManager', '话题文件不存在，使用默认话题');
