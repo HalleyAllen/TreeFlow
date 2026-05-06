@@ -132,7 +132,10 @@ const X6MindMapNode = memo(({ node }) => {
   const isQuote = branchType === 'quote';
   const isLoading = status === 'loading';
   const isError = status === 'error';
+  // 铁打定律：children[0] 是主线，不算分支；真正的分支数 = childrenCount - 1（如果大于0）
+  const branchCount = Math.max(0, childrenCount - 1);
   const hasChildren = childrenCount > 0;
+  const hasBranches = branchCount > 0;
 
   // 显示内容
   const displayQuestion = (isRoot && !question) ? '开始' : (question || '');
@@ -306,8 +309,8 @@ const X6MindMapNode = memo(({ node }) => {
 
   // 是否需要展开按钮（回答内容较长时）
   const needsExpand = fullAnswer.length > 50;
-  // 是否有操作权限（非根节点或有子节点时显示删除支线）
-  const canDeleteBranch = hasChildren && !isRoot;
+  // 是否有操作权限（有真正分支且非根节点时显示删除支线）
+  const canDeleteBranch = hasBranches && !isRoot;
 
   // 获取当前缩放比例
   const graph = node?.model?.graph || node?.getGraph?.();
@@ -565,7 +568,7 @@ const X6MindMapNode = memo(({ node }) => {
               }}
             >
               {/* 分支数量或状态 - 只在收起时显示 */}
-              {(hasChildren || isLoading) && !isExpanded && (
+              {(hasBranches || isLoading) && !isExpanded && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   {isLoading ? (
                     <>
@@ -595,13 +598,13 @@ const X6MindMapNode = memo(({ node }) => {
                         borderRadius: 1,
                       }}
                     >
-                      📌 {childrenCount} 分支
+                      📌 {branchCount} 分支
                     </Typography>
                   )}
                 </Box>
               )}
               {/* 占位元素，当没有分支标签时保持按钮靠右 */}
-              {(!hasChildren && !isLoading) || isExpanded ? <Box /> : null}
+              {(!hasBranches && !isLoading) || isExpanded ? <Box /> : null}
 
               {/* 操作按钮 */}
               <Box sx={{ display: 'flex', gap: 0.5 }}>
