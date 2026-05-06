@@ -14,7 +14,7 @@ class TreeController {
   }
 
   /**
-   * 获取话题的完整对话树
+   * 获取话题的完整对话树（包含节点位置）
    * GET /api/tree/:topicId
    */
   getTree = (req, res) => {
@@ -35,18 +35,26 @@ class TreeController {
             topicId: topic.id,
             topicName: topic.name,
             tree: null,
-            currentNodeId: null
+            currentNodeId: null,
+            positions: {},
+            viewport: null
           }
         });
       }
 
       const tree = this.buildTreeNode(topic.conversationTree, topic);
       
-      logger.info('TreeController', '获取对话树', { 
+      // 同时获取节点位置和视口状态
+      const positions = this.topicManager.getNodePositions(topicId);
+      const viewport = this.topicManager.getViewport(topicId);
+      
+      logger.info('TreeController', '获取对话树（含位置）', { 
         topicId, 
         topicName: topic.name,
         rootChildrenCount: tree.children.length,
-        currentNodeId: topic.currentNode?.id 
+        currentNodeId: topic.currentNode?.id,
+        hasPositions: Object.keys(positions).length > 0,
+        hasViewport: !!viewport
       });
       
       res.json({
@@ -55,7 +63,9 @@ class TreeController {
           topicId: topic.id,
           topicName: topic.name,
           tree,
-          currentNodeId: topic.currentNode?.id || null
+          currentNodeId: topic.currentNode?.id || null,
+          positions,
+          viewport
         }
       });
     } catch (error) {

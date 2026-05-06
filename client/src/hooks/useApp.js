@@ -122,6 +122,7 @@ export const useApp = () => {
 
   // 处理划词引用（支持多个引用）
   const handleQuoteText = useCallback((quoteData) => {
+    console.log('[useApp] handleQuoteText 被调用:', quoteData);
     if (quoteData === null) {
       // 清除所有引用
       setQuotedTexts([]);
@@ -130,8 +131,13 @@ export const useApp = () => {
       setQuotedTexts(prev => {
         // 检查是否已存在相同引用
         const exists = prev.some(q => q.text === quoteData.text && q.nodeId === quoteData.nodeId);
-        if (exists) return prev;
-        return [...prev, { ...quoteData, id: Date.now() }];
+        if (exists) {
+          console.log('[useApp] 引用已存在，跳过添加');
+          return prev;
+        }
+        const newQuote = { ...quoteData, id: Date.now() };
+        console.log('[useApp] 添加新引用:', newQuote);
+        return [...prev, newQuote];
       });
     }
   }, []);

@@ -336,6 +336,7 @@ const ChatContainer = ({
         )}
 
         {/* 引用内容显示 - 支持多个引用 */}
+        {console.log('[ChatContainer] quotedTexts:', quotedTexts)}
         {quotedTexts && quotedTexts.length > 0 && (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
             {quotedTexts.map((quote, index) => (

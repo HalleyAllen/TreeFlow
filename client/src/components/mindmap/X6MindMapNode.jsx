@@ -84,6 +84,9 @@ const X6MindMapNode = memo(({ node }) => {
     onDeleteBranch,
     onToggleExpand,
   } = data;
+  
+  // 获取节点 ID（从 data 或 node 对象）
+  const actualNodeId = nodeId || node?.id || data?.id;
 
   // 使用自定义 Hook 管理展开状态（接收持久化的初始状态）
   const { isExpanded, toggleExpand: originalToggleExpand } = useNodeExpand(initialExpanded);
@@ -221,12 +224,16 @@ const X6MindMapNode = memo(({ node }) => {
   const handleQuote = useCallback((event) => {
     event?.stopPropagation?.();
     event?.preventDefault?.();
-    if (selectedText && onQuoteText) {
-      onQuoteText(data.id, selectedText);
+    console.log('[引用调试] selectedText:', selectedText, 'onQuoteText:', !!onQuoteText, 'actualNodeId:', actualNodeId);
+    if (selectedText && onQuoteText && actualNodeId) {
+      onQuoteText({ nodeId: actualNodeId, text: selectedText });
+      console.log('[引用调试] 已发送引用:', { nodeId: actualNodeId, text: selectedText.substring(0, 30) });
+    } else {
+      console.warn('[引用调试] 无法发送引用:', { selectedText: !!selectedText, hasCallback: !!onQuoteText, actualNodeId });
     }
     setShowQuoteButton(false);
     window.getSelection()?.removeAllRanges();
-  }, [selectedText, onQuoteText, data.id]);
+  }, [selectedText, onQuoteText, actualNodeId]);
 
   // 处理复制回答文字内容到剪贴板
   const handleCopy = useCallback((event) => {

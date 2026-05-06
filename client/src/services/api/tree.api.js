@@ -6,7 +6,7 @@ import logger from '../logger';
 const API_BASE_URL = '';
 
 /**
- * 获取话题的完整对话树
+ * 获取话题的完整对话树（包含节点位置和视口状态）
  * @param {string} topicId - 话题ID
  * @returns {Promise<Object>} - 对话树数据
  */
@@ -14,14 +14,16 @@ export async function getTree(topicId) {
   try {
     const response = await fetch(`${API_BASE_URL}/api/tree/${topicId}`);
     const data = await response.json();
-    // 返回完整响应结构 { success, data: { tree, currentNodeId } }
+    // 返回完整响应结构 { success, data: { tree, currentNodeId, positions, viewport } }
     if (data.success && data.data) {
       return {
         success: true,
         tree: data.data.tree,
         currentNodeId: data.data.currentNodeId,
         topicId: data.data.topicId,
-        topicName: data.data.topicName
+        topicName: data.data.topicName,
+        positions: data.data.positions || {},
+        viewport: data.data.viewport || null
       };
     }
     return { success: false, error: data.error || '获取对话树失败' };
