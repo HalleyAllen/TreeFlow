@@ -32,8 +32,5 @@ module.exports = (agent) => {
   // 清除所有Token
   router.delete('/all', asyncHandler((req, res) => controller.clearTokens(req, res)));
 
-  // 检查Token健康状态
-  router.post('/check-health', asyncHandler((req, res) => controller.checkTokenHealth(req, res)));
-
   return router;
 };

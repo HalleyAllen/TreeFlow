@@ -1,6 +1,6 @@
 /**
  * 技能路由
- * 处理AI技能系统
+ * 处理AI技能系统（预留接口，暂未实现）
  */
 const express = require('express');
 const router = express.Router();
@@ -11,27 +11,19 @@ const { asyncHandler } = require('../middleware/errorHandler');
  * @param {TreeFlowAgent} agent - TreeFlowAgent实例
  */
 module.exports = (agent) => {
-  // 获取技能列表
+  // 获取技能列表（预留）
   router.get('/', asyncHandler(async (req, res) => {
-    const { q } = req.query;
-    const skills = q 
-      ? agent.skillManager.searchSkills(q) 
-      : agent.skillManager.getSkills();
-    res.success({ skills });
+    res.success({ skills: [], message: '功能暂未实现' });
   }));
 
-  // 添加自定义技能
+  // 添加自定义技能（预留）
   router.post('/', asyncHandler(async (req, res) => {
-    const skill = req.body;
-    const result = agent.skillManager.addSkill(skill);
-    res.success({ result });
+    res.success({ result: '功能暂未实现' });
   }));
 
-  // 删除技能
+  // 删除技能（预留）
   router.delete('/:skillId', asyncHandler(async (req, res) => {
-    const { skillId } = req.params;
-    const result = agent.skillManager.deleteSkill(skillId);
-    res.success({ result });
+    res.success({ result: '功能暂未实现' });
   }));
 
   return router;

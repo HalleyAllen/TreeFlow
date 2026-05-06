@@ -61,15 +61,6 @@ class TokenController {
     const result = this.tokenManager.clearTokens();
     res.success({ result });
   }
-
-  /**
-   * 检查Token健康状态
-   */
-  async checkTokenHealth(req, res) {
-    const { token } = req.body;
-    const result = await this.tokenManager.checkTokenHealth(token);
-    res.success({ result });
-  }
 }
 
 module.exports = TokenController;

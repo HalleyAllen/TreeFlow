@@ -99,8 +99,13 @@ Graph.registerEdge(
     router: {
       name: 'manhattan',
       args: {
-        padding: 10,
-        step: 10,
+        padding: 30,
+        step: 15,
+        // 最大转向次数，避免过于复杂的路线
+        maxDirectionChange: 3,
+        // 优先方向，保持垂直和水平走向
+        startDirections: ['bottom', 'top', 'right', 'left'],
+        endDirections: ['top', 'bottom', 'left', 'right'],
       },
     },
     connector: {
@@ -109,6 +114,8 @@ Graph.registerEdge(
         radius: 8,
       },
     },
+    // 设置连线路径避开节点
+    zIndex: 0,
   },
   true
 );
@@ -129,39 +136,93 @@ Graph.registerEdge(
     router: {
       name: 'manhattan',
       args: {
-        padding: 10,
-        step: 10,
+        padding: 30,
+        step: 15,
+        // 最大转向次数，避免过于复杂的路线
+        maxDirectionChange: 3,
+        // 优先方向
+        startDirections: ['bottom', 'top', 'right', 'left'],
+        endDirections: ['top', 'bottom', 'left', 'right'],
       },
     },
     connector: {
       name: 'rounded',
       rounded: 8,
     },
+    zIndex: 0,
   },
   true
 );
 
 // 节点间距配置（NODE_WIDTH/NODE_HEIGHT 从 X6MindMapNode 导入）
-const MAIN_VERTICAL_SPACING = 40;    // 主流程节点之间的垂直间距
-const HORIZONTAL_SPACING = 360;      // 分支的水平间距
-const BRANCH_VERTICAL_SPACING = 200; // 分支之间的垂直间距
+const MAIN_VERTICAL_SPACING = 80;    // 主流程节点之间的垂直间距
+const HORIZONTAL_SPACING = 400;      // 分支的水平间距
+const BRANCH_VERTICAL_SPACING = 240; // 分支之间的垂直间距
+
+/**
+ * 计算子树所需的总高度（包含所有后代节点）
+ * 用于确保兄弟分支之间不会重叠
+ */
+function calculateSubtreeHeight(node) {
+  if (!node.children || node.children.length === 0) {
+    return NODE_HEIGHT + MAIN_VERTICAL_SPACING;
+  }
+
+  const mainChild = node.children[0];
+  const branchChildren = node.children.slice(1);
+
+  // 主流程子树高度
+  let mainChildHeight = 0;
+  if (mainChild) {
+    mainChildHeight = calculateSubtreeHeight(mainChild);
+  }
+
+  // 分支子树的总高度
+  let branchesTotalHeight = 0;
+  branchChildren.forEach((child, index) => {
+    const childTreeHeight = calculateSubtreeHeight(child);
+    branchesTotalHeight += childTreeHeight;
+    // 分支之间添加额外间距
+    if (index < branchChildren.length - 1) {
+      branchesTotalHeight += BRANCH_VERTICAL_SPACING;
+    }
+  });
+
+  // 返回主流程和分支中较高的那个，再加上当前节点高度
+  const childrenHeight = Math.max(mainChildHeight, branchesTotalHeight);
+  return NODE_HEIGHT + MAIN_VERTICAL_SPACING + childrenHeight;
+}
 
 /**
  * 计算文档流式布局
  * 主流程垂直向下，分支向右展开
+ * 改进版：先计算子树高度，再分配空间，避免重叠
  */
 function calculateLayout(rootNode, selectedNodeId = null, callbacks = {}, expandedStates = {}, positionStates = {}) {
   const { onQuoteText, onNodeSelect, onCopyNode, onEditNode, onDeleteNode, onDeleteBranch, onToggleExpand } = callbacks;
   const nodes = [];
   const edges = [];
 
+  // 第一遍：计算所有子树高度
+  const subtreeHeights = new Map();
+  function computeSubtreeHeights(node) {
+    const height = calculateSubtreeHeight(node);
+    subtreeHeights.set(node.id, height);
+    
+    if (node.children) {
+      node.children.forEach(child => computeSubtreeHeights(child));
+    }
+    return height;
+  }
+  computeSubtreeHeights(rootNode);
+
   function layoutNode(node, x, y, depth = 0, isBranch = false) {
     const nodeId = node.id;
     const isSelected = nodeId === selectedNodeId;
-    // 从持久化状态中获取展开状态，默认为 false
     const initialExpanded = expandedStates[nodeId] ?? false;
-    // 优先使用保存的位置
     const savedPosition = positionStates[nodeId];
+    
+    // 使用保存的位置或计算的位置
     const finalX = savedPosition ? savedPosition.x : x;
     const finalY = savedPosition ? savedPosition.y : y;
 
@@ -190,14 +251,12 @@ function calculateLayout(rootNode, selectedNodeId = null, callbacks = {}, expand
       data,
     });
 
-    let subtreeHeight = 0;
-
     // 处理子节点
     if (node.children && node.children.length > 0) {
       const mainChild = node.children[0];
       const branchChildren = node.children.slice(1);
 
-      // 主流程子节点 - 垂直向下（从底部到顶部）
+      // 主流程子节点 - 垂直向下
       if (mainChild) {
         const isQuote = mainChild.branchType === 'quote';
 
@@ -208,49 +267,52 @@ function calculateLayout(rootNode, selectedNodeId = null, callbacks = {}, expand
           shape: isQuote ? 'quote-edge' : 'mind-map-edge',
         });
 
-        const mainChildHeight = layoutNode(
+        layoutNode(
           mainChild,
           x,
-          y + NODE_HEIGHT + MAIN_VERTICAL_SPACING, // 使用固定高度 + 间距
+          y + NODE_HEIGHT + MAIN_VERTICAL_SPACING,
           depth + 1,
           false
         );
-
-        subtreeHeight = mainChildHeight + NODE_HEIGHT + MAIN_VERTICAL_SPACING;
       }
 
-      // 分支子节点 - 向右展开（从右侧到左侧）
-      const totalBranchesHeight = branchChildren.length * NODE_HEIGHT +
-        (branchChildren.length - 1) * BRANCH_VERTICAL_SPACING;
-      // 起始Y坐标：以父节点中心为基准，向上偏移一半高度
-      const startY = y + (NODE_HEIGHT - totalBranchesHeight) / 2;
-
-      let currentBranchY = startY;
-      branchChildren.forEach((child) => {
-        const isQuote = child.branchType === 'quote';
-        const branchX = x + HORIZONTAL_SPACING;
-
-        edges.push({
-          id: `${nodeId}-${child.id}`,
-          source: { cell: nodeId, port: 'right' },
-          target: { cell: child.id, port: 'left' },
-          shape: isQuote ? 'quote-edge' : 'mind-map-edge',
+      // 分支子节点 - 向右展开
+      if (branchChildren.length > 0) {
+        // 计算所有分支子树的总高度
+        let totalBranchesHeight = 0;
+        branchChildren.forEach((child, index) => {
+          totalBranchesHeight += subtreeHeights.get(child.id) || NODE_HEIGHT;
+          if (index < branchChildren.length - 1) {
+            totalBranchesHeight += BRANCH_VERTICAL_SPACING;
+          }
         });
 
-        layoutNode(child, branchX, currentBranchY, depth + 1, true);
+        // 计算起始Y坐标：将分支垂直居中分布在父节点周围
+        const parentCenterY = y + NODE_HEIGHT / 2;
+        let currentBranchY = parentCenterY - totalBranchesHeight / 2;
 
-        const branchBottom = currentBranchY + NODE_HEIGHT;
-        if (branchBottom > subtreeHeight) {
-          subtreeHeight = branchBottom;
-        }
+        branchChildren.forEach((child) => {
+          const isQuote = child.branchType === 'quote';
+          const branchX = x + HORIZONTAL_SPACING;
+          const childTreeHeight = subtreeHeights.get(child.id) || NODE_HEIGHT;
 
-        currentBranchY += NODE_HEIGHT + BRANCH_VERTICAL_SPACING;
-      });
-    } else {
-      subtreeHeight = NODE_HEIGHT + MAIN_VERTICAL_SPACING;
+          edges.push({
+            id: `${nodeId}-${child.id}`,
+            source: { cell: nodeId, port: 'right' },
+            target: { cell: child.id, port: 'left' },
+            shape: isQuote ? 'quote-edge' : 'mind-map-edge',
+          });
+
+          // 将子节点放置在其子树的垂直中心位置
+          const childNodeY = currentBranchY + (childTreeHeight - NODE_HEIGHT) / 2;
+          
+          layoutNode(child, branchX, childNodeY, depth + 1, true);
+
+          // 移动到下一个分支的起始位置
+          currentBranchY += childTreeHeight + BRANCH_VERTICAL_SPACING;
+        });
+      }
     }
-
-    return subtreeHeight;
   }
 
   layoutNode(rootNode, 0, 0, 0, false);
