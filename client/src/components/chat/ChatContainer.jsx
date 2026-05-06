@@ -24,7 +24,7 @@ const ChatContainer = ({
   activeSkill,
   quotedTexts,
   onInputChange,
-  onKeyPress,
+  onKeyDown,
   onSend,
   onToggleModelDropdown,
   onSelectModel,
@@ -368,7 +368,7 @@ const ChatContainer = ({
           variant="standard"
           value={input}
           onChange={handleInputChange}
-          onKeyPress={onKeyPress}
+          onKeyDown={onKeyDown}
           placeholder={activeSkill ? activeSkill.placeholder : (branchMode ? '输入新问题，从此处创建分支...' : "发消息")}
           disabled={isLoading}
           multiline

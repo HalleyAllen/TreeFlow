@@ -182,8 +182,8 @@ export const useApp = () => {
     }
   }, [input, branchFromNodeId, sendChatMessage, activeSkill, clearSkill, setMessages, models, selectedModel, quotedTexts]);
 
-  // 按键事件
-  const handleKeyPress = useCallback((e) => {
+  // 按键事件：监听键盘按下，实现回车发送消息，Shift+回车换行
+  const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -264,7 +264,7 @@ export const useApp = () => {
     input,
     quotedTexts,
     handleInputChange,
-    handleKeyPress,
+    handleKeyDown,
     handleSend,
     handleEnterBranchMode,
     exitBranchMode,

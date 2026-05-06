@@ -354,6 +354,7 @@ const X6MindMapNode = memo(({ node }) => {
       {showQuoteButton && (
         <Box
           onMouseDown={(e) => e.stopPropagation()}
+          onMouseUp={(e) => e.stopPropagation()}
           sx={{
             position: 'absolute',
             left: quoteButtonPos.x,

@@ -35,7 +35,7 @@ function App() {
     input,
     quotedTexts,
     handleInputChange,
-    handleKeyPress,
+    handleKeyDown,
     handleSend,
     handleEnterBranchMode,
     exitBranchMode,
@@ -98,7 +98,7 @@ function App() {
           activeSkill={activeSkill}
           quotedTexts={quotedTexts}
           onInputChange={handleInputChange}
-          onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyDown}
           onSend={handleSend}
           onToggleModelDropdown={() => setShowModelDropdown(!showModelDropdown)}
           onSelectModel={handleSelectModel}
