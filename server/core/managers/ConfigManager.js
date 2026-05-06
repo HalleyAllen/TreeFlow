@@ -14,7 +14,7 @@ class ConfigManager {
       ollamaBaseUrl: 'http://localhost:11434',
       ollamaEnabled: false,
       currentTopic: 'default',
-      theme: 'dark', // 默认深色主题
+      theme: 'light', // 默认浅色主题
       providers: {
         "OpenAI": {
           "apiUrl": "https://api.openai.com/v1/chat/completions",
@@ -180,7 +180,7 @@ class ConfigManager {
    * @returns {string} - 主题名称 ('light' | 'dark')
    */
   getTheme() {
-    return this.config.theme || 'dark';
+    return this.config.theme || 'light';
   }
 
   /**
