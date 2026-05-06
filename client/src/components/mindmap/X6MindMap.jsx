@@ -102,7 +102,7 @@ Graph.registerEdge(
         padding: 30,
         step: 15,
         // 最大转向次数，避免过于复杂的路线
-        maxDirectionChange: 3,
+        maxDirectionChange: 5,
         // 优先方向，保持垂直和水平走向
         startDirections: ['bottom', 'top', 'right', 'left'],
         endDirections: ['top', 'bottom', 'left', 'right'],
@@ -139,7 +139,7 @@ Graph.registerEdge(
         padding: 30,
         step: 15,
         // 最大转向次数，避免过于复杂的路线
-        maxDirectionChange: 3,
+        maxDirectionChange: 5,
         // 优先方向
         startDirections: ['bottom', 'top', 'right', 'left'],
         endDirections: ['top', 'bottom', 'left', 'right'],
@@ -343,6 +343,28 @@ export default function X6MindMap({
   
   // 初始数据加载标志
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
+
+  // 使用 ref 存储回调函数，避免输入时触发重建
+  const callbacksRef = useRef({
+    onQuoteText,
+    onNodeSelect,
+    onCopyNode,
+    onEditNode,
+    onDeleteNode,
+    onDeleteBranch,
+  });
+  
+  // 更新回调函数引用
+  useEffect(() => {
+    callbacksRef.current = {
+      onQuoteText,
+      onNodeSelect,
+      onCopyNode,
+      onEditNode,
+      onDeleteNode,
+      onDeleteBranch,
+    };
+  }, [onQuoteText, onNodeSelect, onCopyNode, onEditNode, onDeleteNode, onDeleteBranch]);
 
   // 保存节点展开状态（仅更新 ref，不触发重渲染）
   const handleToggleExpand = useCallback((nodeId, isExpanded) => {
@@ -600,14 +622,17 @@ export default function X6MindMap({
     // 清空现有内容
     graph.clearCells();
 
+    // 从 ref 获取最新回调，避免输入时触发重建
+    const callbacks = callbacksRef.current;
+
     // 计算布局（传入持久化的展开状态和位置）
     const { nodes, edges } = calculateLayout(treeData, selectedNodeId, {
-      onQuoteText,
+      onQuoteText: callbacks.onQuoteText,
       onNodeSelect: handleNodeSelectInternal,
-      onCopyNode,
-      onEditNode,
-      onDeleteNode,
-      onDeleteBranch,
+      onCopyNode: callbacks.onCopyNode,
+      onEditNode: callbacks.onEditNode,
+      onDeleteNode: callbacks.onDeleteNode,
+      onDeleteBranch: callbacks.onDeleteBranch,
       onToggleExpand: handleToggleExpand,
     }, expandedStatesRef.current, positionStatesRef.current);
 
@@ -657,7 +682,7 @@ export default function X6MindMap({
         }, index * 30); // 每个节点延迟 30ms
       });
     });
-  }, [treeData, initialDataLoaded, onQuoteText, handleNodeSelectInternal, onCopyNode, onEditNode, onDeleteNode, onDeleteBranch, handleToggleExpand]);
+  }, [treeData, initialDataLoaded, handleNodeSelectInternal, handleToggleExpand]);
 
   // 单独处理选中状态变化，只更新节点样式而不重建图
   useEffect(() => {
@@ -722,13 +747,14 @@ export default function X6MindMap({
           const graph = graphRef.current;
           if (graph) {
             graph.clearCells();
+            const callbacks = callbacksRef.current;
             const { nodes, edges } = calculateLayout(treeData, selectedNodeId, {
-              onQuoteText,
+              onQuoteText: callbacks.onQuoteText,
               onNodeSelect: handleNodeSelectInternal,
-              onCopyNode,
-              onEditNode,
-              onDeleteNode,
-              onDeleteBranch,
+              onCopyNode: callbacks.onCopyNode,
+              onEditNode: callbacks.onEditNode,
+              onDeleteNode: callbacks.onDeleteNode,
+              onDeleteBranch: callbacks.onDeleteBranch,
               onToggleExpand: handleToggleExpand,
             }, expandedStatesRef.current, {});
             requestAnimationFrame(() => {
@@ -752,7 +778,7 @@ export default function X6MindMap({
         console.error('重置布局失败:', error);
       }
     }
-  }, [topicId, treeData, selectedNodeId, onQuoteText, handleNodeSelectInternal, onCopyNode, onEditNode, onDeleteNode, onDeleteBranch, handleToggleExpand]);
+  }, [topicId, treeData, selectedNodeId, handleNodeSelectInternal, handleToggleExpand]);
 
   // 重置节点（只清除节点位置，保留视口，重新应用自动布局）
   const handleResetNodes = useCallback(async () => {
@@ -765,13 +791,14 @@ export default function X6MindMap({
           const graph = graphRef.current;
           if (graph) {
             // 计算新布局
+            const callbacks = callbacksRef.current;
             const { nodes } = calculateLayout(treeData, selectedNodeId, {
-              onQuoteText,
+              onQuoteText: callbacks.onQuoteText,
               onNodeSelect: handleNodeSelectInternal,
-              onCopyNode,
-              onEditNode,
-              onDeleteNode,
-              onDeleteBranch,
+              onCopyNode: callbacks.onCopyNode,
+              onEditNode: callbacks.onEditNode,
+              onDeleteNode: callbacks.onDeleteNode,
+              onDeleteBranch: callbacks.onDeleteBranch,
               onToggleExpand: handleToggleExpand,
             }, expandedStatesRef.current, {});
 
@@ -830,7 +857,7 @@ export default function X6MindMap({
         console.error('重置节点失败:', error);
       }
     }
-  }, [topicId, treeData, selectedNodeId, onQuoteText, handleNodeSelectInternal, onCopyNode, onEditNode, onDeleteNode, onDeleteBranch, handleToggleExpand]);
+  }, [topicId, treeData, selectedNodeId, handleNodeSelectInternal, handleToggleExpand]);
 
   return (
     <Box

@@ -110,8 +110,6 @@ const X6MindMapNode = memo(({ node }) => {
     // 底部连接桩应该在内容底部（收起时在 NODE_HEIGHT，展开时随内容自适应）
     const bottomY = isExpanded ? Math.max(NODE_HEIGHT, contentHeight) : NODE_HEIGHT;
 
-    console.log('[Port Update]', { isExpanded, contentHeight, bottomY });
-
     // 更新底部连接桩位置（x 为节点宽度的一半）
     node.setPortProp('bottom', 'args', { x: NODE_WIDTH / 2, y: bottomY });
 
@@ -127,7 +125,8 @@ const X6MindMapNode = memo(({ node }) => {
     outgoingEdges.forEach(edge => {
       edge.setTarget(edge.getTarget());
     });
-  }, [isExpanded, node]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isExpanded]);  // 只监听 isExpanded，不监听 node 避免父组件渲染触发
 
   const isRoot = depth === 0;
   const isQuote = branchType === 'quote';

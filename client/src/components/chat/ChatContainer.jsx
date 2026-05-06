@@ -102,6 +102,19 @@ const ChatContainer = ({
     return result
   }, [currentTopic?.id, refreshTree, showNotification])
 
+  // 节点选中（用 useCallback 避免输入时重建脑图）
+  const handleNodeSelect = useCallback((nodeData) => {
+    console.log('选中节点:', nodeData)
+  }, [])
+
+  // 从节点创建分支（用 useCallback 避免输入时重建脑图）
+  const handleBranchFromNode = useCallback((nodeData) => {
+    const index = messages.findIndex(m => m.nodeId === nodeData.id)
+    if (index !== -1) {
+      onEnterBranchMode(index, nodeData.id)
+    }
+  }, [messages, onEnterBranchMode])
+
   // 话题切换时加载树数据
   useEffect(() => {
     if (currentTopic?.id) {
@@ -154,12 +167,12 @@ const ChatContainer = ({
   const handleInputChange = (e) => {
     const value = e.target.value
     onInputChange(e)
-    // 检测 '/' 触发技能选择
-    if (value === '/' && !activeSkill) {
-      setShowSkillSelector(true)
-    } else if (showSkillSelector && !value.startsWith('/')) {
-      setShowSkillSelector(false)
-    }
+    // TODO: 暂时禁用 '/' 触发技能选择
+    // if (value === '/' && !activeSkill) {
+    //   setShowSkillSelector(true)
+    // } else if (showSkillSelector && !value.startsWith('/')) {
+    //   setShowSkillSelector(false)
+    // }
   }
 
   const handleSelectSkill = (skill) => {
@@ -244,17 +257,8 @@ const ChatContainer = ({
           treeData={treeData}
           topicId={currentTopic?.id}
           loading={treeLoading || isLoading}
-          onNodeSelect={(nodeData) => {
-            // 节点选中处理
-            console.log('选中节点:', nodeData)
-          }}
-          onBranchFromNode={(nodeData) => {
-            // 从节点创建分支
-            const index = messages.findIndex(m => m.nodeId === nodeData.id)
-            if (index !== -1) {
-              onEnterBranchMode(index, nodeData.id)
-            }
-          }}
+          onNodeSelect={handleNodeSelect}
+          onBranchFromNode={handleBranchFromNode}
           onQuoteText={onQuoteText}
           onEditNode={handleEditNode}
           onCopyNode={handleCopyNode}
@@ -365,7 +369,7 @@ const ChatContainer = ({
           value={input}
           onChange={handleInputChange}
           onKeyPress={onKeyPress}
-          placeholder={activeSkill ? activeSkill.placeholder : (branchMode ? '输入新问题，从此处创建分支...' : "发消息或输入 '/' 选择技能")}
+          placeholder={activeSkill ? activeSkill.placeholder : (branchMode ? '输入新问题，从此处创建分支...' : "发消息")}
           disabled={isLoading}
           multiline
           maxRows={4}
