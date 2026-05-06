@@ -80,8 +80,9 @@ class TreeFlowAgent {
       }
       
       // 获取对话历史用于上下文（必须在 addConversationNode 之前，否则新节点会被包含进历史）
-      // 引用分支：基于被引用节点(fromNodeId)回溯；其他情况：基于当前节点回溯
-      const historyEndNodeId = (branchType === 'quote' && fromNodeId) ? fromNodeId : null;
+      // 主线延续：fromNodeId 为 null，基于 currentNode 回溯（只走主线，自然不包含分支）
+      // 分支对话：fromNodeId 为分叉点，基于该节点回溯（只包含该节点及之前，不包含父节点以下的其他内容）
+      const historyEndNodeId = fromNodeId || null;
       let conversationHistory = this.conversationTreeManager.getConversationHistory(currentTopic, historyEndNodeId);
       
       newNode = this.conversationTreeManager.addConversationNode(currentTopic, question, '', nodeOptions, actualParentId);
