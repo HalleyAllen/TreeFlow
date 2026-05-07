@@ -158,7 +158,7 @@ const X6MindMapNode = memo(({ node }) => {
   const getStyles = () => {
     if (selected) {
       return {
-        border: '3px solid #2563eb',
+        border: '2px solid rgb(69, 124, 243)',
         boxShadow: '0 0 0 4px rgba(59, 130, 246, 0.3), 0 8px 24px rgba(59, 130, 246, 0.4)',
         questionBg: '#dbeafe',
         typeColor: '#2563eb',
