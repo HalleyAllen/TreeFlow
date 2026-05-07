@@ -62,7 +62,18 @@ const X6MindMapNode = memo(({ node }) => {
   const [showQuoteButton, setShowQuoteButton] = useState(false);
   const [quoteButtonPos, setQuoteButtonPos] = useState({ x: 0, y: 0 });
 
-  // 获取节点数据
+  // 监听 X6 节点数据变化，触发重新渲染（解决 setData 后 React 组件不更新的问题）
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (!node) return;
+    const onDataChange = () => setTick(t => t + 1);
+    node.on('change:data', onDataChange);
+    return () => {
+      node.off('change:data', onDataChange);
+    };
+  }, [node]);
+
+  // 获取节点数据（每次渲染时重新读取，确保拿到最新值）
   const data = node?.getData?.() || node?.data || {};
 
   const {
@@ -136,6 +147,7 @@ const X6MindMapNode = memo(({ node }) => {
   const branchCount = Math.max(0, childrenCount - 1);
   const hasChildren = childrenCount > 0;
   const hasBranches = branchCount > 0;
+  const isEndNode = childrenCount === 0; // 末端节点（没有子节点）
 
   // 显示内容
   const displayQuestion = (isRoot && !question) ? '开始' : (question || '');
@@ -317,24 +329,11 @@ const X6MindMapNode = memo(({ node }) => {
   const scale = graph?.transform?.getScale?.() || { sx: 1, sy: 1 };
   const zoom = Math.max(scale.sx, 0.5);
 
-  // 处理节点点击选中（排除按钮等交互元素）
-  const handleNodeClick = useCallback((event) => {
-    // 检查点击的是否是按钮或交互元素，如果是则不触发选中
-    const target = event?.target;
-    if (target) {
-      const isInteractiveElement =
-        target.closest('button') ||
-        target.closest('[role="button"]') ||
-        target.closest('.MuiIconButton-root') ||
-        target.closest('.MuiButtonBase-root') ||
-        target.closest('svg') ||
-        target.closest('.expand-toggle-btn') ||
-        target.closest('[data-expand-toggle="true"]');
-
-      if (isInteractiveElement) return;
-    }
-
-    // 调用选中回调
+  // 处理节点点击选中
+  // 注：内部按钮（展开、复制、编辑、删除、引用）均已各自 stopPropagation，
+  // 无需在外层再过滤交互元素。之前用 target.closest('svg') 会因 foreignObject
+  // （SVG 元素）祖先导致所有点击被误判为交互元素而忽略。
+  const handleNodeClick = useCallback(() => {
     if (onNodeSelect && nodeId) {
       onNodeSelect(data);
     }
@@ -398,10 +397,10 @@ const X6MindMapNode = memo(({ node }) => {
           borderRadius: 3,
           boxShadow: styles.boxShadow,
           // 展开时溢出可见，确保底部文字可选中；收起时隐藏溢出内容
-          overflow: isExpanded ? 'visible' : 'hidden',
-          transition: 'all 0.2s ease',
-          backgroundColor: isQuote ? '#fffbeb' : (isError ? '#fef2f2' : '#ffffff'),
-        }}
+        overflow: isExpanded ? 'visible' : 'hidden',
+        transition: 'all 0.2s ease',
+        backgroundColor: selected ? '#eff6ff' : (isQuote ? '#fffbeb' : (isError ? '#fef2f2' : '#ffffff')),
+      }}
       >
         {/* 上半部分：问题区域 */}
         <Box

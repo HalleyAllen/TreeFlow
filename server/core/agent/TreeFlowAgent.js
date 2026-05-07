@@ -72,16 +72,18 @@ class TreeFlowAgent {
       if (branchType === 'quote') {
         nodeOptions.branchType = 'quote';
         nodeOptions.quoteNodeIds = quoteNodeIds || [];
-        // 引用分支直接以被引用节点为父节点，不创建中间空分支
+        // 引用分支直接以被引用节点为父节点
         actualParentId = fromNodeId;
       } else if (fromNodeId) {
-        // 普通分支：先创建中间分支，再添加节点
-        this.conversationTreeManager.createBranchFromNode(currentTopic, fromNodeId);
+        // 从指定节点继续对话：直接以该节点为父节点，不再创建空分支中间节点
+        // 如果 fromNode 是末端节点 → 新节点成为 children[0]（主线延续）
+        // 如果 fromNode 已有子节点 → 新节点成为 children[1+]（分支）
+        actualParentId = fromNodeId;
       }
       
       // 获取对话历史用于上下文（必须在 addConversationNode 之前，否则新节点会被包含进历史）
-      // 主线延续：fromNodeId 为 null，基于 currentNode 回溯（只走主线，自然不包含分支）
-      // 分支对话：fromNodeId 为分叉点，基于该节点回溯（只包含该节点及之前，不包含父节点以下的其他内容）
+      // 正常提问：fromNodeId 为 null，基于 currentNode 回溯
+      // 从指定节点继续：fromNodeId 为起点，基于该节点回溯（只包含该节点及之前）
       const historyEndNodeId = fromNodeId || null;
       let conversationHistory = this.conversationTreeManager.getConversationHistory(currentTopic, historyEndNodeId);
       

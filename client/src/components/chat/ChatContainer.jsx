@@ -1,13 +1,16 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { Box, Typography, Paper, TextField, Button, IconButton, Tooltip, Fade, Chip, Snackbar, Alert } from '@mui/material'
 import CallSplitIcon from '@mui/icons-material/CallSplit'
 import CloseIcon from '@mui/icons-material/Close'
 import SendIcon from '@mui/icons-material/Send'
 import FormatQuoteIcon from '@mui/icons-material/FormatQuote'
+
 import SkillSelector from '../common/SkillSelector'
 import X6MindMap from '../mindmap/X6MindMap'
 import { useMindMap } from '../../hooks/useMindMap'
 import * as treeApi from '../../services/api/tree.api'
+
+
 
 const ChatContainer = ({
   currentTopic,
@@ -20,6 +23,7 @@ const ChatContainer = ({
   branchMode,
   branchFromIndex,
   nodeCreated,
+  activeEndNodeId,
   skills,
   activeSkill,
   quotedTexts,
@@ -30,6 +34,7 @@ const ChatContainer = ({
   onSelectModel,
   onEnterBranchMode,
   onExitBranchMode,
+  onNodeSelect,
   onSelectSkill,
   onClearSkill,
   onQuoteText,
@@ -105,7 +110,9 @@ const ChatContainer = ({
   // 节点选中（用 useCallback 避免输入时重建脑图）
   const handleNodeSelect = useCallback((nodeData) => {
     console.log('选中节点:', nodeData)
-  }, [])
+    // 通知外部处理活跃末端节点切换
+    onNodeSelect?.(nodeData)
+  }, [onNodeSelect])
 
   // 从节点创建分支（用 useCallback 避免输入时重建脑图）
   const handleBranchFromNode = useCallback((nodeData) => {
@@ -257,6 +264,7 @@ const ChatContainer = ({
           treeData={treeData}
           topicId={currentTopic?.id}
           loading={treeLoading || isLoading}
+          activeEndNodeId={activeEndNodeId}
           onNodeSelect={handleNodeSelect}
           onBranchFromNode={handleBranchFromNode}
           onQuoteText={onQuoteText}
@@ -369,7 +377,7 @@ const ChatContainer = ({
           value={input}
           onChange={handleInputChange}
           onKeyDown={onKeyDown}
-          placeholder={activeSkill ? activeSkill.placeholder : (branchMode ? '输入新问题，从此处创建分支...' : "发消息")}
+          placeholder={activeSkill ? activeSkill.placeholder : (branchMode ? '输入新问题，从此处创建分支...' : (activeEndNodeId ? '在此节点继续提问...' : "发消息"))}
           disabled={isLoading}
           multiline
           maxRows={4}

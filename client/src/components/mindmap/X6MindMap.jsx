@@ -198,7 +198,7 @@ function calculateSubtreeHeight(node) {
  * 主流程垂直向下，分支向右展开
  * 改进版：先计算子树高度，再分配空间，避免重叠
  */
-function calculateLayout(rootNode, selectedNodeId = null, callbacks = {}, expandedStates = {}, positionStates = {}) {
+function calculateLayout(rootNode, selectedNodeId = null, callbacks = {}, expandedStates = {}, positionStates = {}, activeEndNodeId = null) {
   const { onQuoteText, onNodeSelect, onCopyNode, onEditNode, onDeleteNode, onDeleteBranch, onToggleExpand } = callbacks;
   const nodes = [];
   const edges = [];
@@ -226,11 +226,13 @@ function calculateLayout(rootNode, selectedNodeId = null, callbacks = {}, expand
     const finalX = savedPosition ? savedPosition.x : x;
     const finalY = savedPosition ? savedPosition.y : y;
 
+    const isActiveEndNode = nodeId === activeEndNodeId;
     const data = {
       ...node,
       depth,
       isBranch,
       selected: isSelected,
+      isActiveEndNode,
       initialExpanded,
       onQuoteText,
       onNodeSelect,
@@ -324,6 +326,7 @@ export default function X6MindMap({
   treeData,
   topicId,
   loading,
+  activeEndNodeId,
   onNodeSelect,
   onBranchFromNode,
   onQuoteText,
@@ -336,6 +339,7 @@ export default function X6MindMap({
   const graphRef = useRef(null);
   const miniMapRef = useRef(null);
   const handleNodePositionChangeRef = useRef(null);
+  const handleNodeSelectRef = useRef(null); // 存储节点选中回调，避免闭包问题
   const positionStatesRef = useRef({}); // 使用 ref 存储位置，避免触发重渲染
   const expandedStatesRef = useRef({}); // 使用 ref 存储展开状态，避免触发重渲染
   const [selectedNodeId, setSelectedNodeId] = useState(null);
@@ -372,16 +376,20 @@ export default function X6MindMap({
     console.log(`[展开状态] 节点 ${nodeId}: ${isExpanded ? '展开' : '收起'}`);
   }, []);
 
-  // 处理节点选中（更新内部状态并通知外部）
+  // 处理节点选中：蓝色效果只关联活跃末端节点
   const handleNodeSelectInternal = useCallback((nodeData) => {
-    if (nodeData && nodeData.id) {
+    // 只有末端节点才显示蓝色选中效果
+    if (nodeData && nodeData.id && nodeData.childrenCount === 0) {
       setSelectedNodeId(nodeData.id);
     } else {
       setSelectedNodeId(null);
     }
-    // 通知外部
+    // 通知外部（useApp 会处理 activeEndNodeId）
     onNodeSelect?.(nodeData);
   }, [onNodeSelect]);
+
+  // 将节点选中回调存入 ref，供 X6 事件监听使用
+  handleNodeSelectRef.current = handleNodeSelectInternal;
 
   // 保存节点位置到服务器（不触发状态更新，避免重渲染）
   const handleNodePositionChange = useCallback(async (nodeId, x, y) => {
@@ -488,6 +496,15 @@ export default function X6MindMap({
     graph.on('blank:click', () => {
       setSelectedNodeId(null);
       onNodeSelect?.(null);
+    });
+
+    // 节点点击选中（X6 级别事件，避免拖拽系统拦截 React 的 onClick）
+    graph.on('node:click', ({ node }) => {
+      const data = node.getData();
+      console.log('[X6 node:click] 节点被点击:', data?.id, 'childrenCount:', data?.childrenCount);
+      if (data) {
+        handleNodeSelectRef.current?.(data);
+      }
     });
 
     // 节点拖拽开始时禁用文本选择
@@ -634,7 +651,7 @@ export default function X6MindMap({
       onDeleteNode: callbacks.onDeleteNode,
       onDeleteBranch: callbacks.onDeleteBranch,
       onToggleExpand: handleToggleExpand,
-    }, expandedStatesRef.current, positionStatesRef.current);
+    }, expandedStatesRef.current, positionStatesRef.current, activeEndNodeId);
 
     // 使用 requestAnimationFrame 延迟添加新节点，确保旧节点完全卸载
     // 避免 X6 React Shape 组件异步卸载时与新节点渲染冲突导致重复节点
@@ -703,6 +720,25 @@ export default function X6MindMap({
     });
   }, [selectedNodeId]);
 
+  // 单独处理活跃末端节点变化，只更新节点样式而不重建图
+  useEffect(() => {
+    if (!graphRef.current) return;
+
+    const graph = graphRef.current;
+    const nodes = graph.getNodes();
+
+    nodes.forEach((node) => {
+      const nodeId = node.id;
+      const isActiveEndNode = nodeId === activeEndNodeId;
+      const data = node.getData() || {};
+
+      // 只更新活跃末端节点状态，不重建节点
+      if (data.isActiveEndNode !== isActiveEndNode) {
+        node.setData({ ...data, isActiveEndNode });
+      }
+    });
+  }, [activeEndNodeId]);
+
   // 适应画布
   const handleFitView = useCallback(() => {
     graphRef.current?.centerContent();
@@ -756,7 +792,7 @@ export default function X6MindMap({
               onDeleteNode: callbacks.onDeleteNode,
               onDeleteBranch: callbacks.onDeleteBranch,
               onToggleExpand: handleToggleExpand,
-            }, expandedStatesRef.current, {});
+            }, expandedStatesRef.current, {}, activeEndNodeId);
             requestAnimationFrame(() => {
               nodes.forEach((node) => {
                 graph.addNode({ ...node, zIndex: 2 });
@@ -800,7 +836,7 @@ export default function X6MindMap({
               onDeleteNode: callbacks.onDeleteNode,
               onDeleteBranch: callbacks.onDeleteBranch,
               onToggleExpand: handleToggleExpand,
-            }, expandedStatesRef.current, {});
+            }, expandedStatesRef.current, {}, activeEndNodeId);
 
             // 获取现有节点位置
             const existingNodes = graph.getNodes();

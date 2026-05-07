@@ -32,6 +32,7 @@ function App() {
     chatLoading,
     branchMode,
     nodeCreated,
+    activeEndNodeId,
     input,
     quotedTexts,
     handleInputChange,
@@ -39,6 +40,7 @@ function App() {
     handleSend,
     handleEnterBranchMode,
     exitBranchMode,
+    handleNodeSelect,
     handleQuoteText,
     removeQuote,
 
@@ -94,6 +96,7 @@ function App() {
           branchMode={branchMode}
           isLoading={chatLoading}
           nodeCreated={nodeCreated}
+          activeEndNodeId={activeEndNodeId}
           skills={skills}
           activeSkill={activeSkill}
           quotedTexts={quotedTexts}
@@ -104,6 +107,7 @@ function App() {
           onSelectModel={handleSelectModel}
           onEnterBranchMode={handleEnterBranchMode}
           onExitBranchMode={exitBranchMode}
+          onNodeSelect={handleNodeSelect}
           onSelectSkill={selectSkill}
           onClearSkill={clearSkill}
           onQuoteText={handleQuoteText}

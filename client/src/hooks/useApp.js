@@ -45,6 +45,8 @@ export const useApp = () => {
     branchMode,
     branchFromNodeId,
     nodeCreated,
+    activeEndNodeId,
+    setActiveEndNodeId,
     sendMessage: sendChatMessage,
     loadMessages,
     enterBranchMode,
@@ -94,12 +96,13 @@ export const useApp = () => {
     loadOllamaConfig();
   }, []);
 
-  // 当话题切换时加载消息
+  // 当话题切换时加载消息并清除活跃末端节点
   useEffect(() => {
     if (currentTopic?.id) {
       loadMessages(currentTopic.id);
+      setActiveEndNodeId(null);
     }
-  }, [currentTopic?.id, loadMessages]);
+  }, [currentTopic?.id, loadMessages, setActiveEndNodeId]);
 
   // Ollama 启用状态变化处理
   const handleOllamaEnabledChange = useCallback(async (enabled) => {
@@ -234,6 +237,20 @@ export const useApp = () => {
     enterBranchMode(nodeId);
   }, [enterBranchMode]);
 
+  // 节点选中处理（用于活跃末端节点切换）
+  const handleNodeSelect = useCallback((nodeData) => {
+    console.log('[useApp handleNodeSelect] nodeData:', nodeData);
+    if (nodeData && nodeData.childrenCount === 0) {
+      // 点击末端节点：设为活跃末端节点
+      console.log('[useApp] 设为活跃末端节点:', nodeData.id);
+      setActiveEndNodeId(nodeData.id);
+    } else {
+      // 点击非末端节点：取消活跃末端节点
+      console.log('[useApp] 取消活跃末端节点');
+      setActiveEndNodeId(null);
+    }
+  }, [setActiveEndNodeId]);
+
   return {
     // UI 状态
     showAIServiceModal,
@@ -261,6 +278,7 @@ export const useApp = () => {
     chatLoading,
     branchMode,
     nodeCreated,
+    activeEndNodeId,
     input,
     quotedTexts,
     handleInputChange,
@@ -268,6 +286,7 @@ export const useApp = () => {
     handleSend,
     handleEnterBranchMode,
     exitBranchMode,
+    handleNodeSelect,
     handleQuoteText,
     removeQuote,
 

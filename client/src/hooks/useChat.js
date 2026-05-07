@@ -10,6 +10,7 @@ export const useChat = () => {
   const [loading, setLoading] = useState(false);
   const [branchMode, setBranchMode] = useState(false);
   const [branchFromNodeId, setBranchFromNodeId] = useState(null);
+  const [activeEndNodeId, setActiveEndNodeId] = useState(null); // 活跃末端节点（点击末端节点切换）
   const [nodeCreated, setNodeCreated] = useState(false); // 用于触发脑图刷新
 
   // 发送消息（支持引用分支）
@@ -26,8 +27,8 @@ export const useChat = () => {
     setNodeCreated(false); // 重置节点创建标志
     
     try {
-      // 确定分支来源节点
-      let fromNodeId = branchMode ? branchFromNodeId : null;
+      // 确定父节点：引用分支 > 分支模式 > 活跃末端节点
+      let fromNodeId = branchMode ? branchFromNodeId : activeEndNodeId;
       
       // 如果是引用分支，使用最后一个引用的节点作为来源
       if (branchType === 'quote' && quoteNodeIds.length > 0) {
@@ -66,10 +67,13 @@ export const useChat = () => {
           : msg
       ));
 
-      // 退出分支模式
+      // 退出分支模式并清除活跃末端节点
       if (branchMode) {
         setBranchMode(false);
         setBranchFromNodeId(null);
+      }
+      if (activeEndNodeId) {
+        setActiveEndNodeId(null);
       }
 
       return { success: true, result };
@@ -86,7 +90,7 @@ export const useChat = () => {
       setLoading(false);
       setNodeCreated(true); // 标记节点已创建/更新，触发脑图刷新
     }
-  }, [branchMode, branchFromNodeId]);
+  }, [branchMode, branchFromNodeId, activeEndNodeId]);
 
   // 加载话题消息
   const loadMessages = useCallback(async (topicId) => {
@@ -150,6 +154,8 @@ export const useChat = () => {
     loading,
     branchMode,
     branchFromNodeId,
+    activeEndNodeId,
+    setActiveEndNodeId,
     nodeCreated, // 导出用于触发脑图刷新
     sendMessage,
     loadMessages,
