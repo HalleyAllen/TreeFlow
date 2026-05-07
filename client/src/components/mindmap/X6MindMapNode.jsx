@@ -456,10 +456,13 @@ const X6MindMapNode = memo(({ node }) => {
               component="span"
               onMouseDown={(e) => e.stopPropagation()}
               sx={{
+                width: 'fit-content',
                 fontSize: '0.8rem',
                 fontWeight: 600,
                 color: '#1f2937',
                 lineHeight: 1.4,
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
                 cursor: 'text',
                 userSelect: 'text',
                 WebkitUserSelect: 'text',
@@ -471,12 +474,17 @@ const X6MindMapNode = memo(({ node }) => {
             // 收起时：用 -webkit-box 截断
             <Typography
               variant="body2"
+              component="span"
               onMouseDown={(e) => e.stopPropagation()}
               sx={{
+                alignSelf: 'flex-start',
+                width: 'fit-content',
                 fontSize: '0.8rem',
                 fontWeight: 600,
                 color: '#1f2937',
                 lineHeight: 1.4,
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
                 cursor: 'text',
                 userSelect: 'text',
                 WebkitUserSelect: 'text',
@@ -524,6 +532,7 @@ const X6MindMapNode = memo(({ node }) => {
               component="span"
               onMouseDown={(e) => e.stopPropagation()}
               sx={{
+                width: 'fit-content',
                 fontSize: '0.75rem',
                 color: isError ? '#dc2626' : '#374151',
                 lineHeight: 1.4,
@@ -540,8 +549,10 @@ const X6MindMapNode = memo(({ node }) => {
             // 收起时：用 -webkit-box 截断
             <Typography
               variant="body2"
+              component="span"
               onMouseDown={(e) => e.stopPropagation()}
               sx={{
+                width: 'fit-content',
                 fontSize: '0.75rem',
                 color: isError ? '#dc2626' : '#374151',
                 lineHeight: 1.4,
