@@ -131,6 +131,11 @@ const X6MindMapNode = memo(({ node }) => {
       node.resize(NODE_WIDTH, NODE_HEIGHT);
     }
 
+    // 展开时层级置顶，防止被其他节点遮挡
+    if (node.setZIndex) {
+      node.setZIndex(isExpanded ? 100 : 2);
+    }
+
     // 触发从该节点出发的边重新路由
     const outgoingEdges = node.getOutgoingEdges?.() || [];
     outgoingEdges.forEach(edge => {
