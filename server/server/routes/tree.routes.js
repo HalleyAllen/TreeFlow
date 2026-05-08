@@ -41,6 +41,15 @@ function createTreeRoutes(agent) {
   // 重置话题的视口位置
   router.delete('/viewport/:topicId', controller.resetViewport);
 
+  // 获取话题的活跃末端节点ID
+  router.get('/active-end-node/:topicId', controller.getActiveEndNodeId);
+
+  // 保存话题的活跃末端节点ID
+  router.post('/active-end-node/:topicId', controller.saveActiveEndNodeId);
+
+  // 重置话题的活跃末端节点ID
+  router.delete('/active-end-node/:topicId', controller.resetActiveEndNodeId);
+
   return router;
 }
 

@@ -194,6 +194,70 @@ export async function resetNodePositions(topicId) {
 }
 
 /**
+ * 获取话题的活跃末端节点ID
+ * @param {string} topicId - 话题ID
+ * @returns {Promise<Object>} - { success, data: nodeId|null }
+ */
+export async function getActiveEndNodeId(topicId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/tree/active-end-node/${topicId}`);
+    const data = await response.json();
+    if (data.success) {
+      return { success: true, nodeId: data.data };
+    }
+    return { success: false, error: data.error || '获取活跃末端节点失败' };
+  } catch (error) {
+    logger.error('TreeAPI', '获取活跃末端节点失败:', { error: error.message });
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 保存话题的活跃末端节点ID
+ * @param {string} topicId - 话题ID
+ * @param {string|null} nodeId - 活跃末端节点ID
+ * @returns {Promise<Object>} - 保存结果
+ */
+export async function saveActiveEndNodeId(topicId, nodeId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/tree/active-end-node/${topicId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nodeId })
+    });
+    const data = await response.json();
+    if (data.success) {
+      return { success: true, message: data.message };
+    }
+    return { success: false, error: data.error || '保存活跃末端节点失败' };
+  } catch (error) {
+    logger.error('TreeAPI', '保存活跃末端节点失败:', { error: error.message });
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 重置话题的活跃末端节点ID
+ * @param {string} topicId - 话题ID
+ * @returns {Promise<Object>} - 重置结果
+ */
+export async function resetActiveEndNodeId(topicId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/tree/active-end-node/${topicId}`, {
+      method: 'DELETE'
+    });
+    const data = await response.json();
+    if (data.success) {
+      return { success: true, message: data.message };
+    }
+    return { success: false, error: data.error || '重置活跃末端节点失败' };
+  } catch (error) {
+    logger.error('TreeAPI', '重置活跃末端节点失败:', { error: error.message });
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * 获取话题的视口位置
  * @param {string} topicId - 话题ID
  * @returns {Promise<Object>} - 视口位置 { x, y, zoom } 或 null

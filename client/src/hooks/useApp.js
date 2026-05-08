@@ -2,7 +2,7 @@
  * App 主逻辑 Hook
  * 整合所有业务逻辑，解耦 App.jsx
  */
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useTopics } from './useTopics';
 import { useChat } from './useChat';
 import { useModels } from './useModels';
@@ -10,6 +10,7 @@ import { useTokens } from './useTokens';
 import { useSkills } from './useSkills';
 import { useTheme } from './useTheme';
 import * as ollamaApi from '../services/api/ollama.api';
+import * as treeApi from '../services/api/tree.api';
 import logger from '../services/logger';
 
 export const useApp = () => {
@@ -96,11 +97,18 @@ export const useApp = () => {
     loadOllamaConfig();
   }, []);
 
-  // 当话题切换时加载消息并清除活跃末端节点
+  // 当话题切换时加载消息并恢复活跃末端节点
   useEffect(() => {
     if (currentTopic?.id) {
       loadMessages(currentTopic.id);
-      setActiveEndNodeId(null);
+      // 从服务器加载该话题保存的活跃末端节点
+      treeApi.getActiveEndNodeId(currentTopic.id).then(result => {
+        if (result.success && result.nodeId) {
+          setActiveEndNodeId(result.nodeId);
+        } else {
+          setActiveEndNodeId(null);
+        }
+      });
     }
   }, [currentTopic?.id, loadMessages, setActiveEndNodeId]);
 
@@ -241,15 +249,26 @@ export const useApp = () => {
   const handleNodeSelect = useCallback((nodeData) => {
     console.log('[useApp handleNodeSelect] nodeData:', nodeData);
     if (nodeData && nodeData.childrenCount === 0) {
-      // 点击末端节点：设为活跃末端节点
-      console.log('[useApp] 设为活跃末端节点:', nodeData.id);
-      setActiveEndNodeId(nodeData.id);
-    } else {
-      // 点击非末端节点：取消活跃末端节点
-      console.log('[useApp] 取消活跃末端节点');
-      setActiveEndNodeId(null);
+      // 有引用时不更新活跃末端节点（保持引用优先）
+      if (quotedTexts.length === 0) {
+        console.log('[useApp] 设为活跃末端节点:', nodeData.id);
+        setActiveEndNodeId(nodeData.id);
+        // 持久化到服务器
+        if (currentTopic?.id) {
+          treeApi.saveActiveEndNodeId(currentTopic.id, nodeData.id);
+        }
+      }
     }
-  }, [setActiveEndNodeId]);
+    // 非末端节点不清空，保持选中状态持久化
+  }, [setActiveEndNodeId, quotedTexts, currentTopic]);
+
+  // 视觉选中节点：有引用时隐藏蓝色，删除引用后恢复到活跃末端节点
+  const visualNodeId = useMemo(() => {
+    if (quotedTexts.length > 0) {
+      return null; // 有引用时取消蓝色 UI
+    }
+    return activeEndNodeId; // 无引用时显示活跃末端节点的蓝色 UI
+  }, [quotedTexts, activeEndNodeId]);
 
   return {
     // UI 状态
@@ -279,6 +298,7 @@ export const useApp = () => {
     branchMode,
     nodeCreated,
     activeEndNodeId,
+    visualNodeId,
     input,
     quotedTexts,
     handleInputChange,

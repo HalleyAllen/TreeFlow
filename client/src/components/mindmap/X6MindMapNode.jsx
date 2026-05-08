@@ -239,6 +239,51 @@ const X6MindMapNode = memo(({ node }) => {
     }
   }, [node]);
 
+  // 全局监听选区变化：选区在其他节点时隐藏本节点的引用按钮
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      const selection = window.getSelection();
+      const text = selection.toString().trim();
+      if (!text) {
+        // 没有选中文本时隐藏引用按钮
+        setShowQuoteButton(false);
+        return;
+      }
+      // 有选中文本时，检查选区是否在本节点内
+      if (nodeRef.current && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const isInsideThisNode = nodeRef.current.contains(range.commonAncestorContainer);
+        if (!isInsideThisNode) {
+          setShowQuoteButton(false);
+        }
+      }
+    };
+
+    document.addEventListener('selectionchange', handleSelectionChange);
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+    };
+  }, []);
+
+  // 点击外部区域隐藏引用按钮
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showQuoteButton && nodeRef.current) {
+        // 检查点击是否在引用按钮内
+        const isInsideNode = nodeRef.current.contains(event.target);
+        if (!isInsideNode) {
+          setShowQuoteButton(false);
+          window.getSelection()?.removeAllRanges();
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showQuoteButton]);
+
   // 处理引用
   const handleQuote = useCallback((event) => {
     event?.stopPropagation?.();
@@ -251,7 +296,10 @@ const X6MindMapNode = memo(({ node }) => {
       console.warn('[引用调试] 无法发送引用:', { selectedText: !!selectedText, hasCallback: !!onQuoteText, actualNodeId });
     }
     setShowQuoteButton(false);
-    window.getSelection()?.removeAllRanges();
+    // 延迟清除选区，确保 onQuoteText 先执行完毕
+    setTimeout(() => {
+      window.getSelection()?.removeAllRanges();
+    }, 100);
   }, [selectedText, onQuoteText, actualNodeId]);
 
   // 处理复制回答文字内容到剪贴板
@@ -360,8 +408,9 @@ const X6MindMapNode = memo(({ node }) => {
       {/* 引用按钮浮动层 */}
       {showQuoteButton && (
         <Box
-          onMouseDown={(e) => e.stopPropagation()}
-          onMouseUp={(e) => e.stopPropagation()}
+          onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+          onMouseUp={(e) => { e.stopPropagation(); e.preventDefault(); }}
+          onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleQuote(e); }}
           sx={{
             position: 'absolute',
             left: quoteButtonPos.x,
@@ -380,7 +429,6 @@ const X6MindMapNode = memo(({ node }) => {
               backgroundColor: '#2563eb',
             },
           }}
-          onClick={handleQuote}
         >
           <FormatQuote sx={{ color: 'white', fontSize: `calc(12px / ${zoom})`, mr: 0.3 / zoom }} />
           <Typography

@@ -327,6 +327,7 @@ export default function X6MindMap({
   topicId,
   loading,
   activeEndNodeId,
+  visualNodeId,
   onNodeSelect,
   onBranchFromNode,
   onQuoteText,
@@ -378,11 +379,9 @@ export default function X6MindMap({
 
   // 处理节点选中：蓝色效果只关联活跃末端节点
   const handleNodeSelectInternal = useCallback((nodeData) => {
-    // 只有末端节点才显示蓝色选中效果
+    // 只有末端节点才更新蓝色选中效果，非末端节点保持不变
     if (nodeData && nodeData.id && nodeData.childrenCount === 0) {
       setSelectedNodeId(nodeData.id);
-    } else {
-      setSelectedNodeId(null);
     }
     // 通知外部（useApp 会处理 activeEndNodeId）
     onNodeSelect?.(nodeData);
@@ -486,16 +485,16 @@ export default function X6MindMap({
 
     graph.use(miniMap);
 
-    // 点击空白处取消选中（使用 mousedown 比 click 更灵敏）
+    // 点击空白处不再取消选中（保持末端节点选中状态持久化）
+    // 只通知外部取消，由外部决定是否真正清空
     graph.on('blank:mousedown', () => {
-      setSelectedNodeId(null);
-      onNodeSelect?.(null);
+      // setSelectedNodeId(null);
+      // onNodeSelect?.(null);
     });
 
-    // 点击空白处取消选中
     graph.on('blank:click', () => {
-      setSelectedNodeId(null);
-      onNodeSelect?.(null);
+      // setSelectedNodeId(null);
+      // onNodeSelect?.(null);
     });
 
     // 节点点击选中（X6 级别事件，避免拖拽系统拦截 React 的 onClick）
@@ -738,6 +737,11 @@ export default function X6MindMap({
       }
     });
   }, [activeEndNodeId]);
+
+  // 外部 visualNodeId 变化时，同步更新内部 selectedNodeId，确保蓝色效果跟随引用/活跃末端转移
+  useEffect(() => {
+    setSelectedNodeId(visualNodeId || null);
+  }, [visualNodeId]);
 
   // 适应画布
   const handleFitView = useCallback(() => {

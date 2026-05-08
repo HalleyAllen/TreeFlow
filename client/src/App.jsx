@@ -33,6 +33,7 @@ function App() {
     branchMode,
     nodeCreated,
     activeEndNodeId,
+    visualNodeId,
     input,
     quotedTexts,
     handleInputChange,
@@ -97,6 +98,7 @@ function App() {
           isLoading={chatLoading}
           nodeCreated={nodeCreated}
           activeEndNodeId={activeEndNodeId}
+          visualNodeId={visualNodeId}
           skills={skills}
           activeSkill={activeSkill}
           quotedTexts={quotedTexts}

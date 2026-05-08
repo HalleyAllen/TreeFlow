@@ -377,6 +377,88 @@ class TreeController {
   }
 
   /**
+   * 获取话题的活跃末端节点ID
+   * GET /api/tree/active-end-node/:topicId
+   */
+  getActiveEndNodeId = (req, res) => {
+    try {
+      const { topicId } = req.params;
+
+      const topic = this.topicManager.getTopic(topicId);
+      if (!topic) {
+        return res.status(404).json({ success: false, error: '话题不存在' });
+      }
+
+      const activeEndNodeId = this.topicManager.getActiveEndNodeId(topicId);
+
+      res.json({
+        success: true,
+        data: activeEndNodeId
+      });
+    } catch (error) {
+      logger.error('TreeController', '获取活跃末端节点失败:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  /**
+   * 保存话题的活跃末端节点ID
+   * POST /api/tree/active-end-node/:topicId
+   */
+  saveActiveEndNodeId = (req, res) => {
+    try {
+      const { topicId } = req.params;
+      const { nodeId } = req.body;
+
+      const topic = this.topicManager.getTopic(topicId);
+      if (!topic) {
+        return res.status(404).json({ success: false, error: '话题不存在' });
+      }
+
+      const success = this.topicManager.saveActiveEndNodeId(topicId, nodeId);
+      if (!success) {
+        return res.status(500).json({ success: false, error: '保存活跃末端节点失败' });
+      }
+
+      res.json({
+        success: true,
+        message: '活跃末端节点已保存'
+      });
+    } catch (error) {
+      logger.error('TreeController', '保存活跃末端节点失败:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  /**
+   * 重置话题的活跃末端节点ID
+   * DELETE /api/tree/active-end-node/:topicId
+   */
+  resetActiveEndNodeId = (req, res) => {
+    try {
+      const { topicId } = req.params;
+
+      const topic = this.topicManager.getTopic(topicId);
+      if (!topic) {
+        return res.status(404).json({ success: false, error: '话题不存在' });
+      }
+
+      const success = this.topicManager.resetActiveEndNodeId(topicId);
+      if (!success) {
+        return res.status(500).json({ success: false, error: '重置活跃末端节点失败' });
+      }
+
+      res.json({
+        success: true,
+        message: '活跃末端节点已重置'
+      });
+    } catch (error) {
+      logger.error('TreeController', '重置活跃末端节点失败:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  /**
    * 获取话题的视口位置
    * GET /api/tree/viewport/:topicId
    */

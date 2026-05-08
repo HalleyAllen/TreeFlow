@@ -24,6 +24,7 @@ const ChatContainer = ({
   branchFromIndex,
   nodeCreated,
   activeEndNodeId,
+  visualNodeId,
   skills,
   activeSkill,
   quotedTexts,
@@ -265,6 +266,7 @@ const ChatContainer = ({
           topicId={currentTopic?.id}
           loading={treeLoading || isLoading}
           activeEndNodeId={activeEndNodeId}
+          visualNodeId={visualNodeId}
           onNodeSelect={handleNodeSelect}
           onBranchFromNode={handleBranchFromNode}
           onQuoteText={onQuoteText}

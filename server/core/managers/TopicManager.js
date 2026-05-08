@@ -17,7 +17,8 @@ class TopicManager {
         conversationTree: null,  // 初始为空，等用户提问时再创建
         currentNode: null,
         nodePositions: {},  // 节点位置持久化存储
-        viewport: null  // 视口位置持久化存储 { x, y, zoom }
+        viewport: null,  // 视口位置持久化存储 { x, y, zoom }
+        activeEndNodeId: null  // 活跃末端节点ID持久化存储
       }
     };
   }
@@ -149,7 +150,8 @@ class TopicManager {
         conversationTree: null,  // 初始为空，等用户提问时再创建
         currentNode: null,
         nodePositions: {},  // 节点位置持久化存储
-        viewport: null  // 视口位置持久化存储
+        viewport: null,  // 视口位置持久化存储
+        activeEndNodeId: null  // 活跃末端节点ID持久化存储
       };
       this.saveTopics();
       logger.info('TopicManager', '创建话题', { topicId, name });
@@ -309,6 +311,65 @@ class TopicManager {
       return true;
     } catch (error) {
       logger.error('TopicManager', '重置节点位置失败:', { error: error.message, topicId });
+      return false;
+    }
+  }
+
+  /**
+   * 获取话题的活跃末端节点ID
+   * @param {string} topicId - 话题ID
+   * @returns {string|null} - 活跃末端节点ID或null
+   */
+  getActiveEndNodeId(topicId) {
+    const topic = this.topics[topicId];
+    if (!topic) {
+      logger.warn('TopicManager', '话题不存在，无法获取活跃末端节点', { topicId });
+      return null;
+    }
+    return topic.activeEndNodeId || null;
+  }
+
+  /**
+   * 保存话题的活跃末端节点ID
+   * @param {string} topicId - 话题ID
+   * @param {string|null} nodeId - 活跃末端节点ID
+   * @returns {boolean} - 是否保存成功
+   */
+  saveActiveEndNodeId(topicId, nodeId) {
+    try {
+      const topic = this.topics[topicId];
+      if (!topic) {
+        logger.warn('TopicManager', '话题不存在，无法保存活跃末端节点', { topicId });
+        return false;
+      }
+      topic.activeEndNodeId = nodeId;
+      this.saveTopics();
+      logger.info('TopicManager', '保存活跃末端节点成功', { topicId, nodeId });
+      return true;
+    } catch (error) {
+      logger.error('TopicManager', '保存活跃末端节点失败:', { error: error.message, topicId });
+      return false;
+    }
+  }
+
+  /**
+   * 重置话题的活跃末端节点ID
+   * @param {string} topicId - 话题ID
+   * @returns {boolean} - 是否重置成功
+   */
+  resetActiveEndNodeId(topicId) {
+    try {
+      const topic = this.topics[topicId];
+      if (!topic) {
+        logger.warn('TopicManager', '话题不存在，无法重置活跃末端节点', { topicId });
+        return false;
+      }
+      topic.activeEndNodeId = null;
+      this.saveTopics();
+      logger.info('TopicManager', '重置活跃末端节点成功', { topicId });
+      return true;
+    } catch (error) {
+      logger.error('TopicManager', '重置活跃末端节点失败:', { error: error.message, topicId });
       return false;
     }
   }

@@ -67,13 +67,14 @@ export const useChat = () => {
           : msg
       ));
 
-      // 退出分支模式并清除活跃末端节点
+      // 退出分支模式
       if (branchMode) {
         setBranchMode(false);
         setBranchFromNodeId(null);
       }
-      if (activeEndNodeId) {
-        setActiveEndNodeId(null);
+      // 发送成功后，新节点自动成为活跃末端节点，蓝色效果跟随转移
+      if (result.nodeId) {
+        setActiveEndNodeId(result.nodeId);
       }
 
       return { success: true, result };
