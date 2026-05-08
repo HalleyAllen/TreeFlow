@@ -341,6 +341,7 @@ export default function X6MindMap({
   const miniMapRef = useRef(null);
   const handleNodePositionChangeRef = useRef(null);
   const handleNodeSelectRef = useRef(null); // 存储节点选中回调，避免闭包问题
+  const onNodeSelectRef = useRef(onNodeSelect); // 存储外部 onNodeSelect，避免 handleNodeSelectInternal 引用变化
   const positionStatesRef = useRef({}); // 使用 ref 存储位置，避免触发重渲染
   const expandedStatesRef = useRef({}); // 使用 ref 存储展开状态，避免触发重渲染
   const [selectedNodeId, setSelectedNodeId] = useState(null);
@@ -379,15 +380,15 @@ export default function X6MindMap({
     console.log(`[展开状态] 节点 ${nodeId}: ${isExpanded ? '展开' : '收起'}`);
   }, []);
 
-  // 处理节点选中：蓝色效果只关联活跃末端节点
+  // 同步外部 onNodeSelect 到 ref
+  onNodeSelectRef.current = onNodeSelect;
+
+  // 处理节点选中：蓝色效果完全由外部 visualNodeId 驱动，此处不再内部设置 selectedNodeId
+  // 有引用时 visualNodeId 为 null，外部不会更新 activeEndNodeId，因此不会触发蓝色效果
   const handleNodeSelectInternal = useCallback((nodeData) => {
-    // 只有末端节点才更新蓝色选中效果，非末端节点保持不变
-    if (nodeData && nodeData.id && nodeData.childrenCount === 0) {
-      setSelectedNodeId(nodeData.id);
-    }
-    // 通知外部（useApp 会处理 activeEndNodeId）
-    onNodeSelect?.(nodeData);
-  }, [onNodeSelect]);
+    // 通知外部（useApp 会处理 activeEndNodeId，并据此更新 visualNodeId）
+    onNodeSelectRef.current?.(nodeData);
+  }, []); // 不依赖 onNodeSelect，防止外部 quotedTexts 变化导致重建
 
   // 将节点选中回调存入 ref，供 X6 事件监听使用
   handleNodeSelectRef.current = handleNodeSelectInternal;
@@ -714,7 +715,8 @@ export default function X6MindMap({
         }
       });
     });
-  }, [treeData, initialDataLoaded, handleNodeSelectInternal, handleToggleExpand]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [treeData, initialDataLoaded]);
 
   // 单独处理选中状态变化，只更新节点样式而不重建图
   useEffect(() => {
