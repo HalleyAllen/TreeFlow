@@ -219,7 +219,9 @@ function calculateLayout(rootNode, selectedNodeId = null, callbacks = {}, expand
   function layoutNode(node, x, y, depth = 0, isBranch = false) {
     const nodeId = node.id;
     const isSelected = nodeId === selectedNodeId;
-    const initialExpanded = expandedStates[nodeId] ?? false;
+    const expandState = expandedStates[nodeId] || {};
+    const initialQuestionExpanded = expandState.question ?? false;
+    const initialAnswerExpanded = expandState.answer ?? false;
     const savedPosition = positionStates[nodeId];
     
     // 使用保存的位置或计算的位置
@@ -233,7 +235,8 @@ function calculateLayout(rootNode, selectedNodeId = null, callbacks = {}, expand
       isBranch,
       selected: isSelected,
       isActiveEndNode,
-      initialExpanded,
+      initialQuestionExpanded,
+      initialAnswerExpanded,
       onQuoteText,
       onNodeSelect,
       onCopyNode,
@@ -375,9 +378,13 @@ export default function X6MindMap({
   }, [onQuoteText, onNodeSelect, onCopyNode, onEditNode, onDeleteNode, onDeleteBranch]);
 
   // 保存节点展开状态（仅更新 ref，不触发重渲染）
-  const handleToggleExpand = useCallback((nodeId, isExpanded) => {
-    expandedStatesRef.current[nodeId] = isExpanded;
-    console.log(`[展开状态] 节点 ${nodeId}: ${isExpanded ? '展开' : '收起'}`);
+  // type: 'question' | 'answer'，分别持久化问题区和回答区的展开状态
+  const handleToggleExpand = useCallback((nodeId, isExpanded, type = 'question') => {
+    if (!expandedStatesRef.current[nodeId]) {
+      expandedStatesRef.current[nodeId] = {};
+    }
+    expandedStatesRef.current[nodeId][type] = isExpanded;
+    console.log(`[展开状态] 节点 ${nodeId} ${type}: ${isExpanded ? '展开' : '收起'}`);
   }, []);
 
   // 同步外部 onNodeSelect 到 ref
