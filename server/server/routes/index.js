@@ -1,5 +1,6 @@
 /**
  * 路由聚合导出
+ * 重构后：路由工厂函数接收 ServiceContainer 而非 TreeFlowAgent，实现依赖注入解耦
  */
 const chatRoutes = require('./chat.routes');
 const topicRoutes = require('./topic.routes');
@@ -14,18 +15,18 @@ const treeRoutes = require('./tree.routes');
 /**
  * 注册所有路由
  * @param {Object} app - Express应用实例
- * @param {TreeFlowAgent} agent - TreeFlowAgent实例
+ * @param {ServiceContainer} container - 依赖注入容器
  */
-function registerRoutes(app, agent) {
-  app.use('/api', chatRoutes(agent));
-  app.use('/api/topics', topicRoutes(agent));
-  app.use('/api/tokens', tokenRoutes(agent));
-  app.use('/api/models', modelRoutes(agent));
-  app.use('/api/providers', providerRoutes(agent));
-  app.use('/api/ollama', ollamaRoutes(agent));
-  app.use('/api/skills', skillRoutes(agent));
-  app.use('/api/theme', themeRoutes(agent));
-  app.use('/api/tree', treeRoutes(agent));
+function registerRoutes(app, container) {
+  app.use('/api', chatRoutes(container));
+  app.use('/api/topics', topicRoutes(container));
+  app.use('/api/tokens', tokenRoutes(container));
+  app.use('/api/models', modelRoutes(container));
+  app.use('/api/providers', providerRoutes(container));
+  app.use('/api/ollama', ollamaRoutes(container));
+  app.use('/api/skills', skillRoutes(container));
+  app.use('/api/theme', themeRoutes(container));
+  app.use('/api/tree', treeRoutes(container));
 }
 
 module.exports = {

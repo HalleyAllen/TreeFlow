@@ -1,6 +1,7 @@
 /**
  * 提供商路由
  * 处理AI提供商配置
+ * 重构后：从 ServiceContainer 获取依赖
  */
 const express = require('express');
 const router = express.Router();
@@ -8,13 +9,17 @@ const { asyncHandler } = require('../middleware/errorHandler');
 const fetch = require('node-fetch');
 
 /**
- * 创建路由时传入agent实例
- * @param {TreeFlowAgent} agent - TreeFlowAgent实例
+ * 创建路由时传入容器
+ * @param {ServiceContainer} container - 依赖注入容器
  */
-module.exports = (agent) => {
+module.exports = (container) => {
+  // 从容器中获取所需服务
+  const configManager = container.get('configManager');
+  const agent = container.get('agent');
+
   // 获取所有提供商配置
   router.get('/', asyncHandler(async (req, res) => {
-    const providers = agent.configManager.getProviders();
+    const providers = configManager.getProviders();
     // 脱敏：不返回包含 token 的 headers
     const sanitized = {};
     for (const [name, config] of Object.entries(providers)) {
@@ -33,7 +38,7 @@ module.exports = (agent) => {
     if (!name || !config) {
       return res.error('缺少 name 或 config 参数', 400, 'MISSING_PARAMS');
     }
-    const providers = agent.configManager.getProviders();
+    const providers = configManager.getProviders();
     providers[name] = config;
     agent.updateProviders(providers);
     res.success({ result: `提供商 "${name}" 已保存` });
@@ -42,7 +47,7 @@ module.exports = (agent) => {
   // 删除自定义提供商
   router.delete('/:name', asyncHandler(async (req, res) => {
     const { name } = req.params;
-    const providers = agent.configManager.getProviders();
+    const providers = configManager.getProviders();
     if (!providers[name]) {
       return res.error(`提供商 "${name}" 不存在`, 404, 'NOT_FOUND');
     }

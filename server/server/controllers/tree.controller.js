@@ -1,16 +1,15 @@
 /**
  * 树形结构控制器
  * 处理对话树的查询和转换
- * 重构后：直接使用 ConversationTreeManager
+ * 重构后：通过 ServiceContainer 依赖注入，不再直接访问 TreeFlowAgent 内部属性
  */
 const logger = require('../../core/utils/logger');
 
 class TreeController {
-  constructor(agent) {
-    this.agent = agent;
-    // 直接使用 ConversationTreeManager
-    this.treeManager = agent.conversationTreeManager;
-    this.topicManager = agent.topicManager;
+  constructor(container) {
+    // 从容器中获取所需服务，实现依赖注入解耦
+    this.treeManager = container.get('conversationTreeManager');
+    this.topicManager = container.get('topicManager');
   }
 
   /**

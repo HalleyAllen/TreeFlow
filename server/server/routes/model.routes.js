@@ -1,6 +1,7 @@
 /**
  * 模型路由
  * 处理模型列表和当前模型设置
+ * 重构后：从 ServiceContainer 获取依赖，不再直接访问 agent 内部属性
  */
 const express = require('express');
 const router = express.Router();
@@ -9,14 +10,18 @@ const logger = require('../../core/utils/logger');
 const fetch = require('node-fetch');
 
 /**
- * 创建路由时传入agent实例
- * @param {TreeFlowAgent} agent - TreeFlowAgent实例
+ * 创建路由时传入容器
+ * @param {ServiceContainer} container - 依赖注入容器
  */
-module.exports = (agent) => {
+module.exports = (container) => {
+  // 从容器中获取所需服务
+  const tokenManager = container.get('tokenManager');
+  const configManager = container.get('configManager');
+
   // 获取可用模型列表
   router.get('/', asyncHandler(async (req, res) => {
     // 从token中提取可用的模型
-    const tokens = agent.tokenManager.tokens;
+    const tokens = tokenManager.tokens;
     const availableModels = [];
 
     tokens.forEach(token => {
@@ -31,9 +36,10 @@ module.exports = (agent) => {
     });
 
     // 添加ollama模型（如果启用）
-    if (agent.ollamaEnabled) {
+    const config = configManager.getConfig();
+    if (config.ollamaEnabled) {
       try {
-        const ollamaResponse = await fetch(`${agent.ollamaBaseUrl}/api/tags`);
+        const ollamaResponse = await fetch(`${config.ollamaBaseUrl}/api/tags`);
         if (ollamaResponse.ok) {
           const data = await ollamaResponse.json();
           if (data.models && Array.isArray(data.models)) {
@@ -85,13 +91,13 @@ module.exports = (agent) => {
   // 设置当前模型
   router.post('/current', asyncHandler(async (req, res) => {
     const { model } = req.body;
-    const result = agent.setModel(model);
-    res.success({ result });
+    configManager.setCurrentModel(model);
+    res.success({ result: `当前模型已设置为: ${model}` });
   }));
 
   // 获取当前模型
   router.get('/current', asyncHandler(async (req, res) => {
-    const model = agent.getModel();
+    const model = configManager.getCurrentModel();
     res.success({ model });
   }));
 

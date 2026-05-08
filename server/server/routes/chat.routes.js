@@ -1,6 +1,7 @@
 /**
  * 对话路由
  * 处理AI对话和分支相关请求
+ * 重构后：从 ServiceContainer 获取控制器依赖
  */
 const express = require('express');
 const router = express.Router();
@@ -8,11 +9,11 @@ const { asyncHandler } = require('../middleware/errorHandler');
 const ChatController = require('../controllers/chat.controller');
 
 /**
- * 创建路由时传入agent实例
- * @param {TreeFlowAgent} agent - TreeFlowAgent实例
+ * 创建路由时传入容器
+ * @param {ServiceContainer} container - 依赖注入容器
  */
-module.exports = (agent) => {
-  const controller = new ChatController(agent);
+module.exports = (container) => {
+  const controller = new ChatController(container);
 
   // 发送消息
   router.post('/ask', asyncHandler((req, res) => controller.ask(req, res)));

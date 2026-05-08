@@ -1,12 +1,13 @@
 /**
  * 树形结构路由
+ * 重构后：从 ServiceContainer 获取控制器依赖
  */
 const express = require('express');
 const TreeController = require('../controllers/tree.controller');
 
-function createTreeRoutes(agent) {
+function createTreeRoutes(container) {
   const router = express.Router();
-  const controller = new TreeController(agent);
+  const controller = new TreeController(container);
 
   // 获取话题的完整对话树
   router.get('/:topicId', controller.getTree);

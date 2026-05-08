@@ -2,8 +2,10 @@ import { AppBar, Toolbar, Typography, Box, Button, IconButton, Tooltip } from '@
 import SettingsIcon from '@mui/icons-material/Settings'
 import LightModeIcon from '@mui/icons-material/LightMode'
 import DarkModeIcon from '@mui/icons-material/DarkMode'
+import { useAppContext } from '../../contexts/AppContext'
 
-const Header = ({ onTokenManagerClick, theme, onToggleTheme }) => {
+const Header = () => {
+  const { theme, toggleTheme, setShowAIServiceModal } = useAppContext()
   const isDark = theme === 'dark'
 
   return (
@@ -16,7 +18,7 @@ const Header = ({ onTokenManagerClick, theme, onToggleTheme }) => {
           {/* 主题切换按钮 */}
           <Tooltip title={isDark ? '切换到浅色主题' : '切换到深色主题'}>
             <IconButton
-              onClick={onToggleTheme}
+              onClick={toggleTheme}
               sx={{
                 color: 'var(--text-color)',
                 border: '1px solid var(--border-color)',
@@ -36,7 +38,7 @@ const Header = ({ onTokenManagerClick, theme, onToggleTheme }) => {
           <Button
             variant="outlined"
             color="primary"
-            onClick={onTokenManagerClick}
+            onClick={() => setShowAIServiceModal(true)}
             startIcon={<SettingsIcon />}
             sx={{ borderColor: 'var(--primary-color)', color: 'var(--primary-color)', '&:hover': { borderColor: 'var(--primary-hover)', backgroundColor: 'rgba(59, 130, 246, 0.1)' } }}
           >

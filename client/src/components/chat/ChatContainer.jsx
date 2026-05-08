@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { Box, Typography, Paper, TextField, Button, IconButton, Tooltip, Fade, Chip, Snackbar, Alert } from '@mui/material'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { Box, Typography, Paper, TextField, Button, IconButton, Fade, Chip, Snackbar, Alert } from '@mui/material'
 import CallSplitIcon from '@mui/icons-material/CallSplit'
 import CloseIcon from '@mui/icons-material/Close'
 import SendIcon from '@mui/icons-material/Send'
@@ -8,39 +8,46 @@ import FormatQuoteIcon from '@mui/icons-material/FormatQuote'
 import SkillSelector from '../common/SkillSelector'
 import X6MindMap from '../mindmap/X6MindMap'
 import { useMindMap } from '../../hooks/useMindMap'
+import { useAppContext } from '../../contexts/AppContext'
 import * as treeApi from '../../services/api/tree.api'
 
+const ChatContainer = () => {
+  const {
+    currentTopic,
+    messages,
+    input,
+    chatLoading: isLoading,
+    models,
+    selectedModel,
+    showModelDropdown,
+    setShowModelDropdown,
+    branchMode,
+    nodeCreated,
+    activeEndNodeId,
+    visualNodeId,
+    skills,
+    activeSkill,
+    quotedTexts,
+    handleInputChange: onInputChange,
+    handleKeyDown: onKeyDown,
+    handleSend: onSend,
+    handleEnterBranchMode: onEnterBranchMode,
+    exitBranchMode: onExitBranchMode,
+    handleNodeSelect: onNodeSelect,
+    selectSkill: onSelectSkill,
+    clearSkill: onClearSkill,
+    handleQuoteText: onQuoteText,
+    removeQuote: onRemoveQuote,
+    handleSelectModel
+  } = useAppContext()
 
+  const handleToggleModelDropdown = useCallback(() => {
+    setShowModelDropdown(prev => !prev)
+  }, [setShowModelDropdown])
 
-const ChatContainer = ({
-  currentTopic,
-  messages,
-  input,
-  isLoading,
-  models,
-  selectedModel,
-  showModelDropdown,
-  branchMode,
-  branchFromIndex,
-  nodeCreated,
-  activeEndNodeId,
-  visualNodeId,
-  skills,
-  activeSkill,
-  quotedTexts,
-  onInputChange,
-  onKeyDown,
-  onSend,
-  onToggleModelDropdown,
-  onSelectModel,
-  onEnterBranchMode,
-  onExitBranchMode,
-  onNodeSelect,
-  onSelectSkill,
-  onClearSkill,
-  onQuoteText,
-  onRemoveQuote
-}) => {
+  const handleSelectModelLocal = useCallback((model) => {
+    handleSelectModel(model)
+  }, [handleSelectModel])
   const [hoveredMsgIndex, setHoveredMsgIndex] = useState(-1)
   const [showSkillSelector, setShowSkillSelector] = useState(false)
   const messagesEndRef = useRef(null)
@@ -158,8 +165,8 @@ const ChatContainer = ({
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (modelDropdownRef.current && !modelDropdownRef.current.contains(event.target)) {
-        if (showModelDropdown) {
-          onToggleModelDropdown()
+          if (showModelDropdown) {
+          handleToggleModelDropdown()
         }
       }
     }
@@ -170,7 +177,7 @@ const ChatContainer = ({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [showModelDropdown, onToggleModelDropdown])
+  }, [showModelDropdown, handleToggleModelDropdown])
 
   const handleInputChange = (e) => {
     const value = e.target.value
@@ -402,7 +409,7 @@ const ChatContainer = ({
             <Button
               variant="outlined"
               size="small"
-              onClick={onToggleModelDropdown}
+              onClick={handleToggleModelDropdown}
               sx={{
                 borderColor: 'var(--border-color)',
                 color: 'var(--text-color)',
@@ -446,7 +453,7 @@ const ChatContainer = ({
                         '&:hover': model.available ? { backgroundColor: 'var(--hover-bg)' } : {},
                         '&:last-child': { borderBottom: 'none' }
                       }}
-                      onClick={() => onSelectModel(model)}
+                      onClick={() => handleSelectModelLocal(model)}
                     >
                       <Typography sx={{ color: 'var(--text-color)', fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{model.name}</Typography>
                       <Typography sx={{

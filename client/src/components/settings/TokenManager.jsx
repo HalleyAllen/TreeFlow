@@ -29,6 +29,7 @@ import logger from '../../services/logger'
 import { identifyModelFromToken } from '../../utils/tokenUtils'
 import tokenData from '../../utils/tokenUtils.json'
 import CustomProviderManager from './CustomProviderManager'
+import { useAppContext } from '../../contexts/AppContext'
 
 const { providerOptions, modelOptions } = tokenData;
 
@@ -57,7 +58,17 @@ function TabPanel({ children, value, index, ...other }) {
   );
 }
 
-const TokenManager = ({ open, onClose, tokenStats, onTokensUpdated, ollamaEnabled, onOllamaEnabledChange }) => {
+const TokenManager = () => {
+  const {
+    showAIServiceModal: open,
+    setShowAIServiceModal,
+    tokens: tokenStats,
+    handleTokensUpdated: onTokensUpdated,
+    ollamaEnabled,
+    handleOllamaEnabledChange: onOllamaEnabledChange
+  } = useAppContext()
+
+  const handleClose = () => setShowAIServiceModal(false)
   // 标签页状态
   const [activeTab, setActiveTab] = useState(0)
 
@@ -332,7 +343,7 @@ const TokenManager = ({ open, onClose, tokenStats, onTokensUpdated, ollamaEnable
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       maxWidth="md"
       fullWidth
       PaperProps={{
@@ -361,7 +372,7 @@ const TokenManager = ({ open, onClose, tokenStats, onTokensUpdated, ollamaEnable
             AI 服务管理
           </Typography>
         </Box>
-        <IconButton onClick={onClose} size="small" sx={{ color: 'var(--text-secondary)', '&:hover': { color: 'var(--text-color)' } }}>
+        <IconButton onClick={handleClose} size="small" sx={{ color: 'var(--text-secondary)', '&:hover': { color: 'var(--text-color)' } }}>
           <CloseIcon />
         </IconButton>
       </DialogTitle>

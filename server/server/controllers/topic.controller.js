@@ -1,14 +1,14 @@
 /**
  * 话题控制器
  * 处理话题的CRUD操作
- * 重构后：直接使用 TopicManager
+ * 重构后：通过 ServiceContainer 依赖注入，不再直接访问 TreeFlowAgent 内部属性
  */
 class TopicController {
-  constructor(agent) {
-    this.agent = agent;
-    // 直接使用 TopicManager
-    this.topicManager = agent.topicManager;
-    this.configManager = agent.configManager;
+  constructor(container) {
+    // 从容器中获取所需服务，实现依赖注入解耦
+    this.topicManager = container.get('topicManager');
+    this.configManager = container.get('configManager');
+    this.treeManager = container.get('conversationTreeManager');
   }
 
   /**
@@ -83,8 +83,7 @@ class TopicController {
    */
   getTopicMessages(req, res) {
     const { topicId } = req.params;
-    const treeManager = this.agent.conversationTreeManager;
-    const messages = treeManager.getConversationMessages(topicId);
+    const messages = this.treeManager.getConversationMessages(topicId);
     res.success({ messages });
   }
 }

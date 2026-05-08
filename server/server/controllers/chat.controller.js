@@ -1,15 +1,15 @@
 /**
  * 对话控制器
  * 处理AI对话和流式响应的业务逻辑
- * 重构后：直接使用 ConversationTreeManager 处理对话树相关操作
+ * 重构后：通过 ServiceContainer 依赖注入，不再直接访问 TreeFlowAgent 内部属性
  */
 class ChatController {
-  constructor(agent) {
-    this.agent = agent;
-    // 直接使用 ConversationTreeManager
-    this.treeManager = agent.conversationTreeManager;
-    this.topicManager = agent.topicManager;
-    this.configManager = agent.configManager;
+  constructor(container) {
+    // 从容器中获取所需服务，实现依赖注入解耦
+    this.agent = container.get('agent');
+    this.treeManager = container.get('conversationTreeManager');
+    this.topicManager = container.get('topicManager');
+    this.configManager = container.get('configManager');
   }
 
   /**

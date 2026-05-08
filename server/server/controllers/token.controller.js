@@ -1,13 +1,12 @@
 /**
  * Token控制器
  * 处理Token的CRUD操作和健康检查
- * 重构后：直接使用 TokenManager
+ * 重构后：通过 ServiceContainer 依赖注入
  */
 class TokenController {
-  constructor(agent) {
-    this.agent = agent;
-    // 直接使用 TokenManager
-    this.tokenManager = agent.tokenManager;
+  constructor(container) {
+    // 从容器中获取所需服务，实现依赖注入解耦
+    this.tokenManager = container.get('tokenManager');
   }
 
   /**

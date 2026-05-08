@@ -1,19 +1,23 @@
 /**
  * 主题路由
  * 处理主题切换
+ * 重构后：从 ServiceContainer 获取依赖
  */
 const express = require('express');
 const router = express.Router();
 const { asyncHandler } = require('../middleware/errorHandler');
 
 /**
- * 创建路由时传入agent实例
- * @param {TreeFlowAgent} agent - TreeFlowAgent实例
+ * 创建路由时传入容器
+ * @param {ServiceContainer} container - 依赖注入容器
  */
-module.exports = (agent) => {
+module.exports = (container) => {
+  // 从容器中获取配置管理器
+  const configManager = container.get('configManager');
+
   // 获取当前主题
   router.get('/', asyncHandler(async (_req, res) => {
-    const theme = agent.configManager.getTheme();
+    const theme = configManager.getTheme();
     res.success({ theme });
   }));
 
@@ -23,7 +27,7 @@ module.exports = (agent) => {
     if (!theme || !['light', 'dark'].includes(theme)) {
       return res.error('无效的主题名称，只支持 light 或 dark', 400);
     }
-    agent.configManager.setTheme(theme);
+    configManager.setTheme(theme);
     res.success({ 
       result: `主题已设置为: ${theme === 'light' ? '浅色' : '深色'}主题` 
     });

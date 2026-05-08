@@ -3,129 +3,33 @@ import Header from './components/layout/Header'
 import Sidebar from './components/layout/Sidebar'
 import ChatContainer from './components/chat/ChatContainer'
 import TokenManager from './components/settings/TokenManager'
-import { useApp } from './hooks'
+import { AppProvider } from './contexts/AppContext'
 
+/**
+ * App 根组件
+ * 使用 AppProvider 提供全局状态，消除 prop drilling
+ */
 function App() {
-  const {
-    // UI 状态
-    showAIServiceModal,
-    setShowAIServiceModal,
-    showCreateTopicModal,
-    setShowCreateTopicModal,
-    topicNameInput,
-    setTopicNameInput,
-    showModelDropdown,
-    setShowModelDropdown,
+  return (
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
+  )
+}
 
-    // Ollama 相关
-    ollamaEnabled,
-    handleOllamaEnabledChange,
-
-    // 话题相关
-    topics,
-    currentTopic,
-    handleCreateTopic,
-    handleSwitchTopic,
-
-    // 聊天相关
-    messages,
-    chatLoading,
-    branchMode,
-    nodeCreated,
-    activeEndNodeId,
-    visualNodeId,
-    input,
-    quotedTexts,
-    handleInputChange,
-    handleKeyDown,
-    handleSend,
-    handleEnterBranchMode,
-    exitBranchMode,
-    handleNodeSelect,
-    handleQuoteText,
-    removeQuote,
-
-    // 模型相关
-    models,
-    selectedModel,
-    handleSelectModel,
-
-    // Token 相关
-    tokens,
-    handleTokensUpdated,
-
-    // 技能相关
-    skills,
-    activeSkill,
-    selectSkill,
-    clearSkill,
-
-    // 主题相关
-    theme,
-    toggleTheme
-  } = useApp();
-
+/**
+ * AppContent - 实际布局组件
+ * 子组件通过 useAppContext 自行获取所需状态
+ */
+function AppContent() {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <Header
-        onTokenManagerClick={() => setShowAIServiceModal(true)}
-        theme={theme}
-        onToggleTheme={toggleTheme}
-      />
+      <Header />
       <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        <Sidebar
-          topics={topics}
-          currentTopic={currentTopic}
-          showCreateTopicModal={showCreateTopicModal}
-          topicNameInput={topicNameInput}
-          onShowCreateTopicModal={() => setShowCreateTopicModal(true)}
-          onTopicNameChange={(e) => setTopicNameInput(e.target.value)}
-          onCreateTopic={handleCreateTopic}
-          onSwitchTopic={handleSwitchTopic}
-          onCancelCreateTopic={() => {
-            setShowCreateTopicModal(false)
-            setTopicNameInput('')
-          }}
-        />
-        <ChatContainer
-          currentTopic={currentTopic}
-          messages={messages}
-          input={input}
-          models={models}
-          selectedModel={selectedModel}
-          showModelDropdown={showModelDropdown}
-          branchMode={branchMode}
-          isLoading={chatLoading}
-          nodeCreated={nodeCreated}
-          activeEndNodeId={activeEndNodeId}
-          visualNodeId={visualNodeId}
-          skills={skills}
-          activeSkill={activeSkill}
-          quotedTexts={quotedTexts}
-          onInputChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          onSend={handleSend}
-          onToggleModelDropdown={() => setShowModelDropdown(!showModelDropdown)}
-          onSelectModel={handleSelectModel}
-          onEnterBranchMode={handleEnterBranchMode}
-          onExitBranchMode={exitBranchMode}
-          onNodeSelect={handleNodeSelect}
-          onSelectSkill={selectSkill}
-          onClearSkill={clearSkill}
-          onQuoteText={handleQuoteText}
-          onRemoveQuote={removeQuote}
-        />
+        <Sidebar />
+        <ChatContainer />
       </Box>
-
-      {/* AI服务管理模态框 */}
-      <TokenManager
-        open={showAIServiceModal}
-        onClose={() => setShowAIServiceModal(false)}
-        tokenStats={tokens}
-        onTokensUpdated={handleTokensUpdated}
-        ollamaEnabled={ollamaEnabled}
-        onOllamaEnabledChange={handleOllamaEnabledChange}
-      />
+      <TokenManager />
     </Box>
   )
 }
