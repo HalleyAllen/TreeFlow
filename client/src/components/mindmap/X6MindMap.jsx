@@ -344,6 +344,8 @@ export default function X6MindMap({
   const positionStatesRef = useRef({}); // 使用 ref 存储位置，避免触发重渲染
   const expandedStatesRef = useRef({}); // 使用 ref 存储展开状态，避免触发重渲染
   const [selectedNodeId, setSelectedNodeId] = useState(null);
+  const selectedNodeIdRef = useRef(null); // 存储最新选中节点ID，供异步回调使用
+  const activeEndNodeIdRef = useRef(null); // 存储最新活跃末端节点ID，供异步回调使用
   const [showMiniMap, setShowMiniMap] = useState(true);
   
   // 初始数据加载标志
@@ -697,6 +699,20 @@ export default function X6MindMap({
           requestAnimationFrame(animateFadeIn);
         }, index * 30); // 每个节点延迟 30ms
       });
+
+      // 节点添加完成后，同步当前的选中状态和活跃末端状态
+      // 解决异步添加节点时，selectedNodeId / activeEndNodeId 已更新但节点还未创建的问题
+      const currentSelectedNodeId = selectedNodeIdRef.current;
+      const currentActiveEndNodeId = activeEndNodeIdRef.current;
+      graph.getNodes().forEach((node) => {
+        const nodeId = node.id;
+        const data = node.getData() || {};
+        const newSelected = nodeId === currentSelectedNodeId;
+        const newIsActiveEndNode = nodeId === currentActiveEndNodeId;
+        if (data.selected !== newSelected || data.isActiveEndNode !== newIsActiveEndNode) {
+          node.setData({ ...data, selected: newSelected, isActiveEndNode: newIsActiveEndNode });
+        }
+      });
     });
   }, [treeData, initialDataLoaded, handleNodeSelectInternal, handleToggleExpand]);
 
@@ -740,8 +756,15 @@ export default function X6MindMap({
 
   // 外部 visualNodeId 变化时，同步更新内部 selectedNodeId，确保蓝色效果跟随引用/活跃末端转移
   useEffect(() => {
-    setSelectedNodeId(visualNodeId || null);
+    const newId = visualNodeId || null;
+    setSelectedNodeId(newId);
+    selectedNodeIdRef.current = newId;
   }, [visualNodeId]);
+
+  // 同步 activeEndNodeId 到 ref
+  useEffect(() => {
+    activeEndNodeIdRef.current = activeEndNodeId;
+  }, [activeEndNodeId]);
 
   // 适应画布
   const handleFitView = useCallback(() => {
