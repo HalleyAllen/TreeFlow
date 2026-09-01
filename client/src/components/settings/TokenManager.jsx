@@ -377,51 +377,80 @@ const TokenManager = () => {
         </IconButton>
       </DialogTitle>
 
-      {/* 标签页 */}
-      <Box sx={{ borderBottom: 1, borderColor: 'var(--border-color)', bgcolor: 'var(--card-background)' }}>
-        <Tabs
-          value={activeTab}
-          onChange={(e, v) => setActiveTab(v)}
-          textColor="primary"
-          indicatorColor="var(--primary-color)"
-          sx={{
-            '& .MuiTabs-flexContainer': { px: 2 },
-            '& .MuiTab-root': {
-              color: 'var(--text-secondary)',
-              textTransform: 'none',
-              fontSize: '0.9rem',
-              fontWeight: 500,
-              minHeight: '48px',
-              '&.Mui-selected': { color: 'var(--primary-color)' }
-            }
-          }}
-        >
-          <Tab icon={<KeyIcon sx={{ fontSize: 18 }} />} iconPosition="start" label={`API密钥 (${tokenStats.length})`} />
-          <Tab
-            icon={<ComputerIcon sx={{ fontSize: 18 }} />}
-            iconPosition="start"
-            label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                Ollama本地模型
-                {ollamaEnabled && (
-                  <Box
-                    sx={{
-                      width: 8, height: 8, borderRadius: '50%',
-                      bgcolor: ollamaConnectionStatus.connected ? 'var(--success-color)' : 'var(--error-color)'
-                    }}
-                  />
-                )}
-              </Box>
-            }
-          />
-          <Tab icon={<StorageIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="自定义提供商" />
-        </Tabs>
-      </Box>
+      <DialogContent sx={{ bgcolor: 'var(--card-background)', p: 0, overflow: 'hidden', display: 'flex' }}>
+        {/* 左侧：AI服务选择列表 */}
+        <Box sx={{
+          width: 200,
+          flexShrink: 0,
+          borderRight: '1px solid var(--border-color)',
+          bgcolor: 'var(--hover-bg)',
+          py: 1,
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          <Typography sx={{
+            px: 2,
+            pb: 1,
+            fontSize: '0.72rem',
+            fontWeight: 600,
+            letterSpacing: '0.08em',
+            color: 'var(--text-secondary)',
+            textTransform: 'uppercase'
+          }}>
+            AI 服务
+          </Typography>
+          <Tabs
+            value={activeTab}
+            onChange={(e, v) => setActiveTab(v)}
+            orientation="vertical"
+            variant="fullWidth"
+            sx={{
+              '& .MuiTabs-indicator': { left: 0, width: 3, borderRadius: 2, bgcolor: 'var(--primary-color)' },
+              '& .MuiTab-root': {
+                color: 'var(--text-secondary)',
+                textTransform: 'none',
+                fontSize: '0.9rem',
+                fontWeight: 500,
+                minHeight: '46px',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                borderRadius: 1.5,
+                mx: 1,
+                '&.Mui-selected': {
+                  color: 'var(--primary-color)',
+                  bgcolor: 'rgba(33, 150, 243, 0.08)'
+                },
+                '&:hover': { bgcolor: 'var(--card-background)' }
+              }
+            }}
+          >
+            <Tab icon={<KeyIcon sx={{ fontSize: 18 }} />} iconPosition="start" label={`API密钥 (${tokenStats.length})`} />
+            <Tab
+              icon={<ComputerIcon sx={{ fontSize: 18 }} />}
+              iconPosition="start"
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  Ollama本地模型
+                  {ollamaEnabled && (
+                    <Box
+                      sx={{
+                        width: 8, height: 8, borderRadius: '50%',
+                        bgcolor: ollamaConnectionStatus.connected ? 'var(--success-color)' : 'var(--error-color)'
+                      }}
+                    />
+                  )}
+                </Box>
+              }
+            />
+            <Tab icon={<StorageIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="自定义提供商" />
+          </Tabs>
+        </Box>
 
-      <DialogContent sx={{ bgcolor: 'var(--card-background)', p: 0, overflow: 'auto' }}>
+        {/* 右侧：设置内容 */}
+        <Box sx={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
         {/* ========== Token管理标签页 ========== */}
         <TabPanel value={activeTab} index={0}>
-          <Box sx={{ px: 3, pb: 3, height: '100%', overflow: 'auto' }}>
+          <Box sx={{ px: 3, pb: 3 }}>
             {/* 添加Token卡片 */}
             <Card sx={{
               mb: 3,
@@ -705,7 +734,7 @@ const TokenManager = () => {
 
         {/* ========== Ollama标签页 ========== */}
         <TabPanel value={activeTab} index={1}>
-          <Box sx={{ px: 3, pb: 3, height: '100%', overflow: 'auto' }}>
+          <Box sx={{ px: 3, pb: 3 }}>
             {/* 启用开关卡片 */}
             <Card sx={{
               mb: 3,
@@ -1066,6 +1095,7 @@ const TokenManager = () => {
             <CustomProviderManager />
           </Box>
         </TabPanel>
+        </Box>
       </DialogContent>
 
       {/* Token删除确认对话框 */}
