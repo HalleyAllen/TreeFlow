@@ -6,7 +6,7 @@ import SendIcon from '@mui/icons-material/Send'
 import FormatQuoteIcon from '@mui/icons-material/FormatQuote'
 
 import SkillSelector from '../common/SkillSelector'
-import X6MindMap from '../mindmap/X6MindMap'
+import MindMap from '../mindmap/MindMap'
 import { useMindMap } from '../../hooks/useMindMap'
 import { useAppContext } from '../../contexts/AppContext'
 import * as treeApi from '../../services/api/tree.api'
@@ -231,7 +231,7 @@ const ChatContainer = () => {
         </Paper>
       </Fade>
 
-      {/* 脑图视图 - AntV X6 */}
+      {/* 脑图视图 - React Flow */}
       <Box sx={{ flex: 1, mb: 0, borderRadius: 2, overflow: 'hidden', border: '1px solid var(--border-color)', position: 'relative' }}>
         {/* 标题栏 - 悬浮在脑图上层 */}
         <Box sx={{
@@ -268,7 +268,7 @@ const ChatContainer = () => {
             />
           )}
         </Box>
-        <X6MindMap
+        <MindMap
           treeData={treeData}
           topicId={currentTopic?.id}
           loading={treeLoading || isLoading}

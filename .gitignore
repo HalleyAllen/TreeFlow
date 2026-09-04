@@ -4,3 +4,6 @@ node_modules
 # Data and logs
 server/data/topics.json
 server/logs/
+
+# Local dev logs
+*.log

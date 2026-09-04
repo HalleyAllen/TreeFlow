@@ -33,10 +33,10 @@ export const loadTopicMessages = async (topicId) => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/topics/${topicId}/messages`);
     const data = await response.json();
-    return data.data || data;
+    return data.data?.messages || data.messages || [];
   } catch (error) {
     logger.error('API', '加载话题消息失败:', { error: error.message });
-    return { error: '加载话题消息失败，请稍后再试' };
+    return [];
   }
 };
 
