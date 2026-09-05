@@ -18,12 +18,12 @@ export const loadTokenStats = async () => {
 };
 
 // 添加Token
-export const addToken = async (token, provider, model) => {
+export const addToken = async (token, provider, model, baseUrl) => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/tokens`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, provider, model })
+      body: JSON.stringify({ token, provider, model, baseUrl })
     });
     return await response.json();
   } catch (error) {
@@ -48,12 +48,12 @@ export const removeToken = async (token) => {
 };
 
 // 更新Token信息
-export const updateTokenInfo = async (token, newToken, provider, model) => {
+export const updateTokenInfo = async (token, newToken, provider, model, baseUrl) => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/tokens/info`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, newToken, provider, model })
+      body: JSON.stringify({ token, newToken, provider, model, baseUrl })
     });
     return await response.json();
   } catch (error) {

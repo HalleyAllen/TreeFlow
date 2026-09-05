@@ -21,8 +21,8 @@ class TokenController {
    * 添加Token
    */
   addToken(req, res) {
-    const { token, provider, model } = req.body;
-    const result = this.tokenManager.addToken(token, provider, model);
+    const { token, provider, model, baseUrl } = req.body;
+    const result = this.tokenManager.addToken(token, provider, model, baseUrl);
     res.success({ result });
   }
 
@@ -39,8 +39,8 @@ class TokenController {
    * 更新Token信息
    */
   updateTokenInfo(req, res) {
-    const { token, newToken, provider, model } = req.body;
-    const result = this.tokenManager.updateTokenInfo(token, newToken, provider, model);
+    const { token, newToken, provider, model, baseUrl } = req.body;
+    const result = this.tokenManager.updateTokenInfo(token, newToken, provider, model, baseUrl);
     res.success({ result });
   }
 

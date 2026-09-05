@@ -76,12 +76,14 @@ const TokenManager = () => {
   const [tokenInput, setTokenInput] = useState('')
   const [addProvider, setAddProvider] = useState('')
   const [addModel, setAddModel] = useState('')
+  const [addBaseUrl, setAddBaseUrl] = useState('')
   const [tokenLoading, setTokenLoading] = useState(false)
   const [showEditTokenModal, setShowEditTokenModal] = useState(false)
   const [editingToken, setEditingToken] = useState(null)
   const [newToken, setNewToken] = useState('')
   const [editProvider, setEditProvider] = useState('')
   const [editModel, setEditModel] = useState('')
+  const [editBaseUrl, setEditBaseUrl] = useState('')
   const [tokenToDelete, setTokenToDelete] = useState(null)
 
   // Ollama相关状态
@@ -134,21 +136,30 @@ const TokenManager = () => {
       const modelInfo = identifyModelFromToken(token)
       setAddProvider(modelInfo.provider)
       setAddModel(modelInfo.model)
+      // 接入地址无法从 key 推断，识别到需自定义接入点的厂商时清空等待用户填写
+      setAddBaseUrl('')
     } else {
       setAddProvider('')
       setAddModel('')
+      setAddBaseUrl('')
     }
   }
 
   const handleAddToken = async () => {
     if (!tokenInput.trim()) return
+    // 阿里云百炼Agent 必须提供接入地址
+    if (addProvider === '阿里云百炼Agent' && !addBaseUrl.trim()) {
+      showSnackbar('请填写该 Key 的 Base URL 接入地址', 'warning')
+      return
+    }
     setTokenLoading(true)
     try {
-      const data = await addToken(tokenInput, addProvider, addModel)
+      const data = await addToken(tokenInput, addProvider, addModel, addBaseUrl.trim())
       if (data.result) {
         setTokenInput('')
         setAddProvider('')
         setAddModel('')
+        setAddBaseUrl('')
         onTokensUpdated?.()
         showSnackbar(data.result, 'success')
       } else if (data.error) {
@@ -187,13 +198,18 @@ const TokenManager = () => {
     setNewToken(token.token)
     setEditProvider(token.provider)
     setEditModel(token.model)
+    setEditBaseUrl(token.baseUrl || '')
     setShowEditTokenModal(true)
   }
 
   const handleUpdateTokenInfo = async () => {
     if (!editingToken || !editProvider || !editModel) return
+    if (editProvider === '阿里云百炼Agent' && !editBaseUrl.trim()) {
+      showSnackbar('请填写该 Key 的 Base URL 接入地址', 'warning')
+      return
+    }
     try {
-      const data = await updateTokenInfo(editingToken, newToken, editProvider, editModel)
+      const data = await updateTokenInfo(editingToken, newToken, editProvider, editModel, editBaseUrl.trim())
       if (data.result) {
         onTokensUpdated?.()
         setShowEditTokenModal(false)
@@ -606,6 +622,35 @@ const TokenManager = () => {
                   />
                 </Box>
 
+                {addProvider === '阿里云百炼Agent' && (
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Base URL（OpenAI 兼容接入地址）"
+                    placeholder="https://ws-xxxx.region.maas.aliyuncs.com/compatible-mode/v1"
+                    value={addBaseUrl}
+                    onChange={(e) => setAddBaseUrl(e.target.value)}
+                    disabled={tokenLoading}
+                    sx={{
+                      mb: 2,
+                      '& .MuiOutlinedInput-root': {
+                        bgcolor: 'var(--card-background)',
+                        '& fieldset': { borderColor: 'var(--border-color)' },
+                        '&:hover fieldset': { borderColor: 'var(--primary-color)' },
+                        '&.Mui-focused fieldset': { borderColor: 'var(--primary-color)' }
+                      },
+                      '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
+                      '& .MuiInputLabel-root.Mui-focused': { color: 'var(--primary-color)' },
+                      '& input': {
+                        color: 'var(--text-color)',
+                        fontFamily: 'monospace',
+                        fontSize: '0.8rem',
+                        '&::placeholder': { color: 'var(--text-secondary)', opacity: 0.5 }
+                      }
+                    }}
+                  />
+                )}
+
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <Button
                     variant="contained"
@@ -693,6 +738,20 @@ const TokenManager = () => {
                           <Typography sx={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
                             模型: {token.model}
                           </Typography>
+                          {token.baseUrl && (
+                            <Typography
+                              sx={{
+                                color: 'var(--text-secondary)',
+                                fontSize: '0.72rem',
+                                fontFamily: 'monospace',
+                                wordBreak: 'break-all',
+                                mt: 0.3,
+                                opacity: 0.8
+                              }}
+                            >
+                              接入: {token.baseUrl}
+                            </Typography>
+                          )}
                         </Box>
                         <Box sx={{ display: 'flex', gap: 0.5 }}>
                           <Tooltip title="检测健康">
@@ -1266,6 +1325,33 @@ const TokenManager = () => {
               }}
             />
           </Box>
+          {editProvider === '阿里云百炼Agent' && (
+            <TextField
+              fullWidth
+              size="small"
+              label="Base URL（OpenAI 兼容接入地址）"
+              placeholder="https://ws-xxxx.region.maas.aliyuncs.com/compatible-mode/v1"
+              value={editBaseUrl}
+              onChange={(e) => setEditBaseUrl(e.target.value)}
+              sx={{
+                mt: 2,
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: 'var(--card-background)',
+                  '& fieldset': { borderColor: 'var(--border-color)' },
+                  '&:hover fieldset': { borderColor: 'var(--primary-color)' },
+                  '&.Mui-focused fieldset': { borderColor: 'var(--primary-color)' }
+                },
+                '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
+                '& .MuiInputLabel-root.Mui-focused': { color: 'var(--primary-color)' },
+                '& input': {
+                  color: 'var(--text-color)',
+                  fontFamily: 'monospace',
+                  fontSize: '0.8rem',
+                  '&::placeholder': { color: 'var(--text-secondary)', opacity: 0.5 }
+                }
+              }}
+            />
+          )}
         </DialogContent>
         <DialogActions sx={{ bgcolor: 'var(--card-background)', px: 3, pb: 2 }}>
           <Button onClick={() => setShowEditTokenModal(false)} sx={{ color: 'var(--text-secondary)', textTransform: 'none' }}>

@@ -83,7 +83,7 @@ class TokenManager {
    * @returns {string} - 添加结果消息
    * @throws {Error} - 当token格式无效或已存在时抛出错误
    */
-  addToken(token, provider = null, model = null) {
+  addToken(token, provider = null, model = null, baseUrl = null) {
     // 验证Token格式
     this.validateToken(token);
 
@@ -104,6 +104,8 @@ class TokenManager {
       token,
       model: modelInfo.model,
       provider: modelInfo.provider,
+      // 自定义接入地址（OpenAI 兼容），如百炼 Agent 工作空间的专属端点
+      baseUrl: baseUrl || undefined,
       createdAt: new Date(),
       status: 'active' // active, inactive, expired, testing
     });
@@ -147,7 +149,7 @@ class TokenManager {
    * @param {string} model - 新的模型名称
    * @returns {string} - 更新结果消息
    */
-  updateTokenInfo(oldToken, newToken, provider, model) {
+  updateTokenInfo(oldToken, newToken, provider, model, baseUrl = null) {
     const index = this.findTokenIndex(oldToken);
     if (index > -1) {
       // 验证新Token格式
@@ -161,12 +163,32 @@ class TokenManager {
       }
       this.tokens[index].provider = provider;
       this.tokens[index].model = model;
+      // 更新自定义接入地址（空字符串视为清空）
+      if (baseUrl !== null && baseUrl !== undefined) {
+        this.tokens[index].baseUrl = baseUrl.trim() || undefined;
+      }
       // 保存Token状态
       this.saveTokens();
       const tokenToDisplay = this.tokens[index].token;  // 显示新Token或旧Token
       return `Token信息已更新: ${tokenToDisplay.substring(0, 8)}... (${provider} - ${model})`;
     }
     return 'Token不存在';
+  }
+
+  /**
+   * 根据模型和提供商获取 Token 条目（完整对象）
+   * 用于需要 baseUrl 等额外字段的场景（如百炼 Agent 工作空间）
+   * @param {string} model - 模型名称
+   * @param {string} provider - 提供商名称
+   * @returns {Object|null} - Token 条目对象，未找到返回 null
+   */
+  getTokenEntryForProvider(model, provider) {
+    const entry = this.tokens.find(t =>
+      t.status === 'active' &&
+      t.model === model &&
+      t.provider === provider
+    );
+    return entry || null;
   }
 
   /**

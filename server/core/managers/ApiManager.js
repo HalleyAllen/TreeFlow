@@ -212,20 +212,22 @@ class ApiManager {
   }
 
   /**
-   * 使用OpenAI SDK调用阿里云API
+   * 使用OpenAI兼容接口调用AI服务（可指定 baseURL）
+   * 适用于阿里云百炼、OpenAI、以及自带专属接入点的服务（如百炼 Agent 工作空间）
    * @param {string} question - 问题
    * @param {string} model - 模型名称
    * @param {string} token - API密钥
+   * @param {string} baseUrl - OpenAI兼容接口基础地址（如 https://xxx/compatible-mode/v1）
    * @param {Array} [conversationHistory] - 对话历史
    * @returns {string} - AI的回答
    */
-  async askAliyunWithOpenAI(question, model, token, conversationHistory = []) {
+  async askOpenAICompat(question, model, token, baseUrl, conversationHistory = []) {
     try {
-      logger.info('ApiManager', '使用OpenAI SDK调用阿里云', { model });
-      
+      logger.info('ApiManager', '使用OpenAI兼容接口调用', { model, baseUrl });
+
       const openai = new OpenAI({
         apiKey: token,
-        baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+        baseURL: baseUrl
       });
 
       const messages = [
@@ -239,10 +241,41 @@ class ApiManager {
       });
 
       const response = completion.choices[0].message.content;
-      logger.info('ApiManager', '阿里云请求成功', { model, responseLength: response.length,response: response.substring(0, 20) + '...'});
+      logger.info('ApiManager', 'OpenAI兼容请求成功', { model, responseLength: response.length, response: response.substring(0, 20) + '...' });
       return response;
     } catch (error) {
-      logger.error('ApiManager', '阿里云OpenAI SDK请求失败:', { 
+      logger.error('ApiManager', 'OpenAI兼容请求失败:', {
+        error: error.message,
+        model,
+        baseUrl,
+        errorType: error.name,
+        errorCode: error.code
+      });
+      throw new Error(`AI请求失败: ${error.message}`);
+    }
+  }
+
+  /**
+   * 使用OpenAI SDK调用阿里云百炼 API（dashscope 兼容模式）
+   * @param {string} question - 问题
+   * @param {string} model - 模型名称
+   * @param {string} token - API密钥
+   * @param {Array} [conversationHistory] - 对话历史
+   * @returns {string} - AI的回答
+   */
+  async askAliyunWithOpenAI(question, model, token, conversationHistory = []) {
+    try {
+      logger.info('ApiManager', '使用OpenAI SDK调用阿里云', { model });
+      const response = await this.askOpenAICompat(
+        question,
+        model,
+        token,
+        'https://dashscope.aliyuncs.com/compatible-mode/v1',
+        conversationHistory
+      );
+      return response;
+    } catch (error) {
+      logger.error('ApiManager', '阿里云OpenAI SDK请求失败:', {
         error: error.message,
         model,
         errorType: error.name,
@@ -280,6 +313,16 @@ class ApiManager {
         if (provider === '阿里云') {
           const token = this.tokenManager.getTokenByModel(model);
           aiResponse = await this.askAliyunWithOpenAI(question, model, token, conversationHistory);
+        } else if (provider === '阿里云百炼Agent') {
+          // 百炼 Agent 工作空间：每个 key 有专属的 OpenAI 兼容接入地址（baseUrl）
+          const entry = this.tokenManager.getTokenEntryForProvider(model, provider);
+          if (!entry) {
+            throw new Error(`找不到可用的「${provider}」Token，请在 AI 服务管理中为模型 ${model} 添加 Key`);
+          }
+          if (!entry.baseUrl) {
+            throw new Error('「阿里云百炼Agent」需要配置 Base URL 接入地址，请在 AI 服务管理中编辑该 Key 后重试');
+          }
+          aiResponse = await this.askOpenAICompat(question, model, entry.token, entry.baseUrl, conversationHistory);
         } else {
           // 其他提供商使用通用fetch方法
           aiResponse = await this.askGenericAPI(question, model, provider, conversationHistory);

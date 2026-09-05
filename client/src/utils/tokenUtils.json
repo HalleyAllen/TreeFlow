@@ -6,19 +6,51 @@
     },
     {
       "value": "阿里云",
-      "label": "阿里云"
+      "label": "阿里云百炼"
+    },
+    {
+      "value": "阿里云百炼Agent",
+      "label": "阿里云百炼 Agent 工作空间"
+    },
+    {
+      "value": "Anthropic",
+      "label": "Anthropic (Claude)"
+    },
+    {
+      "value": "Google",
+      "label": "Google Gemini"
     }
   ],
   "modelOptions": {
     "OpenAI": [
       "gpt-4o",
+      "gpt-4o-mini",
       "gpt-4-turbo",
-      "gpt-3.5-turbo"
+      "gpt-3.5-turbo",
+      "o1",
+      "o1-mini"
     ],
     "阿里云": [
-      "qwen-turbo",
       "qwen-plus",
-      "qwen-max"
+      "qwen-max",
+      "qwen-turbo",
+      "qwen-long"
+    ],
+    "阿里云百炼Agent": [
+      "qwen-max",
+      "qwen-plus",
+      "qwen-turbo"
+    ],
+    "Anthropic": [
+      "claude-3-5-sonnet-20240620",
+      "claude-3-opus-20240229",
+      "claude-3-sonnet-20240229"
+    ],
+    "Google": [
+      "gemini-1.5-pro",
+      "gemini-1.5-flash",
+      "gemini-pro",
+      "gemini-pro-vision"
     ]
   }
 }

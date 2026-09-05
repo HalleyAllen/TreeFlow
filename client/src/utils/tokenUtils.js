@@ -1,7 +1,15 @@
 // 根据Token自动识别厂商和模型
 export const identifyModelFromToken = (token) => {
+  // 阿里云百炼 Agent 工作空间 token格式: sk-ws-开头
+  // 注意：必须放在 sk- 之前判断，否则会被 OpenAI 分支吞掉
+  if (token.startsWith('sk-ws-')) {
+    return {
+      provider: '阿里云百炼Agent',
+      model: 'qwen-plus'
+    };
+  }
   // OpenAI token格式: sk-开头
-  if (token.startsWith('sk-')) {
+  else if (token.startsWith('sk-')) {
     return {
       provider: 'OpenAI',
       model: 'gpt-3.5-turbo'

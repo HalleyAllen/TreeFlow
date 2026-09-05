@@ -15,6 +15,15 @@ class ModelIdentifier {
       return { provider: 'Unknown', model: 'unknown' };
     }
 
+    // 阿里云百炼 Agent 工作空间 token格式: sk-ws-开头
+    // 注意：必须放在 sk- 之前判断，否则会被 OpenAI 分支吞掉
+    if (token.startsWith('sk-ws-')) {
+      return {
+        provider: '阿里云百炼Agent',
+        model: 'qwen-plus'
+      };
+    }
+
     // OpenAI token格式: sk-开头
     if (token.startsWith('sk-')) {
       // 百度token也是sk-开头，这里暂时默认识别为OpenAI
@@ -142,6 +151,7 @@ class ModelIdentifier {
    */
   static getSupportedPrefixes() {
     return [
+      { prefix: 'sk-ws-', provider: '阿里云百炼Agent', description: '阿里云百炼 Agent 工作空间' },
       { prefix: 'sk-', provider: 'OpenAI', description: 'OpenAI 或百度' },
       { prefix: 'sk-ant-', provider: 'Anthropic', description: 'Anthropic (Claude)' },
       { prefix: 'AIzaSy', provider: 'Gemini', description: 'Google AI Studio' },
