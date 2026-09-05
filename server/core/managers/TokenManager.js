@@ -8,6 +8,7 @@ const path = require('path');
 const logger = require('../utils/logger');
 const fetch = require('node-fetch');
 const ModelIdentifier = require('../services/ModelIdentifier');
+const TokenHealthChecker = require('../services/TokenHealthChecker');
 
 class TokenManager {
   /**
@@ -167,6 +168,11 @@ class TokenManager {
       if (baseUrl !== null && baseUrl !== undefined) {
         this.tokens[index].baseUrl = baseUrl.trim() || undefined;
       }
+      // Key/接入地址变更后，旧的健康检测结果不再有效，一并重置
+      this.tokens[index].healthStatus = undefined;
+      this.tokens[index].healthMessage = undefined;
+      this.tokens[index].latencyMs = undefined;
+      this.tokens[index].lastCheckedAt = undefined;
       // 保存Token状态
       this.saveTokens();
       const tokenToDisplay = this.tokens[index].token;  // 显示新Token或旧Token
@@ -255,6 +261,83 @@ class TokenManager {
   }
 
   /**
+   * 检测单个 Token 的健康状态（Key 有效性 + 模型可用性两步真实探测）
+   * @param {string} token - 要检测的 token
+   * @returns {Promise<Object>} - 检测结果 { ok, healthStatus, keyOk, modelOk, status, message, latencyMs }
+   */
+  async checkTokenHealth(token) {
+    const index = this.findTokenIndex(token);
+    if (index === -1) {
+      return { ok: false, checked: false, message: 'Token不存在' };
+    }
+
+    const entry = this.tokens[index];
+    const result = await TokenHealthChecker.check({
+      token: entry.token,
+      provider: entry.provider,
+      model: entry.model,
+      baseUrl: entry.baseUrl
+    });
+
+    // 持久化检测结果，供列表展示
+    this.tokens[index].healthStatus = result.healthStatus || (result.ok ? 'ok' : 'fail');
+    this.tokens[index].healthMessage = result.message;
+    this.tokens[index].latencyMs = result.latencyMs;
+    this.tokens[index].lastCheckedAt = new Date().toISOString();
+    this.saveTokens();
+
+    return { ...result, checked: true };
+  }
+
+  /**
+   * 批量检测所有 Token 的健康状态
+   * @returns {Promise<Object>} - { checked, okCount, warnCount, failCount, summary }
+   */
+  async checkAllTokensHealth() {
+    if (this.tokens.length === 0) {
+      return { checked: 0, okCount: 0, warnCount: 0, failCount: 0, summary: '没有可检测的 Token' };
+    }
+
+    // 并发探测，避免逐条串行等待；全部结束后统一落盘
+    const settled = await Promise.allSettled(
+      this.tokens.map((entry, index) =>
+        TokenHealthChecker.check({
+          token: entry.token,
+          provider: entry.provider,
+          model: entry.model,
+          baseUrl: entry.baseUrl
+        }).then(result => ({ index, result }))
+      )
+    );
+
+    let okCount = 0;
+    let warnCount = 0;
+    let failCount = 0;
+    settled.forEach(item => {
+      const { index, result } = item.value || { result: { healthStatus: 'fail', message: '检测异常' } };
+      const healthStatus = result.healthStatus || (result.ok ? 'ok' : 'fail');
+      if (healthStatus === 'ok') okCount++;
+      else if (healthStatus === 'warn') warnCount++;
+      else failCount++;
+      this.tokens[index].healthStatus = healthStatus;
+      this.tokens[index].healthMessage = result.message;
+      this.tokens[index].latencyMs = result.latencyMs;
+      this.tokens[index].lastCheckedAt = new Date().toISOString();
+    });
+    this.saveTokens();
+
+    const parts = [];
+    if (okCount > 0) parts.push(`${okCount} 个正常`);
+    if (warnCount > 0) parts.push(`${warnCount} 个待确认`);
+    if (failCount > 0) parts.push(`${failCount} 个异常`);
+    const summary = parts.length > 0
+      ? `检测完成：${parts.join('，')}（共 ${this.tokens.length} 个）`
+      : `检测完成：共 ${this.tokens.length} 个 Token`;
+
+    return { checked: this.tokens.length, okCount, warnCount, failCount, summary };
+  }
+
+  /**
    * 清除所有Token
    * @returns {string} - 清除结果消息
    */
@@ -294,8 +377,13 @@ class TokenManager {
       token: token.token,
       provider: token.provider,
       model: token.model,
+      baseUrl: token.baseUrl,
       createdAt: token.createdAt,
-      status: token.status
+      status: token.status,
+      healthStatus: token.healthStatus || null,
+      healthMessage: token.healthMessage || null,
+      latencyMs: token.latencyMs ?? null,
+      lastCheckedAt: token.lastCheckedAt || null
     }));
   }
 }

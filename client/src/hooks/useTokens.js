@@ -23,9 +23,9 @@ export const useTokens = () => {
   }, []);
 
   // 添加Token
-  const addToken = useCallback(async (token, provider, model) => {
+  const addToken = useCallback(async (token, provider, model, baseUrl) => {
     try {
-      const result = await tokenApi.addToken(token, provider, model);
+      const result = await tokenApi.addToken(token, provider, model, baseUrl);
       if (result.success !== false) {
         await loadTokens();
         return { success: true, result };
@@ -53,9 +53,9 @@ export const useTokens = () => {
   }, [loadTokens]);
 
   // 更新Token信息
-  const updateTokenInfo = useCallback(async (token, newToken, provider, model) => {
+  const updateTokenInfo = useCallback(async (token, newToken, provider, model, baseUrl) => {
     try {
-      const result = await tokenApi.updateTokenInfo(token, newToken, provider, model);
+      const result = await tokenApi.updateTokenInfo(token, newToken, provider, model, baseUrl);
       if (result.success !== false) {
         await loadTokens();
         return { success: true, result };

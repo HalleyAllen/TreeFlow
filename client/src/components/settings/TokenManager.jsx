@@ -11,6 +11,7 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import SettingsIcon from '@mui/icons-material/Settings'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import ErrorIcon from '@mui/icons-material/Error'
+import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 import ComputerIcon from '@mui/icons-material/Computer'
 import KeyIcon from '@mui/icons-material/Key'
 import StorageIcon from '@mui/icons-material/Storage'
@@ -21,17 +22,19 @@ import MemoryIcon from '@mui/icons-material/Memory'
 import ThermostatIcon from '@mui/icons-material/Thermostat'
 import MessageIcon from '@mui/icons-material/Message'
 import {
-  addToken, removeToken, updateTokenInfo, checkTokenHealth,
+  addToken, removeToken, updateTokenInfo, checkTokenHealth, checkTokenHealthAll,
   getOllamaUrl, setOllamaUrl, setOllamaEnabled, checkOllamaStatus, getOllamaModels,
   pullOllamaModel, deleteOllamaModel
 } from '../../services/api'
 import logger from '../../services/logger'
-import { identifyModelFromToken } from '../../utils/tokenUtils'
-import tokenData from '../../utils/tokenUtils.json'
+import {
+  identifyModelFromToken,
+  providerOptions,
+  modelOptions,
+  providerRequiresBaseUrl
+} from '../../utils/tokenUtils'
 import CustomProviderManager from './CustomProviderManager'
 import { useAppContext } from '../../contexts/AppContext'
-
-const { providerOptions, modelOptions } = tokenData;
 
 // 格式化文件大小
 const formatSize = (bytes) => {
@@ -85,6 +88,8 @@ const TokenManager = () => {
   const [editModel, setEditModel] = useState('')
   const [editBaseUrl, setEditBaseUrl] = useState('')
   const [tokenToDelete, setTokenToDelete] = useState(null)
+  const [checkingToken, setCheckingToken] = useState(null)
+  const [checkingAll, setCheckingAll] = useState(false)
 
   // Ollama相关状态
   const [localOllamaUrl, setLocalOllamaUrl] = useState('http://localhost:11434')
@@ -147,23 +152,23 @@ const TokenManager = () => {
 
   const handleAddToken = async () => {
     if (!tokenInput.trim()) return
-    // 阿里云百炼Agent 必须提供接入地址
-    if (addProvider === '阿里云百炼Agent' && !addBaseUrl.trim()) {
+    // 需要自定义接入地址的厂商（如阿里云百炼Agent）必须填写 Base URL
+    if (providerRequiresBaseUrl(addProvider) && !addBaseUrl.trim()) {
       showSnackbar('请填写该 Key 的 Base URL 接入地址', 'warning')
       return
     }
     setTokenLoading(true)
     try {
       const data = await addToken(tokenInput, addProvider, addModel, addBaseUrl.trim())
-      if (data.result) {
+      if (data.success) {
         setTokenInput('')
         setAddProvider('')
         setAddModel('')
         setAddBaseUrl('')
         onTokensUpdated?.()
-        showSnackbar(data.result, 'success')
-      } else if (data.error) {
-        showSnackbar(`添加失败: ${data.error}`, 'error')
+        showSnackbar(data.data?.result || 'Token已添加', 'success')
+      } else {
+        showSnackbar(data.error || '添加Token失败', 'error')
       }
     } catch (error) {
       showSnackbar('添加token失败', 'error')
@@ -180,11 +185,11 @@ const TokenManager = () => {
     if (!tokenToDelete) return
     try {
       const data = await removeToken(tokenToDelete)
-      if (data.result) {
+      if (data.success) {
         onTokensUpdated?.()
-        showSnackbar(data.result, 'success')
-      } else if (data.error) {
-        showSnackbar(data.error, 'error')
+        showSnackbar(data.data?.result || 'Token已删除', 'success')
+      } else {
+        showSnackbar(data.error || '删除Token失败', 'error')
       }
     } catch (error) {
       showSnackbar('删除失败', 'error')
@@ -203,19 +208,23 @@ const TokenManager = () => {
   }
 
   const handleUpdateTokenInfo = async () => {
-    if (!editingToken || !editProvider || !editModel) return
-    if (editProvider === '阿里云百炼Agent' && !editBaseUrl.trim()) {
+    if (!editingToken) return
+    if (!editProvider || !editModel) {
+      showSnackbar('请先选择服务商和模型', 'warning')
+      return
+    }
+    if (providerRequiresBaseUrl(editProvider) && !editBaseUrl.trim()) {
       showSnackbar('请填写该 Key 的 Base URL 接入地址', 'warning')
       return
     }
     try {
       const data = await updateTokenInfo(editingToken, newToken, editProvider, editModel, editBaseUrl.trim())
-      if (data.result) {
+      if (data.success) {
         onTokensUpdated?.()
         setShowEditTokenModal(false)
-        showSnackbar(data.result, 'success')
-      } else if (data.error) {
-        showSnackbar(data.error, 'error')
+        showSnackbar(data.data?.result || 'Token信息已更新', 'success')
+      } else {
+        showSnackbar(data.error || '更新Token信息失败', 'error')
       }
     } catch (error) {
       showSnackbar('更新失败', 'error')
@@ -223,16 +232,52 @@ const TokenManager = () => {
   }
 
   const handleCheckTokenHealth = async (token) => {
+    if (checkingToken || checkingAll) return
+    setCheckingToken(token)
     try {
       const data = await checkTokenHealth(token)
-      if (data.result) {
+      if (data.success) {
         onTokensUpdated?.()
-        showSnackbar(`Token健康状态: ${data.result.message}`, 'info')
-      } else if (data.error) {
-        showSnackbar(data.error, 'error')
+        const info = data.data?.result || {}
+        if (info.checked === false) {
+          showSnackbar(`健康检测失败: ${info.message || 'Token不存在'}`, 'error')
+        } else if (info.healthStatus === 'ok') {
+          showSnackbar(`健康检测: ${info.message || '正常'}`, 'success')
+        } else if (info.healthStatus === 'warn') {
+          showSnackbar(`健康检测待确认: ${info.message || '暂时无法确认'}`, 'warning')
+        } else {
+          showSnackbar(`健康检测异常: ${info.message || '无法连接服务'}`, 'error')
+        }
+      } else {
+        showSnackbar(data.error || '检测Token健康失败', 'error')
       }
     } catch (error) {
       showSnackbar('检测失败', 'error')
+    } finally {
+      setCheckingToken(null)
+    }
+  }
+
+  const handleCheckAllTokenHealth = async () => {
+    if (checkingToken || checkingAll) return
+    if (tokenStats.length === 0) return
+    setCheckingAll(true)
+    try {
+      const data = await checkTokenHealthAll()
+      if (data.success) {
+        onTokensUpdated?.()
+        const info = data.data?.result || {}
+        showSnackbar(
+          info.summary || '批量健康检测完成',
+          info.failCount > 0 ? 'error' : (info.warnCount > 0 ? 'warning' : 'success')
+        )
+      } else {
+        showSnackbar(data.error || '批量检测Token健康失败', 'error')
+      }
+    } catch (error) {
+      showSnackbar('批量检测失败', 'error')
+    } finally {
+      setCheckingAll(false)
     }
   }
 
@@ -270,13 +315,13 @@ const TokenManager = () => {
     setPullingModel(true)
     try {
       const data = await pullOllamaModel(newModelName.trim())
-      if (data.result) {
-        showSnackbar(data.result, 'success')
+      if (data.success) {
+        showSnackbar(data.data?.result || '模型拉取成功', 'success')
         setNewModelName('')
         loadOllamaModelsList()
         onTokensUpdated?.()
-      } else if (data.error) {
-        showSnackbar(data.error, 'error')
+      } else {
+        showSnackbar(data.error || '拉取模型失败', 'error')
       }
     } catch {
       showSnackbar('拉取失败', 'error')
@@ -290,12 +335,12 @@ const TokenManager = () => {
     setDeletingModel(modelName)
     try {
       const data = await deleteOllamaModel(modelName)
-      if (data.result) {
-        showSnackbar(data.result, 'success')
+      if (data.success) {
+        showSnackbar(data.data?.result || '模型已删除', 'success')
         loadOllamaModelsList()
         onTokensUpdated?.()
-      } else if (data.error) {
-        showSnackbar(data.error, 'error')
+      } else {
+        showSnackbar(data.error || '删除模型失败', 'error')
       }
     } catch {
       showSnackbar('删除失败', 'error')
@@ -305,14 +350,17 @@ const TokenManager = () => {
   }
 
   const handleSaveOllamaUrl = async () => {
-    if (!ollamaUrlInput.trim()) return
+    if (!ollamaUrlInput.trim()) {
+      showSnackbar('请输入 Ollama 服务地址', 'warning')
+      return
+    }
     try {
       const data = await setOllamaUrl(ollamaUrlInput)
-      if (data.result) {
+      if (data.success) {
         setLocalOllamaUrl(ollamaUrlInput)
-        showSnackbar(data.result, 'success')
-      } else if (data.error) {
-        showSnackbar(data.error, 'error')
+        showSnackbar(data.data?.result || '已保存', 'success')
+      } else {
+        showSnackbar(data.error || '保存失败', 'error')
       }
     } catch {
       showSnackbar('保存失败', 'error')
@@ -323,12 +371,14 @@ const TokenManager = () => {
     onOllamaEnabledChange?.(enabled)
     try {
       const data = await setOllamaEnabled(enabled)
-      if (data.result) {
-        showSnackbar(data.result, 'success')
+      if (data.success) {
+        showSnackbar(data.data?.result || (enabled ? '已启用 Ollama' : '已禁用 Ollama'), 'success')
         if (enabled) {
           checkConnectionStatus()
           loadOllamaModelsList()
         }
+      } else {
+        showSnackbar(data.error || '设置失败', 'error')
       }
     } catch {
       showSnackbar('设置失败', 'error')
@@ -345,6 +395,67 @@ const TokenManager = () => {
   }
 
   // ========== 渲染辅助函数 ==========
+  // 格式化检测时间
+  const formatDetectTime = (iso) => {
+    if (!iso) return ''
+    try {
+      return new Date(iso).toLocaleString('zh-CN', { hour12: false })
+    } catch {
+      return iso
+    }
+  }
+
+  // Token健康状态徽标
+  const renderHealthChip = (token) => {
+    if (checkingToken === token.token) {
+      return (
+        <Chip
+          size="small"
+          icon={<CircularProgress size={12} color="inherit" />}
+          label="检测中"
+          sx={{ bgcolor: 'rgba(33, 150, 243, 0.12)', color: 'var(--primary-color)', fontSize: '0.7rem', height: '20px' }}
+        />
+      )
+    }
+    if (token.healthStatus === 'ok') {
+      return (
+        <Chip
+          size="small"
+          icon={<CheckCircleIcon sx={{ fontSize: 14, color: 'inherit' }} />}
+          label="正常"
+          sx={{ bgcolor: 'rgba(76, 175, 80, 0.12)', color: '#4caf50', fontSize: '0.7rem', height: '20px' }}
+        />
+      )
+    }
+    if (token.healthStatus === 'warn') {
+      return (
+        <Chip
+          size="small"
+          icon={<WarningAmberIcon sx={{ fontSize: 14, color: 'inherit' }} />}
+          label="待确认"
+          sx={{ bgcolor: 'rgba(255, 152, 0, 0.14)', color: '#f57c00', fontSize: '0.7rem', height: '20px' }}
+        />
+      )
+    }
+    if (token.healthStatus === 'fail') {
+      return (
+        <Chip
+          size="small"
+          icon={<ErrorIcon sx={{ fontSize: 14, color: 'inherit' }} />}
+          label="异常"
+          sx={{ bgcolor: 'rgba(244, 67, 54, 0.12)', color: '#f44336', fontSize: '0.7rem', height: '20px' }}
+        />
+      )
+    }
+    return (
+      <Chip
+        size="small"
+        label="未检测"
+        sx={{ bgcolor: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: '0.7rem', height: '20px' }}
+      />
+    )
+  }
+
   const renderStatusChip = (connected, checking) => {
     if (checking) {
       return <Chip size="small" icon={<CircularProgress size={12} />} label="检测中" sx={{ bgcolor: 'var(--hover-bg)', color: 'var(--text-secondary)', fontSize: '0.75rem' }} />
@@ -622,7 +733,7 @@ const TokenManager = () => {
                   />
                 </Box>
 
-                {addProvider === '阿里云百炼Agent' && (
+                {providerRequiresBaseUrl(addProvider) && (
                   <TextField
                     fullWidth
                     size="small"
@@ -677,9 +788,29 @@ const TokenManager = () => {
             </Card>
 
             {/* Token列表 */}
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'var(--text-color)', mb: 2, fontSize: '0.95rem' }}>
-              已配置的 API Keys
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'var(--text-color)', fontSize: '0.95rem' }}>
+                已配置的 API Keys
+              </Typography>
+              {tokenStats.length > 0 && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={checkingAll ? <CircularProgress size={14} color="inherit" /> : <RefreshIcon sx={{ fontSize: 16 }} />}
+                  disabled={!!checkingToken || checkingAll}
+                  onClick={handleCheckAllTokenHealth}
+                  sx={{
+                    textTransform: 'none',
+                    color: 'var(--text-secondary)',
+                    borderColor: 'var(--border-color)',
+                    fontSize: '0.78rem',
+                    '&:hover': { color: 'var(--primary-color)', borderColor: 'var(--primary-color)' }
+                  }}
+                >
+                  {checkingAll ? '检测中...' : '全部检测'}
+                </Button>
+              )}
+            </Box>
 
             {tokenStats.length === 0 ? (
               <Box sx={{
@@ -734,10 +865,31 @@ const TokenManager = () => {
                                 height: '20px'
                               }}
                             />
+                            {renderHealthChip(token)}
                           </Box>
                           <Typography sx={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
                             模型: {token.model}
                           </Typography>
+                          {token.healthStatus && token.healthMessage && (
+                            <Typography
+                              sx={{
+                                color: token.healthStatus === 'ok'
+                                  ? '#4caf50'
+                                  : (token.healthStatus === 'warn' ? '#f57c00' : '#f44336'),
+                                fontSize: '0.72rem',
+                                mt: 0.3,
+                                wordBreak: 'break-all',
+                                opacity: 0.9
+                              }}
+                            >
+                              {token.healthMessage}
+                              {token.lastCheckedAt && (
+                                <Box component="span" sx={{ color: 'var(--text-secondary)', opacity: 0.8 }}>
+                                  {' · '}{formatDetectTime(token.lastCheckedAt)}
+                                </Box>
+                              )}
+                            </Typography>
+                          )}
                           {token.baseUrl && (
                             <Typography
                               sx={{
@@ -755,13 +907,18 @@ const TokenManager = () => {
                         </Box>
                         <Box sx={{ display: 'flex', gap: 0.5 }}>
                           <Tooltip title="检测健康">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleCheckTokenHealth(token.token)}
-                              sx={{ color: 'var(--text-secondary)', '&:hover': { color: 'var(--primary-color)' } }}
-                            >
-                              <RefreshIcon sx={{ fontSize: 18 }} />
-                            </IconButton>
+                            <span>
+                              <IconButton
+                                size="small"
+                                disabled={!!checkingToken || checkingAll}
+                                onClick={() => handleCheckTokenHealth(token.token)}
+                                sx={{ color: 'var(--text-secondary)', '&:hover': { color: 'var(--primary-color)' } }}
+                              >
+                                {checkingToken === token.token
+                                  ? <CircularProgress size={16} color="inherit" />
+                                  : <RefreshIcon sx={{ fontSize: 18 }} />}
+                              </IconButton>
+                            </span>
                           </Tooltip>
                           <Tooltip title="编辑">
                             <IconButton
@@ -1325,7 +1482,7 @@ const TokenManager = () => {
               }}
             />
           </Box>
-          {editProvider === '阿里云百炼Agent' && (
+          {providerRequiresBaseUrl(editProvider) && (
             <TextField
               fullWidth
               size="small"

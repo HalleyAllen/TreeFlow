@@ -60,6 +60,23 @@ class TokenController {
     const result = this.tokenManager.clearTokens();
     res.success({ result });
   }
+
+  /**
+   * 检测单个Token健康状态
+   */
+  async checkTokenHealth(req, res) {
+    const { token } = req.body;
+    const result = await this.tokenManager.checkTokenHealth(token);
+    res.success({ result });
+  }
+
+  /**
+   * 批量检测所有Token健康状态
+   */
+  async checkAllTokensHealth(_req, res) {
+    const result = await this.tokenManager.checkAllTokensHealth();
+    res.success({ result });
+  }
 }
 
 module.exports = TokenController;

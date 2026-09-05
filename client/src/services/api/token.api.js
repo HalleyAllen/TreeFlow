@@ -104,3 +104,17 @@ export const checkTokenHealth = async (token) => {
     return { success: false, error: error.message };
   }
 };
+
+// 批量检查所有Token健康状态
+export const checkTokenHealthAll = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/tokens/check-health/all`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return await response.json();
+  } catch (error) {
+    logger.error('API', '批量检查token健康状态失败:', { error: error.message });
+    return { success: false, error: error.message };
+  }
+};

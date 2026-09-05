@@ -1,172 +1,46 @@
 /**
  * ModelIdentifier 服务
- * 负责根据 token 前缀识别 AI 模型提供商和模型类型
+ * 负责根据 token 前缀识别 AI 模型提供商和默认模型
  * 从 TokenManager 抽离，遵循单一职责原则
+ *
+ * 规则表与前端 client/src/utils/tokenProviders.json 保持同步，
+ * 注意维持「长前缀优先」的匹配顺序，避免 sk- 吞掉 sk-ws- / sk-ant- / sk-ali-。
  */
 
 class ModelIdentifier {
   /**
-   * 识别 token 对应的提供商和模型
+   * 厂商识别规则表
+   * prefix: token 前缀；provider: 厂商标识（与 config.providers 键名一致）
+   */
+  static RULES = [
+    { prefix: 'sk-ws-', provider: '阿里云百炼Agent', model: 'qwen-max' },
+    { prefix: 'sk-ant-', provider: 'Anthropic', model: 'claude-3-5-sonnet-20240620' },
+    { prefix: 'sk-ali-', provider: '阿里云', model: 'qwen-plus' },
+    { prefix: 'aliyun-', provider: '阿里云', model: 'qwen-plus' },
+    { prefix: 'AIzaSy', provider: 'Google', model: 'gemini-1.5-pro' },
+    // 通用 OpenAI 前缀兜底：阿里云百炼、百度等新格式 key 也是 sk- 开头，
+    // 无法仅凭前缀区分，识别后可由用户手动修正厂商。
+    { prefix: 'sk-', provider: 'OpenAI', model: 'gpt-4o' }
+  ];
+
+  /**
+   * 识别 token 对应的提供商和默认模型
    * @param {string} token - 要识别的 token
-   * @returns {Object} - 识别结果，包含 provider 和 model
+   * @returns {Object} - 识别结果 { provider, model }，无法识别时返回 Unknown
    */
   static identify(token) {
     if (!token || typeof token !== 'string') {
       return { provider: 'Unknown', model: 'unknown' };
     }
 
-    // 阿里云百炼 Agent 工作空间 token格式: sk-ws-开头
-    // 注意：必须放在 sk- 之前判断，否则会被 OpenAI 分支吞掉
-    if (token.startsWith('sk-ws-')) {
-      return {
-        provider: '阿里云百炼Agent',
-        model: 'qwen-plus'
-      };
-    }
+    // 长前缀优先匹配，避免 sk- 吞掉 sk-ant- / sk-ws- / sk-ali- 等更长前缀
+    const rules = [...ModelIdentifier.RULES].sort((a, b) => b.prefix.length - a.prefix.length);
+    const matched = rules.find((rule) => token.startsWith(rule.prefix));
 
-    // OpenAI token格式: sk-开头
-    if (token.startsWith('sk-')) {
-      // 百度token也是sk-开头，这里暂时默认识别为OpenAI
-      // 用户可以在界面上手动修改为百度
-      return {
-        provider: 'OpenAI',
-        model: 'gpt-3.5-turbo'
-      };
+    if (!matched) {
+      return { provider: 'Unknown', model: 'unknown' };
     }
-    
-    // Anthropic (Claude) token格式: sk-ant-开头
-    if (token.startsWith('sk-ant-')) {
-      return {
-        provider: 'Anthropic',
-        model: 'claude-3-opus-20240229'
-      };
-    }
-    
-    // Google AI Studio token格式: AIzaSy开头
-    if (token.startsWith('AIzaSy')) {
-      return {
-        provider: 'Gemini',
-        model: 'gemini-1.5-pro'
-      };
-    }
-    
-    // AWS token格式: ak-开头
-    if (token.startsWith('ak-')) {
-      return {
-        provider: 'AWS',
-        model: 'bedrock-anthropic-claude-3'
-      };
-    }
-    
-    // xAI token格式: xai-开头
-    if (token.startsWith('xai-')) {
-      return {
-        provider: 'xAI',
-        model: 'grok-1'
-      };
-    }
-    
-    // OpenRouter token格式: or-开头
-    if (token.startsWith('or-')) {
-      return {
-        provider: 'OpenRouter',
-        model: 'openai/gpt-4o'
-      };
-    }
-    
-    // Vercel AI-Gateway token格式: vercel-开头
-    if (token.startsWith('vercel-')) {
-      return {
-        provider: 'Vercel AI-Gateway',
-        model: 'openai/gpt-4o'
-      };
-    }
-    
-    // MiniMax token格式: mm-开头
-    if (token.startsWith('mm-')) {
-      return {
-        provider: 'MiniMax-CN',
-        model: 'abab6-chat'
-      };
-    }
-    
-    // DeepSeek token格式: ds-开头
-    if (token.startsWith('ds-')) {
-      return {
-        provider: 'DeepSeek',
-        model: 'deepseek-llm-7b-chat'
-      };
-    }
-    
-    // 火山引擎 token格式: volc-开头
-    if (token.startsWith('volc-')) {
-      return {
-        provider: '火山引擎',
-        model: 'volcengine-llama3'
-      };
-    }
-    
-    // 阿里云 token格式: aliyun-开头
-    if (token.startsWith('aliyun-')) {
-      return {
-        provider: '阿里云',
-        model: 'qwen-7b-chat'
-      };
-    }
-    
-    // 腾讯云 token格式: tencent-开头
-    if (token.startsWith('tencent-')) {
-      return {
-        provider: '腾讯云',
-        model: 'tencent-hunyuan'
-      };
-    }
-    
-    // Kimi token格式: kimi-开头
-    if (token.startsWith('kimi-')) {
-      return {
-        provider: 'Kimi-CN',
-        model: 'kimi-cn'
-      };
-    }
-    
-    // BytePlus token格式: byteplus-开头
-    if (token.startsWith('byteplus-')) {
-      return {
-        provider: 'BytePlus',
-        model: 'byteplus-llm-7b'
-      };
-    }
-    
-    // 默认情况
-    return {
-      provider: 'Unknown',
-      model: 'unknown'
-    };
-  }
-
-  /**
-   * 获取所有支持的 token 前缀列表
-   * @returns {Array} - 前缀列表
-   */
-  static getSupportedPrefixes() {
-    return [
-      { prefix: 'sk-ws-', provider: '阿里云百炼Agent', description: '阿里云百炼 Agent 工作空间' },
-      { prefix: 'sk-', provider: 'OpenAI', description: 'OpenAI 或百度' },
-      { prefix: 'sk-ant-', provider: 'Anthropic', description: 'Anthropic (Claude)' },
-      { prefix: 'AIzaSy', provider: 'Gemini', description: 'Google AI Studio' },
-      { prefix: 'ak-', provider: 'AWS', description: 'AWS Bedrock' },
-      { prefix: 'xai-', provider: 'xAI', description: 'xAI (Grok)' },
-      { prefix: 'or-', provider: 'OpenRouter', description: 'OpenRouter' },
-      { prefix: 'vercel-', provider: 'Vercel AI-Gateway', description: 'Vercel AI Gateway' },
-      { prefix: 'mm-', provider: 'MiniMax-CN', description: 'MiniMax' },
-      { prefix: 'ds-', provider: 'DeepSeek', description: 'DeepSeek' },
-      { prefix: 'volc-', provider: '火山引擎', description: '火山引擎' },
-      { prefix: 'aliyun-', provider: '阿里云', description: '阿里云' },
-      { prefix: 'tencent-', provider: '腾讯云', description: '腾讯云' },
-      { prefix: 'kimi-', provider: 'Kimi-CN', description: 'Kimi' },
-      { prefix: 'byteplus-', provider: 'BytePlus', description: 'BytePlus' }
-    ];
+    return { provider: matched.provider, model: matched.model };
   }
 }
 

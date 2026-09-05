@@ -1,0 +1,40 @@
+{
+  "providers": [
+    {
+      "value": "OpenAI",
+      "label": "OpenAI",
+      "prefixes": ["sk-"],
+      "defaultModel": "gpt-4o",
+      "models": ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo", "o1", "o1-mini"]
+    },
+    {
+      "value": "阿里云",
+      "label": "阿里云百炼",
+      "prefixes": ["sk-ali-", "aliyun-"],
+      "defaultModel": "qwen-plus",
+      "models": ["qwen-plus", "qwen-max", "qwen-turbo", "qwen-long"]
+    },
+    {
+      "value": "阿里云百炼Agent",
+      "label": "阿里云百炼 Agent 工作空间",
+      "prefixes": ["sk-ws-"],
+      "defaultModel": "qwen-max",
+      "baseUrlRequired": true,
+      "models": ["qwen-max", "qwen-plus", "qwen-turbo"]
+    },
+    {
+      "value": "Anthropic",
+      "label": "Anthropic (Claude)",
+      "prefixes": ["sk-ant-"],
+      "defaultModel": "claude-3-5-sonnet-20240620",
+      "models": ["claude-3-5-sonnet-20240620", "claude-3-opus-20240229", "claude-3-sonnet-20240229"]
+    },
+    {
+      "value": "Google",
+      "label": "Google Gemini",
+      "prefixes": ["AIzaSy"],
+      "defaultModel": "gemini-1.5-pro",
+      "models": ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro", "gemini-pro-vision"]
+    }
+  ]
+}
