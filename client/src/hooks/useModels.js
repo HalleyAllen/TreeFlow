@@ -16,16 +16,20 @@ export const useModels = () => {
     try {
       const modelsData = await modelApi.loadModels();
       setModels(modelsData);
-      // 如果没有选择模型且列表不为空，默认选择第一个
-      if (!selectedModel && modelsData.length > 0) {
-        setSelectedModel(modelsData[0].id);
-      }
+      // 若无当前选中模型、或选中的模型已不在列表中（被删除/改名），回退到第一个可用模型
+      setSelectedModel(prev => {
+        if (modelsData.length === 0) return prev;
+        if (!prev || !modelsData.some(m => m.id === prev)) {
+          return modelsData[0].id;
+        }
+        return prev;
+      });
     } catch (error) {
       logger.error('useModels', '加载模型列表失败:', error);
     } finally {
       setLoading(false);
     }
-  }, [selectedModel]);
+  }, []);
 
   // 设置当前模型
   const setModel = useCallback(async (model) => {

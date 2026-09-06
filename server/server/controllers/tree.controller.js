@@ -10,6 +10,7 @@ class TreeController {
     // 从容器中获取所需服务，实现依赖注入解耦
     this.treeManager = container.get('conversationTreeManager');
     this.topicManager = container.get('topicManager');
+    this.agent = container.get('agent');
   }
 
   /**
@@ -217,6 +218,51 @@ class TreeController {
       });
     } catch (error) {
       logger.error('TreeController', '编辑节点失败:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  /**
+   * 重新回答节点：以节点当前问题重新调用AI，覆盖回答
+   * POST /api/tree/node/:nodeId/reanswer
+   * body: { topicId, confirm }
+   */
+  reanswerNode = async (req, res) => {
+    try {
+      const { nodeId } = req.params;
+      const { topicId, confirm, model, provider } = req.body;
+
+      if (!topicId) {
+        return res.status(400).json({ success: false, error: '缺少topicId参数' });
+      }
+
+      const topic = this.topicManager.getTopic(topicId);
+      if (!topic) {
+        return res.status(404).json({ success: false, error: '话题不存在' });
+      }
+
+      const result = await this.agent.reanswer(topicId, nodeId, !!confirm, model || null, provider || null);
+
+      // 存在后续分支且未确认：让前端弹出确认
+      if (result.needsConfirm) {
+        return res.json({
+          success: true,
+          data: { needsConfirm: true, removedChildren: result.removedChildren }
+        });
+      }
+
+      const node = this.treeManager.findNodeById(topic.conversationTree, nodeId);
+      if (!node) {
+        return res.status(404).json({ success: false, error: '节点不存在' });
+      }
+
+      logger.info('TreeController', '重新回答节点成功', { nodeId, topicId });
+      res.json({
+        success: true,
+        data: this.serializeNode(node, topic)
+      });
+    } catch (error) {
+      logger.error('TreeController', '重新回答节点失败:', error);
       res.status(500).json({ success: false, error: error.message });
     }
   }

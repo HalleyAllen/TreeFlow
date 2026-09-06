@@ -89,6 +89,29 @@ const ChatContainer = () => {
     return result
   }, [currentTopic?.id, refreshTree, showNotification])
 
+  // 重新回答节点：以修改后的问题重新调用 AI
+  const handleReanswerNode = useCallback(async (nodeId) => {
+    if (!currentTopic?.id) return { success: false }
+    // 使用当前选中的模型/provider 重新提问
+    const currentModel = models.find(m => m.id === selectedModel)
+    let result = await treeApi.reanswerNode(nodeId, currentTopic.id, false, currentModel?.id, currentModel?.provider)
+    // 该节点存在后续分支时需二次确认（重新提问将清空后续节点）
+    if (result.success && result.data?.needsConfirm) {
+      const ok = window.confirm(
+        `该节点后有 ${result.data.removedChildren} 条后续对话。重新提问将先清空这些后续分支，是否继续？`
+      )
+      if (!ok) return { success: false, cancelled: true }
+      result = await treeApi.reanswerNode(nodeId, currentTopic.id, true, currentModel?.id, currentModel?.provider)
+    }
+    if (result.success) {
+      showNotification('已重新回答')
+      refreshTree(currentTopic.id)
+      return { success: true }
+    }
+    showNotification(result.error || '重新回答失败', 'error')
+    return { success: false, error: result.error }
+  }, [currentTopic?.id, models, selectedModel, refreshTree, showNotification])
+
   // 复制节点
   const handleCopyNode = useCallback(async (nodeId) => {
     if (!currentTopic?.id) return { success: false }
@@ -278,6 +301,7 @@ const ChatContainer = () => {
           onBranchFromNode={handleBranchFromNode}
           onQuoteText={onQuoteText}
           onEditNode={handleEditNode}
+          onReanswerNode={handleReanswerNode}
           onCopyNode={handleCopyNode}
           onDeleteNode={handleDeleteNode}
         />

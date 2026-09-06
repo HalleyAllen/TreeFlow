@@ -1,8 +1,10 @@
 node_modules
 .codebuddy/
 
-# Data and logs
+# Data and logs (runtime state & secrets, keep local only)
 server/data/topics.json
+server/data/config.json
+server/data/tokens.json
 server/logs/
 
 # Local dev logs
