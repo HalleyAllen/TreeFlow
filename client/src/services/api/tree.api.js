@@ -80,6 +80,36 @@ export async function editNode(nodeId, topicId, question, answer) {
 }
 
 /**
+ * 重新回答节点：以节点当前问题重新调用AI，覆盖该节点的回答
+ * @param {string} nodeId - 节点ID
+ * @param {string} topicId - 话题ID
+ * @param {boolean} [confirm] - 节点存在后续分支时，是否确认清空后续分支
+ * @param {string} [model] - 使用的模型（可选）
+ * @param {string} [provider] - 供应商（可选）
+ * @returns {Promise<Object>} - 重答结果；data.needsConfirm 为 true 表示需二次确认
+ */
+export async function reanswerNode(nodeId, topicId, confirm = false, model = null, provider = null) {
+  try {
+    const body = { topicId, confirm };
+    if (model) body.model = model;
+    if (provider) body.provider = provider;
+    const response = await fetch(`${API_BASE_URL}/api/tree/node/${nodeId}/reanswer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await response.json();
+    if (data.success && data.data) {
+      return { success: true, data: data.data };
+    }
+    return { success: false, error: data.error || '重新回答失败' };
+  } catch (error) {
+    logger.error('TreeAPI', '重新回答节点失败:', { error: error.message });
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * 复制节点
  * @param {string} nodeId - 要复制的节点ID
  * @param {string} topicId - 话题ID

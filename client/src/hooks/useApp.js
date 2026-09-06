@@ -235,10 +235,11 @@ export const useApp = () => {
     }
   }, [setModel]);
 
-  // Token 更新回调
+  // Token 更新回调：刷新 Token 列表与模型列表（Token 的 provider/model 变化会改变可用模型）
   const handleTokensUpdated = useCallback(() => {
     loadTokens();
-  }, [loadTokens]);
+    loadModels();
+  }, [loadTokens, loadModels]);
 
   // 进入分支模式
   const handleEnterBranchMode = useCallback((index, nodeId) => {

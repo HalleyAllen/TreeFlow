@@ -18,6 +18,9 @@ function createTreeRoutes(container) {
   // 编辑节点内容
   router.put('/node/:nodeId', controller.editNode);
 
+  // 重新回答节点（以节点当前问题重新调用AI）
+  router.post('/node/:nodeId/reanswer', controller.reanswerNode);
+
   // 复制节点
   router.post('/node/:nodeId/copy', controller.copyNode);
 

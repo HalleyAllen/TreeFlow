@@ -77,7 +77,7 @@ function calculateSubtreeHeight(node) {
  * @returns {{nodes: Array, edges: Array}} React Flow 节点/边数组
  */
 function calculateLayout(rootNode, callbacks = {}, expandedStates = {}, positionStates = {}, selectedNodeId = null, activeEndNodeId = null) {
-  const { onQuoteText, onNodeSelect, onEditNode, onDeleteNode, onDeleteBranch, onToggleExpand, onExpandStateChange } = callbacks;
+  const { onQuoteText, onNodeSelect, onEditNode, onReanswerNode, onDeleteNode, onDeleteBranch, onToggleExpand, onExpandStateChange } = callbacks;
   const nodes = [];
   const edges = [];
 
@@ -118,6 +118,7 @@ function calculateLayout(rootNode, callbacks = {}, expandedStates = {}, position
       onQuoteText,
       onNodeSelect,
       onEditNode,
+      onReanswerNode,
       onDeleteNode,
       onDeleteBranch,
       onToggleExpand,
@@ -217,6 +218,7 @@ function MindMapInner({
   onNodeSelect,
   onQuoteText,
   onEditNode,
+  onReanswerNode,
   onDeleteNode,
   onDeleteBranch,
 }) {
@@ -246,6 +248,7 @@ function MindMapInner({
     onQuoteText,
     onNodeSelect,
     onEditNode,
+    onReanswerNode,
     onDeleteNode,
     onDeleteBranch,
   };
@@ -354,6 +357,7 @@ function MindMapInner({
         onQuoteText: callbacks.onQuoteText,
         onNodeSelect: handleNodeSelectInternal,
         onEditNode: callbacks.onEditNode,
+        onReanswerNode: callbacks.onReanswerNode,
         onDeleteNode: callbacks.onDeleteNode,
         onDeleteBranch: callbacks.onDeleteBranch,
         onToggleExpand: handleToggleExpand,
@@ -428,6 +432,7 @@ function MindMapInner({
             onQuoteText: callbacks.onQuoteText,
             onNodeSelect: handleNodeSelectInternal,
             onEditNode: callbacks.onEditNode,
+            onReanswerNode: callbacks.onReanswerNode,
             onDeleteNode: callbacks.onDeleteNode,
             onDeleteBranch: callbacks.onDeleteBranch,
             onToggleExpand: handleToggleExpand,

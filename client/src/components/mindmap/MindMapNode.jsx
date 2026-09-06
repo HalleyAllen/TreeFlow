@@ -125,6 +125,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
     onQuoteText,
     onNodeSelect,
     onEditNode,
+    onReanswerNode,
     onDeleteNode,
     onDeleteBranch,
     onToggleExpand,
@@ -375,6 +376,30 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
       setEditSaving(false);
     }
   }, [actualNodeId, onEditNode, editQuestion, editAnswer]);
+
+  // 保存修改后的问题，并重新发送给 AI 回答
+  const handleReanswerSave = useCallback(async () => {
+    if (!actualNodeId || !onEditNode) return;
+    if (!editQuestion.trim()) {
+      alert('请先填写问题内容');
+      return;
+    }
+    setEditSaving(true);
+    try {
+      // 先保存修改后的问题/回答
+      await onEditNode(actualNodeId, editQuestion, editAnswer);
+      // 再以当前问题重新调用 AI（失败时由回调处理并抛出）
+      const result = await onReanswerNode?.(actualNodeId, editQuestion);
+      if (result && result.success === false) {
+        return; // 保持弹窗打开，让用户查看错误后重试或取消
+      }
+      setEditDialogOpen(false);
+    } catch (err) {
+      console.error('[保存并重新回答失败]', err);
+    } finally {
+      setEditSaving(false);
+    }
+  }, [actualNodeId, onEditNode, onReanswerNode, editQuestion, editAnswer]);
 
   // 处理删除单个节点
   const handleDelete = useCallback((event) => {
@@ -807,12 +832,20 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
             取消
           </Button>
           <Button
-            variant="contained"
+            variant="outlined"
             onClick={handleEditSave}
+            disabled={editSaving}
+            sx={{ textTransform: 'none' }}
+          >
+            保存
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleReanswerSave}
             disabled={editSaving}
             sx={{ textTransform: 'none', bgcolor: 'var(--primary-color, #3b82f6)' }}
           >
-            {editSaving ? '保存中...' : '保存'}
+            {editSaving ? '重新回答中...' : '保存并重新回答'}
           </Button>
         </DialogActions>
       </Dialog>

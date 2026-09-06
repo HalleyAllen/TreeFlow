@@ -475,6 +475,70 @@ class ConversationTreeManager {
   }
 
   /**
+   * 收集节点的所有后代ID（不含自身）
+   * @private
+   */
+  collectDescendantIds(node) {
+    const ids = [];
+    const walk = (n) => {
+      for (const child of n.children || []) {
+        ids.push(child.id);
+        walk(child);
+      }
+    };
+    walk(node);
+    return ids;
+  }
+
+  /**
+   * 清空指定节点的全部子节点（用于"重新回答"后丢弃该节点之后的后续分支）
+   * 同步清理 currentNode / activeEndNodeId / nodePositions 中的残留引用
+   * @param {string} topicId - 话题ID
+   * @param {string} nodeId - 节点ID
+   * @returns {number} - 被移除的子节点数量
+   */
+  clearNodeChildren(topicId, nodeId) {
+    const topic = this.topicManager.getTopic(topicId);
+    if (!topic) {
+      logger.error('ConversationTreeManager', '话题不存在', { topicId });
+      return 0;
+    }
+
+    const node = this.findNodeById(topic.conversationTree, nodeId);
+    if (!node) {
+      logger.error('ConversationTreeManager', '节点不存在', { nodeId });
+      return 0;
+    }
+
+    if (!node.children || node.children.length === 0) {
+      return 0;
+    }
+
+    const removedCount = node.children.length;
+    const removedIds = new Set(this.collectDescendantIds(node));
+    node.children = [];
+
+    // 当前节点在被移除子树内时，回退到该节点
+    if (topic.currentNode && removedIds.has(topic.currentNode.id)) {
+      topic.currentNode = node;
+    }
+    // 活跃末端节点指向被移除的节点时清空
+    if (topic.activeEndNodeId && removedIds.has(topic.activeEndNodeId)) {
+      topic.activeEndNodeId = null;
+    }
+    // 清理被移除节点的位置记录
+    if (topic.nodePositions) {
+      removedIds.forEach(id => {
+        delete topic.nodePositions[id];
+      });
+    }
+
+    this.topicManager.saveTopics();
+    logger.info('ConversationTreeManager', '清空节点子分支', { topic: topic.name, nodeId, removedCount });
+    return removedCount;
+  }
+
+  /**
    * 删除节点及其子树
    * @param {string} topicId - 话题ID
    * @param {string} nodeId - 要删除的节点ID

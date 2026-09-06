@@ -136,6 +136,78 @@ class TreeFlowAgent {
   }
 
   /**
+   * 重新回答指定节点：以该节点当前问题重新调用AI，覆盖回答并清空该节点之后的后续分支
+   * @param {string} topicId - 话题ID
+   * @param {string} nodeId - 节点ID
+   * @param {boolean} [confirm] - 节点存在后续分支时，是否确认清空后续分支
+   * @param {string} [model] - 模型（不传则使用当前配置模型）
+   * @param {string} [provider] - 供应商名称（不传则自动推断）
+   * @returns {Object} - { response, nodeId, removedChildren } 或 { needsConfirm, removedChildren }
+   */
+  async reanswer(topicId, nodeId, confirm = false, model = null, provider = null) {
+    const topic = this.topicManager.getTopic(topicId);
+    if (!topic) {
+      throw new Error('话题不存在');
+    }
+    const node = this.conversationTreeManager.findNodeById(topic.conversationTree, nodeId);
+    if (!node) {
+      throw new Error('节点不存在');
+    }
+    if (!node.message || !node.message.trim()) {
+      throw new Error('该节点没有问题内容，无法重新回答');
+    }
+
+    // 存在后续分支时，需要用户确认清空
+    if (node.children && node.children.length > 0 && !confirm) {
+      return { needsConfirm: true, removedChildren: node.children.length };
+    }
+
+    try {
+      // 清空该节点之后的后续分支
+      const removedChildren = this.conversationTreeManager.clearNodeChildren(topicId, nodeId);
+      // 切换到该节点，后续对话从新回答继续
+      topic.currentNode = node;
+      this.topicManager.saveTopics();
+
+      const currentModel = model || this.configManager.getCurrentModel();
+      const ollamaBaseUrl = this.configManager.getOllamaBaseUrl();
+
+      // 构建上下文：仅包含该节点之前的历史（修改后的问题作为新问题发送）
+      let conversationHistory = [];
+      if (node.parentId) {
+        conversationHistory = this.conversationTreeManager.getConversationHistory(topicId, node.parentId);
+      }
+
+      // 清空旧回答并标记为加载中
+      this.conversationTreeManager.updateNodeResponse(topicId, nodeId, '', { status: 'loading', error: null });
+
+      logger.info('TreeFlowAgent', '重新回答节点', {
+        topicId,
+        nodeId,
+        model: currentModel,
+        provider: provider || 'auto',
+        removedChildren,
+        historyLength: conversationHistory.length,
+        question: node.message.substring(0, 50)
+      });
+
+      // 调用API（传入该节点之前的历史）
+      const aiResponse = await this.apiManager.ask(node.message, currentModel, ollamaBaseUrl, conversationHistory, provider);
+
+      // 更新节点回答
+      this.conversationTreeManager.updateNodeResponse(topicId, nodeId, aiResponse, { status: 'completed', error: null });
+
+      logger.info('TreeFlowAgent', '重新回答成功', { nodeId, responseLength: aiResponse.length });
+      return { response: aiResponse, nodeId, removedChildren };
+    } catch (error) {
+      logger.error('TreeFlowAgent', '重新回答失败:', { error: error.message, nodeId });
+      // 更新节点状态为错误
+      this.conversationTreeManager.updateNodeResponse(topicId, nodeId, `错误: ${error.message}`, { status: 'error' });
+      throw new Error(`重新回答失败: ${error.message}`);
+    }
+  }
+
+  /**
    * 创建新分支
    * @param {string} [fromNodeId] - 可选，从指定节点创建分支
    * @returns {string} - 创建分支的结果信息
