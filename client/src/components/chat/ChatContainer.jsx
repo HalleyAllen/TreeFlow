@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Box, Typography, Paper, TextField, Button, IconButton, Fade, Chip, Snackbar, Alert } from '@mui/material'
+import { Box, Typography, Paper, TextField, Button, IconButton, Fade, Chip, Snackbar, Alert, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material'
 import CallSplitIcon from '@mui/icons-material/CallSplit'
 import CloseIcon from '@mui/icons-material/Close'
 import SendIcon from '@mui/icons-material/Send'
@@ -89,6 +89,25 @@ const ChatContainer = () => {
     return result
   }, [currentTopic?.id, refreshTree, showNotification])
 
+  // 「重新回答」二次确认弹窗状态：节点存在后续分支时使用应用内弹窗（原生 window.confirm 在预览/iframe 环境会被浏览器拦截而静默失败）
+  const [reanswerConfirm, setReanswerConfirm] = useState({ open: false, removedChildren: 0 })
+  const reanswerConfirmResolverRef = useRef(null)
+
+  const askReanswerConfirm = useCallback((removedChildren) => {
+    return new Promise((resolve) => {
+      reanswerConfirmResolverRef.current = resolve
+      setReanswerConfirm({ open: true, removedChildren })
+    })
+  }, [])
+
+  // 关闭弹窗并把用户的选择回传给等待中的重答流程
+  const handleReanswerConfirmClose = useCallback((action) => {
+    setReanswerConfirm({ open: false, removedChildren: 0 })
+    const resolve = reanswerConfirmResolverRef.current
+    reanswerConfirmResolverRef.current = null
+    resolve?.(action)
+  }, [])
+
   // 重新回答节点：以修改后的问题重新调用 AI
   const handleReanswerNode = useCallback(async (nodeId) => {
     if (!currentTopic?.id) return { success: false }
@@ -97,11 +116,17 @@ const ChatContainer = () => {
     let result = await treeApi.reanswerNode(nodeId, currentTopic.id, false, currentModel?.id, currentModel?.provider)
     // 该节点存在后续分支时需二次确认（重新提问将清空后续节点）
     if (result.success && result.data?.needsConfirm) {
-      const ok = window.confirm(
-        `该节点后有 ${result.data.removedChildren} 条后续对话。重新提问将先清空这些后续分支，是否继续？`
+      // 'replace'：清空后续分支后重答；'self'：只重新回答当前节点，保留后续分支
+      const action = await askReanswerConfirm(result.data.removedChildren || 0)
+      if (action !== 'replace' && action !== 'self') return { success: false, cancelled: true }
+      result = await treeApi.reanswerNode(
+        nodeId,
+        currentTopic.id,
+        action === 'replace',
+        currentModel?.id,
+        currentModel?.provider,
+        action === 'self'
       )
-      if (!ok) return { success: false, cancelled: true }
-      result = await treeApi.reanswerNode(nodeId, currentTopic.id, true, currentModel?.id, currentModel?.provider)
     }
     if (result.success) {
       // 等待刷新完成，确保节点上展示的是新回答
@@ -113,7 +138,7 @@ const ChatContainer = () => {
     await refreshTree(currentTopic.id)
     showNotification(result.error || '重新回答失败', 'error')
     return { success: false, error: result.error }
-  }, [currentTopic?.id, models, selectedModel, refreshTree, showNotification])
+  }, [currentTopic?.id, models, selectedModel, refreshTree, showNotification, askReanswerConfirm])
 
   // 复制节点
   const handleCopyNode = useCallback(async (nodeId) => {
@@ -329,6 +354,47 @@ const ChatContainer = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* 重新回答确认弹窗：节点存在后续分支时提示将被清空 */}
+      <Dialog
+        open={reanswerConfirm.open}
+        onClose={() => handleReanswerConfirmClose(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontSize: '1rem', pb: 1 }}>重新回答</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ fontSize: '0.85rem' }}>
+            该节点后有 {reanswerConfirm.removedChildren} 条后续对话。可以只重新回答当前节点（保留后续分支），
+            也可以清空这些后续分支后再重新回答。
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 2, pb: 2, flexWrap: 'wrap', gap: 0.5 }}>
+          <Button
+            size="small"
+            onClick={() => handleReanswerConfirmClose('cancel')}
+            sx={{ textTransform: 'none' }}
+          >
+            取消
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => handleReanswerConfirmClose('self')}
+            sx={{ textTransform: 'none' }}
+          >
+            只更新本节点
+          </Button>
+          <Button
+            size="small"
+            variant="contained"
+            onClick={() => handleReanswerConfirmClose('replace')}
+            sx={{ textTransform: 'none' }}
+          >
+            清空后续并重答
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* 输入区域 - 悬浮在脑图上方 */}
       <Paper

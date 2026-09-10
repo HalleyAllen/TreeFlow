@@ -230,7 +230,7 @@ class TreeController {
   reanswerNode = async (req, res) => {
     try {
       const { nodeId } = req.params;
-      const { topicId, confirm, model, provider } = req.body;
+      const { topicId, confirm, model, provider, keepChildren } = req.body;
 
       if (!topicId) {
         return res.status(400).json({ success: false, error: '缺少topicId参数' });
@@ -241,7 +241,7 @@ class TreeController {
         return res.status(404).json({ success: false, error: '话题不存在' });
       }
 
-      const result = await this.agent.reanswer(topicId, nodeId, !!confirm, model || null, provider || null);
+      const result = await this.agent.reanswer(topicId, nodeId, !!confirm, model || null, provider || null, !!keepChildren);
 
       // 存在后续分支且未确认：让前端弹出确认
       if (result.needsConfirm) {

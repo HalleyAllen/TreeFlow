@@ -142,9 +142,10 @@ class TreeFlowAgent {
    * @param {boolean} [confirm] - 节点存在后续分支时，是否确认清空后续分支
    * @param {string} [model] - 模型（不传则使用当前配置模型）
    * @param {string} [provider] - 供应商名称（不传则自动推断）
+   * @param {boolean} [keepChildren] - 是否保留后续分支（仅更新当前节点的回答）
    * @returns {Object} - { response, nodeId, removedChildren } 或 { needsConfirm, removedChildren }
    */
-  async reanswer(topicId, nodeId, confirm = false, model = null, provider = null) {
+  async reanswer(topicId, nodeId, confirm = false, model = null, provider = null, keepChildren = false) {
     const topic = this.topicManager.getTopic(topicId);
     if (!topic) {
       throw new Error('话题不存在');
@@ -157,17 +158,20 @@ class TreeFlowAgent {
       throw new Error('该节点没有问题内容，无法重新回答');
     }
 
-    // 存在后续分支时，需要用户确认清空
-    if (node.children && node.children.length > 0 && !confirm) {
+    // 存在后续分支时，需要用户确认清空（"仅更新当前节点"模式保留后续分支，无需确认）
+    if (!keepChildren && node.children && node.children.length > 0 && !confirm) {
       return { needsConfirm: true, removedChildren: node.children.length };
     }
 
     try {
-      // 清空该节点之后的后续分支
-      const removedChildren = this.conversationTreeManager.clearNodeChildren(topicId, nodeId);
-      // 切换到该节点，后续对话从新回答继续
-      topic.currentNode = node;
-      this.topicManager.saveTopics();
+      let removedChildren = 0;
+      if (!keepChildren) {
+        // 清空该节点之后的后续分支
+        removedChildren = this.conversationTreeManager.clearNodeChildren(topicId, nodeId);
+        // 切换到该节点，后续对话从新回答继续
+        topic.currentNode = node;
+        this.topicManager.saveTopics();
+      }
 
       const currentModel = model || this.configManager.getCurrentModel();
       const ollamaBaseUrl = this.configManager.getOllamaBaseUrl();
@@ -187,6 +191,7 @@ class TreeFlowAgent {
         model: currentModel,
         provider: provider || 'auto',
         removedChildren,
+        keepChildren,
         historyLength: conversationHistory.length,
         question: node.message.substring(0, 50)
       });

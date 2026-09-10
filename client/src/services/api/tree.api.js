@@ -86,13 +86,15 @@ export async function editNode(nodeId, topicId, question, answer) {
  * @param {boolean} [confirm] - 节点存在后续分支时，是否确认清空后续分支
  * @param {string} [model] - 使用的模型（可选）
  * @param {string} [provider] - 供应商（可选）
+ * @param {boolean} [keepChildren] - 是否保留后续分支（仅更新当前节点的回答）
  * @returns {Promise<Object>} - 重答结果；data.needsConfirm 为 true 表示需二次确认
  */
-export async function reanswerNode(nodeId, topicId, confirm = false, model = null, provider = null) {
+export async function reanswerNode(nodeId, topicId, confirm = false, model = null, provider = null, keepChildren = false) {
   try {
     const body = { topicId, confirm };
     if (model) body.model = model;
     if (provider) body.provider = provider;
+    if (keepChildren) body.keepChildren = true;
     const response = await fetch(`${API_BASE_URL}/api/tree/node/${nodeId}/reanswer`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
