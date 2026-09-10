@@ -203,18 +203,9 @@ function calculateLayout(
 
       // 分支子节点 - 向右展开
       if (branchChildren.length > 0) {
-        // 计算所有分支子树的总高度
-        let totalBranchesHeight = 0;
-        branchChildren.forEach((child, index) => {
-          totalBranchesHeight += subtreeHeights.get(child.id) || NODE_HEIGHT;
-          if (index < branchChildren.length - 1) {
-            totalBranchesHeight += BRANCH_VERTICAL_SPACING;
-          }
-        });
-
-        // 计算起始Y坐标：将分支垂直居中分布在父节点周围（按父节点实际高度居中）
-        const parentCenterY = y + getHeight(nodeId) / 2;
-        let currentBranchY = parentCenterY - totalBranchesHeight / 2;
+        // 起始Y坐标锚定父节点顶边：分支从父节点顶边自上而下依次排列。
+        // 这样父节点或某个分支展开变高时只会向下扩张，不会把兄弟分支往上推
+        let currentBranchY = y;
 
         branchChildren.forEach((child) => {
           const isQuote = child.branchType === 'quote';
@@ -231,8 +222,8 @@ function calculateLayout(
             style: isQuote ? QUOTE_EDGE_STYLE : EDGE_STYLE,
           });
 
-          // 将子节点放置在其子树的垂直中心位置（按子节点实际高度居中）
-          const childNodeY = currentBranchY + (childTreeHeight - getHeight(child.id)) / 2;
+          // 分支节点顶边与其子树占位区间的顶部对齐，展开时只向下延伸
+          const childNodeY = currentBranchY;
 
           layoutNode(child, branchX, childNodeY, depth + 1, true);
 
