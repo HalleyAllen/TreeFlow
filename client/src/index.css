@@ -1182,12 +1182,11 @@ nav button:hover {
   -webkit-user-select: text !important;
 }
 
-/* 节点内所有文本元素 */
+/* 节点内所有文本元素（光标由 Typography 规则提供，避免影响按钮等交互元素） */
 .mindmap-flow .react-flow__node span,
 .mindmap-flow .react-flow__node p {
   user-select: text !important;
   -webkit-user-select: text !important;
-  cursor: text !important;
 }
 
 /* 移除 selectable 类的选择行为 */
@@ -1238,17 +1237,15 @@ nav button:hover {
 
 /* 文字悬停时显示 I-beam 光标 */
 .mindmap-flow .MuiTypography-root:hover,
-.mindmap-flow p:hover,
-.mindmap-flow span:hover {
+.mindmap-flow p:hover {
   cursor: text !important;
 }
 
-/* nodrag 类 */
+/* nodrag 类：仅保留文本可选中，光标交由文字/按钮各自的规则决定 */
 .mindmap-flow .nodrag,
 .mindmap-flow .nodrag * {
   user-select: text !important;
   -webkit-user-select: text !important;
-  cursor: text !important;
 }
 
 /* ===== 按钮层 ===== */
@@ -1278,11 +1275,26 @@ nav button:hover {
   -webkit-user-select: text !important;
 }
 
-/* ===== 文字光标样式 - 核心修复 ===== */
-/* 确保鼠标移到文字上时显示 I-beam 光标 */
-.mindmap-flow .react-flow__node .MuiPaper-root,
-.mindmap-flow .react-flow__node .MuiBox-root {
-  cursor: text !important;
+/* ===== 节点光标样式 ===== */
+/* 文字上显示 I-beam（见上方 Typography 规则）；节点空白区域显示拖动手势光标 */
+.mindmap-flow .react-flow__node .MuiPaper-root {
+  cursor: grab;
+}
+
+.mindmap-flow .react-flow__node .MuiPaper-root:active {
+  cursor: grabbing;
+}
+
+/* 节点内的空白容器继承拖动手势光标；nodrag 元素（如引用按钮）保留自身光标 */
+.mindmap-flow .react-flow__node .MuiBox-root:not(.nodrag) {
+  cursor: inherit;
+}
+
+/* 拖动过程中整块节点保持抓取光标 */
+.mindmap-flow .react-flow__node.dragging .MuiPaper-root,
+.mindmap-flow .react-flow__node.dragging .MuiTypography-root,
+.mindmap-flow .react-flow__node.dragging span {
+  cursor: grabbing !important;
 }
 
 /* 问题和回答区域的文字光标 */
