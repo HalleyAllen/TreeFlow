@@ -82,7 +82,7 @@ const ChatContainer = () => {
     const result = await treeApi.editNode(nodeId, currentTopic.id, question, answer)
     if (result.success) {
       showNotification('节点已更新')
-      refreshTree(currentTopic.id)
+      await refreshTree(currentTopic.id)
     } else {
       showNotification(result.error || '编辑失败', 'error')
     }
@@ -104,10 +104,13 @@ const ChatContainer = () => {
       result = await treeApi.reanswerNode(nodeId, currentTopic.id, true, currentModel?.id, currentModel?.provider)
     }
     if (result.success) {
+      // 等待刷新完成，确保节点上展示的是新回答
+      await refreshTree(currentTopic.id)
       showNotification('已重新回答')
-      refreshTree(currentTopic.id)
       return { success: true }
     }
+    // 失败时同样刷新，让节点展示错误状态
+    await refreshTree(currentTopic.id)
     showNotification(result.error || '重新回答失败', 'error')
     return { success: false, error: result.error }
   }, [currentTopic?.id, models, selectedModel, refreshTree, showNotification])

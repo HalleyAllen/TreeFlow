@@ -366,43 +366,31 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
     setIsEditing(false);
   }, []);
 
-  // 保存编辑内容（仅保存，不重新提问）
-  const handleEditSave = useCallback(async (event) => {
+  // 保存修改后的问题，并重新发送给 AI 回答；完成后刷新该节点回答并退出编辑状态
+  const handleReanswerSave = useCallback(async (event) => {
     event?.stopPropagation?.();
     event?.preventDefault?.();
-    if (!actualNodeId || !onEditNode) return;
-    setEditSaving(true);
-    try {
-      await onEditNode(actualNodeId, editQuestion, editAnswer);
-      setIsEditing(false);
-    } catch (err) {
-      console.error('[编辑失败]', err);
-    } finally {
-      setEditSaving(false);
-    }
-  }, [actualNodeId, onEditNode, editQuestion, editAnswer]);
-
-  // 保存修改后的问题，并重新发送给 AI 回答
-  const handleReanswerSave = useCallback(async () => {
     if (!actualNodeId || !onEditNode) return;
     if (!editQuestion.trim()) {
       alert('请先填写问题内容');
       return;
     }
     setEditSaving(true);
+    // 仅在用户主动取消「清空后续分支」时保留编辑状态，其余情况都退出编辑
+    let keepEditing = false;
     try {
-      // 先保存修改后的问题/回答
+      // 先保存修改后的问题
       await onEditNode(actualNodeId, editQuestion, editAnswer);
-      // 再以当前问题重新调用 AI（失败时由回调处理并抛出）
+      // 再以当前问题重新调用 AI，外部完成后会刷新该节点回答
       const result = await onReanswerNode?.(actualNodeId, editQuestion);
-      if (result && result.success === false) {
-        return; // 保持编辑状态，让用户查看错误后重试或取消
-      }
-      setIsEditing(false);
+      keepEditing = !!result?.cancelled;
     } catch (err) {
       console.error('[保存并重新回答失败]', err);
     } finally {
       setEditSaving(false);
+      if (!keepEditing) {
+        setIsEditing(false);
+      }
     }
   }, [actualNodeId, onEditNode, onReanswerNode, editQuestion, editAnswer]);
 
@@ -649,16 +637,6 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
                 </Button>
                 <Button
                   size="small"
-                  variant="outlined"
-                  className="nodrag"
-                  onClick={handleEditSave}
-                  disabled={editSaving}
-                  sx={{ textTransform: 'none', fontSize: '0.7rem', minWidth: 0, px: 1 }}
-                >
-                  保存
-                </Button>
-                <Button
-                  size="small"
                   variant="contained"
                   className="nodrag"
                   onClick={handleReanswerSave}
@@ -689,7 +667,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
                     bottom: 4,
                     padding: '2px',
                     color: '#6b7280',
-                    backgroundColor: 'rgba(255,255,255,0.7)',
+                    backgroundColor: 'transparent',
                     '&:hover': { color: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)' },
                   }}
                 >
