@@ -13,14 +13,10 @@ import {
   IconButton,
   Tooltip,
   Divider,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
   TextField,
 } from '@mui/material';
-import { ExpandMore, ExpandLess, FormatQuote, ContentCopy, Edit, Delete, AccountTree } from '@mui/icons-material';
+import { ExpandMore, ExpandLess, FormatQuote, ContentCopy, Edit, Delete, AccountTree, Send } from '@mui/icons-material';
 
 // 节点尺寸常量（与 MindMap 共享）
 export const NODE_WIDTH = 280;
@@ -102,8 +98,8 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
   // 问题区/回答区是否需要展开按钮（通过测量 DOM 溢出精确判断）
   const [needsExpandQuestion, setNeedsExpandQuestion] = useState(false);
   const [needsExpandAnswer, setNeedsExpandAnswer] = useState(false);
-  // 编辑对话框状态
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  // 节点内联编辑状态（直接在节点上编辑，不弹窗）：仅支持编辑上方问题区
+  const [isEditing, setIsEditing] = useState(false);
   const [editQuestion, setEditQuestion] = useState('');
   const [editAnswer, setEditAnswer] = useState('');
   const [editSaving, setEditSaving] = useState(false);
@@ -353,23 +349,32 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
     }
   }, [fullAnswer]);
 
-  // 打开编辑对话框
+  // 进入内联编辑：把当前问题/回答复制为草稿，直接在节点上编辑
   const handleEditOpen = useCallback((event) => {
     event?.stopPropagation?.();
     event?.preventDefault?.();
     if (!actualNodeId) return;
     setEditQuestion(question || '');
     setEditAnswer(answer || '');
-    setEditDialogOpen(true);
+    setIsEditing(true);
   }, [actualNodeId, question, answer]);
 
-  // 保存编辑内容
-  const handleEditSave = useCallback(async () => {
+  // 取消内联编辑，丢弃草稿
+  const handleEditCancel = useCallback((event) => {
+    event?.stopPropagation?.();
+    event?.preventDefault?.();
+    setIsEditing(false);
+  }, []);
+
+  // 保存编辑内容（仅保存，不重新提问）
+  const handleEditSave = useCallback(async (event) => {
+    event?.stopPropagation?.();
+    event?.preventDefault?.();
     if (!actualNodeId || !onEditNode) return;
     setEditSaving(true);
     try {
       await onEditNode(actualNodeId, editQuestion, editAnswer);
-      setEditDialogOpen(false);
+      setIsEditing(false);
     } catch (err) {
       console.error('[编辑失败]', err);
     } finally {
@@ -391,15 +396,26 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
       // 再以当前问题重新调用 AI（失败时由回调处理并抛出）
       const result = await onReanswerNode?.(actualNodeId, editQuestion);
       if (result && result.success === false) {
-        return; // 保持弹窗打开，让用户查看错误后重试或取消
+        return; // 保持编辑状态，让用户查看错误后重试或取消
       }
-      setEditDialogOpen(false);
+      setIsEditing(false);
     } catch (err) {
       console.error('[保存并重新回答失败]', err);
     } finally {
       setEditSaving(false);
     }
   }, [actualNodeId, onEditNode, onReanswerNode, editQuestion, editAnswer]);
+
+  // 内联编辑键盘操作：Esc 取消，Ctrl/Cmd + Enter 保存并重新回答
+  const handleEditorKeyDown = useCallback((event) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      handleEditCancel(event);
+    } else if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      handleReanswerSave(event);
+    }
+  }, [handleEditCancel, handleReanswerSave]);
 
   // 处理删除单个节点
   const handleDelete = useCallback((event) => {
@@ -501,12 +517,12 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
           sx={{
             width: NODE_WIDTH,
             minHeight: NODE_HEIGHT,
-            height: isAnyExpanded ? 'auto' : NODE_HEIGHT,
+            height: isAnyExpanded || isEditing ? 'auto' : NODE_HEIGHT,
             border: styles.border,
             borderRadius: 3,
             boxShadow: styles.boxShadow,
-            // 任一区域展开时溢出可见，确保底部文字可选中；收起时隐藏溢出内容
-            overflow: isAnyExpanded ? 'visible' : 'hidden',
+            // 任一区域展开或编辑时溢出可见，确保底部文字可选中；收起时隐藏溢出内容
+            overflow: isAnyExpanded || isEditing ? 'visible' : 'hidden',
             transition: 'all 0.2s ease',
             backgroundColor: selected ? '#eff6ff' : (isQuote ? '#fffbeb' : (isError ? '#fef2f2' : '#ffffff')),
             boxSizing: 'border-box',
@@ -515,17 +531,18 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
           {/* 上半部分：问题区域 */}
           <Box
             sx={{
+              position: 'relative',
               p: 1.2,
               pb: 0.8,
-              height: questionExpanded ? 'auto' : QUESTION_AREA_HEIGHT,
+              height: questionExpanded || isEditing ? 'auto' : QUESTION_AREA_HEIGHT,
               backgroundColor: styles.questionBg,
-              borderBottom: isAnyExpanded ? '1px solid' : 'none',
+              borderBottom: isAnyExpanded || isEditing ? '1px solid' : 'none',
               borderColor: isQuote ? '#fde68a' : (isRoot ? '#bfdbfe' : '#e5e7eb'),
               boxSizing: 'border-box',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
-              gap: questionExpanded ? 1 : 0,
+              gap: questionExpanded || isEditing ? 1 : 0,
               // 展开时隐藏溢出，防止背景色显示为直角超出圆角边框
               overflow: 'hidden',
               // 保持与 Paper 一致的上圆角
@@ -536,10 +553,30 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
               <ExpandToggleButton
                 isExpanded={questionExpanded}
                 onToggle={wrappedToggleQuestion}
-                visible={needsExpandQuestion}
+                visible={needsExpandQuestion && !isEditing}
               />
             </Box>
-            {questionExpanded ? (
+            {isEditing ? (
+              // 内联编辑：问题直接在节点上修改，无需弹窗
+              <TextField
+                value={editQuestion}
+                onChange={(e) => setEditQuestion(e.target.value)}
+                onKeyDown={handleEditorKeyDown}
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+                className="nodrag"
+                placeholder="输入问题"
+                fullWidth
+                multiline
+                autoFocus
+                variant="standard"
+                sx={{
+                  '& .MuiInputBase-root': { fontSize: '0.8rem', fontWeight: 600, color: '#1f2937' },
+                  '& .MuiInputBase-input': { padding: '2px 0' },
+                  '& .MuiInput-underline:before': { borderBottomColor: '#cbd5e1' },
+                }}
+              />
+            ) : questionExpanded ? (
               // 问题展开时：用 span 让容器只包裹实际文字
               <Typography
                 variant="body2"
@@ -589,6 +626,76 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
               >
                 {displayQuestion}
               </Typography>
+            )}
+            {/* 编辑态操作栏：位于问题区下方、回答区上方 */}
+            {isEditing && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  mt: 0.5,
+                }}
+              >
+                <Button
+                  size="small"
+                  className="nodrag"
+                  onClick={handleEditCancel}
+                  disabled={editSaving}
+                  sx={{ textTransform: 'none', fontSize: '0.7rem', minWidth: 0, px: 1, color: '#6b7280' }}
+                >
+                  取消
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  className="nodrag"
+                  onClick={handleEditSave}
+                  disabled={editSaving}
+                  sx={{ textTransform: 'none', fontSize: '0.7rem', minWidth: 0, px: 1 }}
+                >
+                  保存
+                </Button>
+                <Button
+                  size="small"
+                  variant="contained"
+                  className="nodrag"
+                  onClick={handleReanswerSave}
+                  disabled={editSaving}
+                  endIcon={<Send sx={{ fontSize: '12px !important' }} />}
+                  sx={{
+                    textTransform: 'none',
+                    fontSize: '0.7rem',
+                    minWidth: 0,
+                    px: 1,
+                    '& .MuiButton-endIcon': { ml: '3px', mr: 0 },
+                  }}
+                >
+                  {editSaving ? '发送中...' : '发送'}
+                </Button>
+              </Box>
+            )}
+            {!isEditing && (
+              <Tooltip title="编辑" placement="bottom">
+                <IconButton
+                  type="button"
+                  size="small"
+                  className="nodrag"
+                  onClick={handleEditOpen}
+                  sx={{
+                    position: 'absolute',
+                    right: 4,
+                    bottom: 4,
+                    padding: '2px',
+                    color: '#6b7280',
+                    backgroundColor: 'rgba(255,255,255,0.7)',
+                    '&:hover': { color: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)' },
+                  }}
+                >
+                  <Edit fontSize="small" />
+                </IconButton>
+              </Tooltip>
             )}
           </Box>
 
@@ -705,150 +812,64 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
               {/* 占位元素，当没有分支标签时保持按钮靠右 */}
               {(!hasBranches && !isLoading) || answerExpanded ? <Box /> : null}
 
-              {/* 操作按钮 */}
-              <Box sx={{ display: 'flex', gap: 0.5 }}>
-                <Tooltip title="复制回答" placement="top">
-                  <IconButton
-                    type="button"
-                    size="small"
-                    className="nodrag"
-                    onClick={handleCopy}
-                    sx={{
-                      padding: '4px',
-                      color: '#6b7280',
-                      '&:hover': { color: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)' },
-                    }}
-                  >
-                    <ContentCopy fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="编辑" placement="top">
-                  <IconButton
-                    type="button"
-                    size="small"
-                    className="nodrag"
-                    onClick={handleEditOpen}
-                    sx={{
-                      padding: '4px',
-                      color: '#6b7280',
-                      '&:hover': { color: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)' },
-                    }}
-                  >
-                    <Edit fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="删除节点" placement="top">
-                  <IconButton
-                    type="button"
-                    size="small"
-                    className="nodrag"
-                    onClick={handleDelete}
-                    sx={{
-                      padding: '4px',
-                      color: '#6b7280',
-                      '&:hover': { color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)' },
-                    }}
-                  >
-                    <Delete fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-                {canDeleteBranch && (
-                  <Tooltip title="删除支线" placement="top">
-                    <IconButton
-                      type="button"
-                      size="small"
-                      className="nodrag"
-                      onClick={handleDeleteBranch}
-                      sx={{
-                        padding: '4px',
-                        color: '#6b7280',
-                        '&:hover': { color: '#dc2626', backgroundColor: 'rgba(220, 38, 38, 0.1)' },
-                      }}
-                    >
-                      <AccountTree fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
+              {/* 操作按钮 / 编辑态操作按钮 */}
+              <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                {!isEditing && (
+                  <>
+                    <Tooltip title="复制回答" placement="top">
+                      <IconButton
+                        type="button"
+                        size="small"
+                        className="nodrag"
+                        onClick={handleCopy}
+                        sx={{
+                          padding: '4px',
+                          color: '#6b7280',
+                          '&:hover': { color: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)' },
+                        }}
+                      >
+                        <ContentCopy fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="删除节点" placement="top">
+                      <IconButton
+                        type="button"
+                        size="small"
+                        className="nodrag"
+                        onClick={handleDelete}
+                        sx={{
+                          padding: '4px',
+                          color: '#6b7280',
+                          '&:hover': { color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)' },
+                        }}
+                      >
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    {canDeleteBranch && (
+                      <Tooltip title="删除支线" placement="top">
+                        <IconButton
+                          type="button"
+                          size="small"
+                          className="nodrag"
+                          onClick={handleDeleteBranch}
+                          sx={{
+                            padding: '4px',
+                            color: '#6b7280',
+                            '&:hover': { color: '#dc2626', backgroundColor: 'rgba(220, 38, 38, 0.1)' },
+                          }}
+                        >
+                          <AccountTree fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </>
                 )}
               </Box>
             </Box>
           </Box>
         </Paper>
       </Box>
-
-      {/* 编辑对话框 */}
-      <Dialog
-        open={editDialogOpen}
-        onClose={() => !editSaving && setEditDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            bgcolor: 'var(--card-background, #ffffff)',
-            borderRadius: 2,
-          },
-        }}
-      >
-        <DialogTitle sx={{ color: 'var(--text-color, #1f2937)', fontSize: '1.05rem' }}>
-          编辑节点
-        </DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '8px !important' }}>
-          <TextField
-            label="问题"
-            fullWidth
-            multiline
-            minRows={2}
-            value={editQuestion}
-            onChange={(e) => setEditQuestion(e.target.value)}
-            variant="outlined"
-            size="small"
-            sx={{
-              '& .MuiInputLabel-root': { color: 'var(--text-secondary, #6b7280)' },
-              '& .MuiOutlinedInput-root': {
-                color: 'var(--text-color, #1f2937)',
-                '& fieldset': { borderColor: 'var(--border-color, #e5e7eb)' },
-              },
-            }}
-          />
-          <TextField
-            label="回答"
-            fullWidth
-            multiline
-            minRows={4}
-            value={editAnswer}
-            onChange={(e) => setEditAnswer(e.target.value)}
-            variant="outlined"
-            size="small"
-            sx={{
-              '& .MuiInputLabel-root': { color: 'var(--text-secondary, #6b7280)' },
-              '& .MuiOutlinedInput-root': {
-                color: 'var(--text-color, #1f2937)',
-                '& fieldset': { borderColor: 'var(--border-color, #e5e7eb)' },
-              },
-            }}
-          />
-        </DialogContent>
-        <DialogActions sx={{ p: 2, pt: 0 }}>
-          <Button onClick={() => setEditDialogOpen(false)} disabled={editSaving} sx={{ textTransform: 'none' }}>
-            取消
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={handleEditSave}
-            disabled={editSaving}
-            sx={{ textTransform: 'none' }}
-          >
-            保存
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleReanswerSave}
-            disabled={editSaving}
-            sx={{ textTransform: 'none', bgcolor: 'var(--primary-color, #3b82f6)' }}
-          >
-            {editSaving ? '重新回答中...' : '保存并重新回答'}
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       <style>{`
         @keyframes spin {
