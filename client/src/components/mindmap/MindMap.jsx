@@ -39,10 +39,14 @@ const QUOTE_EDGE_STYLE = {
 /**
  * 计算子树所需的总高度（包含所有后代节点）
  * 用于确保兄弟分支之间不会重叠
+ * @param {object} node 树节点
+ * @param {(nodeId: string) => number} getHeight 获取节点实际高度的函数（展开时高度会变大）
  */
-function calculateSubtreeHeight(node) {
+function calculateSubtreeHeight(node, getHeight = () => NODE_HEIGHT) {
+  const ownHeight = getHeight(node.id);
+
   if (!node.children || node.children.length === 0) {
-    return NODE_HEIGHT + MAIN_VERTICAL_SPACING;
+    return ownHeight + MAIN_VERTICAL_SPACING;
   }
 
   const mainChild = node.children[0];
@@ -51,13 +55,13 @@ function calculateSubtreeHeight(node) {
   // 主流程子树高度
   let mainChildHeight = 0;
   if (mainChild) {
-    mainChildHeight = calculateSubtreeHeight(mainChild);
+    mainChildHeight = calculateSubtreeHeight(mainChild, getHeight);
   }
 
   // 分支子树的总高度
   let branchesTotalHeight = 0;
   branchChildren.forEach((child, index) => {
-    const childTreeHeight = calculateSubtreeHeight(child);
+    const childTreeHeight = calculateSubtreeHeight(child, getHeight);
     branchesTotalHeight += childTreeHeight;
     // 分支之间添加额外间距
     if (index < branchChildren.length - 1) {
@@ -67,24 +71,43 @@ function calculateSubtreeHeight(node) {
 
   // 返回主流程和分支中较高的那个，再加上当前节点高度
   const childrenHeight = Math.max(mainChildHeight, branchesTotalHeight);
-  return NODE_HEIGHT + MAIN_VERTICAL_SPACING + childrenHeight;
+  return ownHeight + MAIN_VERTICAL_SPACING + childrenHeight;
 }
 
 /**
  * 计算文档流式布局（与 X6 算法一致）
  * 主流程垂直向下，分支向右展开
  * 先计算子树高度，再分配空间，避免重叠
+ * @param {object} nodeHeights 节点实测高度表 { [nodeId]: height }
+ * @param {object} manualOffsets 用户拖拽产生的相对偏移 { [nodeId]: { dx, dy } }
+ * @param {object} autoPositions 输出参数：自动布局基准位置 { [nodeId]: { x, y } }
  * @returns {{nodes: Array, edges: Array}} React Flow 节点/边数组
  */
-function calculateLayout(rootNode, callbacks = {}, expandedStates = {}, positionStates = {}, selectedNodeId = null, activeEndNodeId = null) {
-  const { onQuoteText, onNodeSelect, onEditNode, onReanswerNode, onDeleteNode, onDeleteBranch, onToggleExpand, onExpandStateChange } = callbacks;
+function calculateLayout(
+  rootNode,
+  callbacks = {},
+  expandedStates = {},
+  positionStates = {},
+  selectedNodeId = null,
+  activeEndNodeId = null,
+  nodeHeights = {},
+  manualOffsets = {},
+  autoPositions = {}
+) {
+  const { onQuoteText, onNodeSelect, onEditNode, onReanswerNode, onDeleteNode, onDeleteBranch, onToggleExpand, onExpandStateChange, onNodeHeightChange } = callbacks;
   const nodes = [];
   const edges = [];
+
+  // 节点实际高度（未测量到则回退到 NODE_HEIGHT）
+  const getHeight = (nodeId) => {
+    const height = nodeHeights[nodeId];
+    return typeof height === 'number' && height > 0 ? height : NODE_HEIGHT;
+  };
 
   // 第一遍：计算所有子树高度
   const subtreeHeights = new Map();
   function computeSubtreeHeights(node) {
-    const height = calculateSubtreeHeight(node);
+    const height = calculateSubtreeHeight(node, getHeight);
     subtreeHeights.set(node.id, height);
 
     if (node.children) {
@@ -102,9 +125,25 @@ function calculateLayout(rootNode, callbacks = {}, expandedStates = {}, position
     const initialAnswerExpanded = expandState.answer ?? false;
     const savedPosition = positionStates[nodeId];
 
-    // 使用保存的位置或计算的位置
-    const finalX = savedPosition ? savedPosition.x : x;
-    const finalY = savedPosition ? savedPosition.y : y;
+    // 记录自动布局基准位置，供拖拽偏移换算与展开避让使用
+    autoPositions[nodeId] = { x, y };
+
+    // 优先使用用户拖拽产生的相对偏移，使展开/收起时整块布局一起移动
+    let finalX = x;
+    let finalY = y;
+    const offset = manualOffsets[nodeId];
+    if (offset) {
+      finalX = x + (offset.dx || 0);
+      finalY = y + (offset.dy || 0);
+    } else if (savedPosition) {
+      // 兼容服务器保存的绝对位置：换算为相对基准位置的偏移后继续使用
+      manualOffsets[nodeId] = {
+        dx: savedPosition.x - x,
+        dy: savedPosition.y - y,
+      };
+      finalX = savedPosition.x;
+      finalY = savedPosition.y;
+    }
 
     const isActiveEndNode = nodeId === activeEndNodeId;
     const data = {
@@ -123,6 +162,7 @@ function calculateLayout(rootNode, callbacks = {}, expandedStates = {}, position
       onDeleteBranch,
       onToggleExpand,
       onExpandStateChange,
+      onNodeHeightChange,
     };
 
     nodes.push({
@@ -155,7 +195,7 @@ function calculateLayout(rootNode, callbacks = {}, expandedStates = {}, position
         layoutNode(
           mainChild,
           x,
-          y + NODE_HEIGHT + MAIN_VERTICAL_SPACING,
+          y + getHeight(nodeId) + MAIN_VERTICAL_SPACING,
           depth + 1,
           false
         );
@@ -172,8 +212,8 @@ function calculateLayout(rootNode, callbacks = {}, expandedStates = {}, position
           }
         });
 
-        // 计算起始Y坐标：将分支垂直居中分布在父节点周围
-        const parentCenterY = y + NODE_HEIGHT / 2;
+        // 计算起始Y坐标：将分支垂直居中分布在父节点周围（按父节点实际高度居中）
+        const parentCenterY = y + getHeight(nodeId) / 2;
         let currentBranchY = parentCenterY - totalBranchesHeight / 2;
 
         branchChildren.forEach((child) => {
@@ -191,8 +231,8 @@ function calculateLayout(rootNode, callbacks = {}, expandedStates = {}, position
             style: isQuote ? QUOTE_EDGE_STYLE : EDGE_STYLE,
           });
 
-          // 将子节点放置在其子树的垂直中心位置
-          const childNodeY = currentBranchY + (childTreeHeight - NODE_HEIGHT) / 2;
+          // 将子节点放置在其子树的垂直中心位置（按子节点实际高度居中）
+          const childNodeY = currentBranchY + (childTreeHeight - getHeight(child.id)) / 2;
 
           layoutNode(child, branchX, childNodeY, depth + 1, true);
 
@@ -233,11 +273,16 @@ function MindMapInner({
   // 使用 ref 存储位置/展开/视口等状态，避免触发重渲染
   const positionStatesRef = useRef({}); // 节点位置缓存（含拖拽实时更新的位置）
   const expandedStatesRef = useRef({}); // 节点展开状态缓存
+  const nodeHeightsRef = useRef({}); // 节点实测高度缓存（展开变大、收起恢复）
+  const manualOffsetsRef = useRef({}); // 用户拖拽产生的相对自动布局偏移
+  const autoPositionsRef = useRef({}); // 最近一次自动布局的基准位置
   const savedViewportRef = useRef(null); // 服务器保存的视口
   const viewportRestoredRef = useRef(false); // 本次话题是否已完成视口恢复/适应
   const layoutRequestRef = useRef(0); // 布局请求计数，防止旧数据覆盖新话题
   const activeEndNodeIdRef = useRef(null); // 最新活跃末端节点（供布局时计算，避免重建）
   activeEndNodeIdRef.current = activeEndNodeId || null;
+  const visualNodeIdRef = useRef(null); // 最新视觉选中节点（供布局时计算，避免重建）
+  visualNodeIdRef.current = visualNodeId || null;
 
   // 初始数据加载标志（先等服务器位置加载完成再布局）
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
@@ -274,6 +319,35 @@ function MindMapInner({
     }));
   }, [setNodes]);
 
+  // 重新布局句柄（由 buildLayout 赋值，供高度变化回调调用，避免闭包循环依赖）
+  const relayoutRef = useRef(null);
+  const relayoutRafRef = useRef(0);
+
+  // 节点高度变化（展开/收起、内容变化）时重新布局：
+  // 展开的节点会把下方节点往下推，收起后自动恢复
+  const handleNodeHeightChange = useCallback((nodeId, height) => {
+    if (!nodeId || !Number.isFinite(height)) return;
+
+    const previous = nodeHeightsRef.current[nodeId];
+    if (previous !== undefined && Math.abs(previous - height) < 1) return;
+    nodeHeightsRef.current[nodeId] = height;
+
+    // 合并同一帧内的多次上报，避免频繁重排
+    if (relayoutRafRef.current) return;
+    relayoutRafRef.current = requestAnimationFrame(() => {
+      relayoutRafRef.current = 0;
+      relayoutRef.current?.();
+    });
+  }, []);
+
+  // 组件卸载时清理未执行的帧回调
+  useEffect(() => () => {
+    if (relayoutRafRef.current) {
+      cancelAnimationFrame(relayoutRafRef.current);
+      relayoutRafRef.current = 0;
+    }
+  }, []);
+
   // 处理节点选中：蓝色效果完全由外部 visualNodeId 驱动
   const handleNodeSelectInternal = useCallback((nodeData) => {
     onNodeSelect?.(nodeData);
@@ -307,6 +381,9 @@ function MindMapInner({
     // 重置状态，避免旧话题数据污染新话题
     expandedStatesRef.current = {};
     positionStatesRef.current = {};
+    nodeHeightsRef.current = {};
+    manualOffsetsRef.current = {};
+    autoPositionsRef.current = {};
     savedViewportRef.current = null;
     viewportRestoredRef.current = false;
     setNodes([]);
@@ -339,18 +416,11 @@ function MindMapInner({
     });
   }, [topicId, setNodes, setEdges, setViewport]);
 
-  // 构建布局：仅在 treeData 变化或位置数据加载完成后执行
-  useEffect(() => {
-    if (!treeData) {
-      setNodes([]);
-      setEdges([]);
-      return;
-    }
-    if (!initialDataLoaded) return;
+  // 构建并应用布局（使用节点实测高度：展开的节点会把下方节点推开，收起后自动恢复）
+  const buildLayout = useCallback(() => {
+    if (!treeData) return;
 
     const callbacks = callbacksRef.current;
-    const selectedNodeId = visualNodeId || null;
-
     const { nodes: layoutNodes, edges: layoutEdges } = calculateLayout(
       treeData,
       {
@@ -362,15 +432,34 @@ function MindMapInner({
         onDeleteBranch: callbacks.onDeleteBranch,
         onToggleExpand: handleToggleExpand,
         onExpandStateChange: handleExpandStateChange,
+        onNodeHeightChange: handleNodeHeightChange,
       },
       expandedStatesRef.current,
       positionStatesRef.current,
-      selectedNodeId,
-      activeEndNodeIdRef.current
+      visualNodeIdRef.current,
+      activeEndNodeIdRef.current,
+      nodeHeightsRef.current,
+      manualOffsetsRef.current,
+      autoPositionsRef.current
     );
 
     setNodes(layoutNodes);
     setEdges(layoutEdges);
+  }, [treeData, setNodes, setEdges, handleNodeSelectInternal, handleToggleExpand, handleExpandStateChange, handleNodeHeightChange]);
+
+  // 供高度变化回调触发重新布局
+  relayoutRef.current = buildLayout;
+
+  // 构建布局：仅在 treeData 变化或位置数据加载完成后执行
+  useEffect(() => {
+    if (!treeData) {
+      setNodes([]);
+      setEdges([]);
+      return;
+    }
+    if (!initialDataLoaded) return;
+
+    buildLayout();
 
     // 首次渲染后恢复保存的视口或自动适应画布
     if (!viewportRestoredRef.current) {
@@ -399,11 +488,20 @@ function MindMapInner({
     }));
   }, [visualNodeId, setNodes]);
 
-  // 节点拖拽结束：保存位置
+  // 节点拖拽结束：记录相对自动布局的偏移并保存位置
   const handleNodeDragStop = useCallback((event, node) => {
-    if (node && node.id && node.position) {
-      handleNodePositionChange(node.id, node.position.x, node.position.y);
+    if (!node || !node.id || !node.position) return;
+
+    // 记录偏移量，保证重新布局（展开/收起）时用户摆放的相对位置仍然有效
+    const basePosition = autoPositionsRef.current[node.id];
+    if (basePosition) {
+      manualOffsetsRef.current[node.id] = {
+        dx: node.position.x - basePosition.x,
+        dy: node.position.y - basePosition.y,
+      };
     }
+
+    handleNodePositionChange(node.id, node.position.x, node.position.y);
   }, [handleNodePositionChange]);
 
   // 视口变化结束：保存视口位置（用户平移/缩放后触发）
@@ -417,41 +515,20 @@ function MindMapInner({
     });
   }, [topicId]);
 
-  // 重置节点位置（清除服务器保存的位置，重新应用自动布局，保留视口）
+  // 重置节点位置（清除服务器保存的位置与手动偏移，重新应用自动布局，保留视口）
   const handleResetNodes = useCallback(async () => {
     if (!topicId) return;
     try {
       await treeApi.resetNodePositions(topicId);
       positionStatesRef.current = {};
-      if (treeData) {
-        const selectedNodeId = visualNodeId || null;
-        const callbacks = callbacksRef.current;
-        const { nodes: layoutNodes, edges: layoutEdges } = calculateLayout(
-          treeData,
-          {
-            onQuoteText: callbacks.onQuoteText,
-            onNodeSelect: handleNodeSelectInternal,
-            onEditNode: callbacks.onEditNode,
-            onReanswerNode: callbacks.onReanswerNode,
-            onDeleteNode: callbacks.onDeleteNode,
-            onDeleteBranch: callbacks.onDeleteBranch,
-            onToggleExpand: handleToggleExpand,
-            onExpandStateChange: handleExpandStateChange,
-          },
-          expandedStatesRef.current,
-          positionStatesRef.current,
-          selectedNodeId,
-          activeEndNodeId || null
-        );
-        setNodes(layoutNodes);
-        setEdges(layoutEdges);
-        // 视口保持不变，仅节点归位
-        console.log('[重置节点] 节点位置已重置，视口保持不变');
-      }
+      manualOffsetsRef.current = {};
+      buildLayout();
+      // 视口保持不变，仅节点归位
+      console.log('[重置节点] 节点位置已重置，视口保持不变');
     } catch (error) {
       console.error('重置节点失败:', error);
     }
-  }, [topicId, treeData, visualNodeId, activeEndNodeId, setNodes, setEdges, handleNodeSelectInternal, handleToggleExpand, handleExpandStateChange]);
+  }, [topicId, buildLayout]);
 
   // 适应画布
   const handleFitView = useCallback(() => {

@@ -88,6 +88,8 @@ ExpandToggleButton.displayName = 'ExpandToggleButton';
 const MindMapNode = memo(({ data, id: flowNodeId }) => {
   // 外层容器 ref，用于检测文本选区是否在节点内部
   const nodeRef = useRef(null);
+  // 节点外壳（Paper）ref，用于上报实际高度，让下层节点自动避让
+  const paperRef = useRef(null);
   // 问题/回答文本 ref，用于测量是否需要展开按钮
   const questionTextRef = useRef(null);
   const answerTextRef = useRef(null);
@@ -126,6 +128,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
     onDeleteBranch,
     onToggleExpand,
     onExpandStateChange,
+    onNodeHeightChange,
   } = data || {};
 
   // 获取节点 ID
@@ -165,6 +168,23 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questionExpanded, answerExpanded]);
+
+  // 上报节点实际高度：高度变化（展开/收起、内容变化）时上层会重新布局，把下方节点推开或复位
+  useEffect(() => {
+    const element = paperRef.current;
+    if (!element || !onNodeHeightChange || !actualNodeId) return undefined;
+
+    const reportHeight = () => {
+      onNodeHeightChange(actualNodeId, element.offsetHeight);
+    };
+
+    reportHeight();
+
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const observer = new ResizeObserver(reportHeight);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [onNodeHeightChange, actualNodeId]);
 
   const isRoot = depth === 0;
   const isQuote = branchType === 'quote';
@@ -501,6 +521,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
         )}
 
         <Paper
+          ref={paperRef}
           sx={{
             width: NODE_WIDTH,
             height: 'auto',
