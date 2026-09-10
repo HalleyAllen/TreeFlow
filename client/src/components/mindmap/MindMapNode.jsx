@@ -459,7 +459,6 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
         className="mindmap-node"
         sx={{
           width: NODE_WIDTH,
-          minHeight: NODE_HEIGHT,
           position: 'relative',
         }}
         onMouseUp={handleTextSelection}
@@ -504,8 +503,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
         <Paper
           sx={{
             width: NODE_WIDTH,
-            minHeight: NODE_HEIGHT,
-            height: isAnyExpanded || isEditing ? 'auto' : NODE_HEIGHT,
+            height: 'auto',
             border: styles.border,
             borderRadius: 3,
             boxShadow: styles.boxShadow,
@@ -522,7 +520,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
               position: 'relative',
               p: 1.2,
               pb: 0.8,
-              height: questionExpanded || isEditing ? 'auto' : QUESTION_AREA_HEIGHT,
+              minHeight: questionExpanded || isEditing ? 'auto' : QUESTION_AREA_HEIGHT,
               backgroundColor: styles.questionBg,
               borderBottom: isAnyExpanded || isEditing ? '1px solid' : 'none',
               borderColor: isQuote ? '#fde68a' : (isRoot ? '#bfdbfe' : '#e5e7eb'),
