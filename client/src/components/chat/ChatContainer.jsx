@@ -23,6 +23,8 @@ const ChatContainer = () => {
     setShowModelDropdown,
     branchMode,
     nodeCreated,
+    streamingNode,
+    stopStreaming: onStopStreaming,
     activeEndNodeId,
     visualNodeId,
     skills,
@@ -325,6 +327,7 @@ const ChatContainer = () => {
           loading={treeLoading || isLoading}
           activeEndNodeId={activeEndNodeId}
           visualNodeId={visualNodeId}
+          streamingNode={streamingNode}
           onNodeSelect={handleNodeSelect}
           onBranchFromNode={handleBranchFromNode}
           onQuoteText={onQuoteText}
@@ -572,27 +575,48 @@ const ChatContainer = () => {
               </Paper>
             )}
           </Box>
-          <Button
-            variant="contained"
-            onClick={onSend}
-            disabled={isLoading || !input.trim()}
-            endIcon={<SendIcon sx={{ fontSize: 16 }} />}
-            sx={{
-              bgcolor: branchMode ? 'linear-gradient(135deg, #3b82f6, #8b5cf6)' : 'var(--primary-color)',
-              borderRadius: 2,
-              textTransform: 'none',
-              px: 2,
-              '&:hover': {
-                bgcolor: branchMode ? 'linear-gradient(135deg, #2563eb, #7c3aed)' : 'var(--primary-hover)'
-              },
-              '&.Mui-disabled': {
-                bgcolor: 'var(--hover-bg)',
-                color: 'var(--text-secondary)'
-              }
-            }}
-          >
-            发送
-          </Button>
+          {isLoading ? (
+            <Button
+              variant="outlined"
+              color="error"
+              onClick={onStopStreaming}
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                px: 2,
+                borderColor: 'var(--error-color, #ef4444)',
+                color: 'var(--error-color, #ef4444)',
+                '&:hover': {
+                  borderColor: 'var(--error-color, #ef4444)',
+                  backgroundColor: 'rgba(239, 68, 68, 0.08)'
+                }
+              }}
+            >
+              停止
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              onClick={onSend}
+              disabled={isLoading || !input.trim()}
+              endIcon={<SendIcon sx={{ fontSize: 16 }} />}
+              sx={{
+                bgcolor: branchMode ? 'linear-gradient(135deg, #3b82f6, #8b5cf6)' : 'var(--primary-color)',
+                borderRadius: 2,
+                textTransform: 'none',
+                px: 2,
+                '&:hover': {
+                  bgcolor: branchMode ? 'linear-gradient(135deg, #2563eb, #7c3aed)' : 'var(--primary-hover)'
+                },
+                '&.Mui-disabled': {
+                  bgcolor: 'var(--hover-bg)',
+                  color: 'var(--text-secondary)'
+                }
+              }}
+            >
+              发送
+            </Button>
+          )}
         </Box>
       </Paper>
     </Box>

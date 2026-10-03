@@ -246,6 +246,7 @@ function MindMapInner({
   loading,
   activeEndNodeId,
   visualNodeId,
+  streamingNode,
   onNodeSelect,
   onQuoteText,
   onEditNode,
@@ -478,6 +479,26 @@ function MindMapInner({
       return { ...n, data: { ...n.data, selected: isSelected } };
     }));
   }, [visualNodeId, setNodes]);
+
+  // 流式回答：把正在生成的回答内容实时写入对应节点（只更新该节点数据，不重建图）
+  // streamingNode: { nodeId, content, done } | null；done 后保留内容直到下次刷新替换，避免闪烁
+  useEffect(() => {
+    const sn = streamingNode || null;
+    setNodes((nds) => nds.map((n) => {
+      const wasStreaming = !!n.data.isStreaming;
+      const apply = !!(sn && n.id === sn.nodeId);
+      if (!apply && !wasStreaming) return n;
+      if (apply && wasStreaming && n.data.streamingContent === sn.content && !!n.data.isStreaming === !sn.done) return n;
+      return {
+        ...n,
+        data: {
+          ...n.data,
+          isStreaming: apply && !sn.done,
+          streamingContent: apply ? sn.content : '',
+        },
+      };
+    }));
+  }, [streamingNode, setNodes]);
 
   // 节点拖拽结束：记录相对自动布局的偏移并保存位置
   const handleNodeDragStop = useCallback((event, node) => {

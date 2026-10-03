@@ -15,8 +15,11 @@ const ChatController = require('../controllers/chat.controller');
 module.exports = (container) => {
   const controller = new ChatController(container);
 
-  // 发送消息
+  // 发送消息（非流式）
   router.post('/ask', asyncHandler((req, res) => controller.ask(req, res)));
+
+  // 发送消息（流式 SSE，控制器自行处理错误响应，不经过 asyncHandler）
+  router.post('/ask/stream', (req, res) => controller.askStream(req, res));
 
   // 创建分支
   router.post('/branch', asyncHandler((req, res) => controller.createBranch(req, res)));

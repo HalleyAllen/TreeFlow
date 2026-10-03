@@ -1,7 +1,7 @@
 /**
  * 对话管理Hook
  */
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import * as chatApi from '../services/api/chat.api';
 import logger from '../services/logger';
 
@@ -11,12 +11,19 @@ export const useChat = () => {
   const [branchMode, setBranchMode] = useState(false);
   const [branchFromNodeId, setBranchFromNodeId] = useState(null);
   const [activeEndNodeId, setActiveEndNodeId] = useState(null); // 活跃末端节点（点击末端节点切换）
-  const [nodeCreated, setNodeCreated] = useState(false); // 用于触发脑图刷新
+  const [nodeCreated, setNodeCreated] = useState(0); // 计数器：变化时触发脑图刷新
+  const [streamingNode, setStreamingNode] = useState(null); // 正在流式生成的节点 { nodeId, content, done }
+  const abortRef = useRef(null); // 当前流式请求的中止控制器
 
-  // 发送消息（支持引用分支）
+  // 停止生成：中止流式请求，后端会保存已生成的部分内容
+  const stopStreaming = useCallback(() => {
+    abortRef.current?.abort();
+  }, []);
+
+  // 发送消息（流式，支持引用分支）
   const sendMessage = useCallback(async (question, skillId = null, model = null, provider = null, branchType = null, quoteNodeIds = []) => {
     const tempNodeId = `temp-${Date.now()}`;
-    
+
     // 先立即显示用户问题和加载状态
     setMessages(prev => [
       ...prev,
@@ -24,43 +31,68 @@ export const useChat = () => {
       { type: 'ai', content: '', nodeId: tempNodeId, status: 'loading' }
     ]);
     setLoading(true);
-    setNodeCreated(false); // 重置节点创建标志
-    
+    setNodeCreated(0); // 重置节点创建计数
+    setStreamingNode(null); // 清理上一次的流式状态
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    let realNodeId = null; // 后端创建的真实节点 ID（node 事件后可用）
+    let accContent = '';   // 累计的回答内容
+    let lastEmit = 0;      // 增量节流时间戳
+
     try {
       // 确定父节点：引用分支 > 分支模式 > 活跃末端节点
       let fromNodeId = branchMode ? branchFromNodeId : activeEndNodeId;
-      
+
       // 如果是引用分支，使用最后一个引用的节点作为来源
       if (branchType === 'quote' && quoteNodeIds.length > 0) {
         fromNodeId = quoteNodeIds[quoteNodeIds.length - 1];
       }
-      
-      const result = await chatApi.sendMessage(
-        question, 
-        fromNodeId, 
-        skillId, 
-        model, 
+
+      const result = await chatApi.sendMessageStream(
+        question,
+        fromNodeId,
+        skillId,
+        model,
         provider,
         branchType,
-        quoteNodeIds
+        quoteNodeIds,
+        {
+          // 节点已创建：触发脑图刷新把新节点渲染出来
+          onNode: ({ nodeId }) => {
+            realNodeId = nodeId;
+            setNodeCreated(c => c + 1);
+          },
+          // 回答增量：节流更新流式状态，脑图节点渐进渲染
+          onDelta: ({ content }) => {
+            accContent = content;
+            const now = Date.now();
+            if (realNodeId && now - lastEmit > 60) {
+              lastEmit = now;
+              setStreamingNode({ nodeId: realNodeId, content: accContent, done: false });
+            }
+          },
+          signal: controller.signal
+        }
       );
-      
+
       if (result.error) {
         // 更新为错误状态
-        setMessages(prev => prev.map(msg => 
-          msg.nodeId === tempNodeId 
-            ? { ...msg, nodeId: result.nodeId || tempNodeId, status: 'error', error: result.error }
+        setMessages(prev => prev.map(msg =>
+          msg.nodeId === tempNodeId
+            ? { ...msg, nodeId: realNodeId || tempNodeId, status: 'error', error: result.error }
             : msg
         ));
         return { success: false, error: result.error };
       }
 
       // 更新消息列表，替换临时节点为实际节点
-      setMessages(prev => prev.map(msg => 
-        msg.nodeId === tempNodeId 
-          ? { 
-              ...msg, 
-              nodeId: result.nodeId, 
+      setMessages(prev => prev.map(msg =>
+        msg.nodeId === tempNodeId
+          ? {
+              ...msg,
+              nodeId: result.nodeId,
               content: msg.type === 'ai' ? result.response : msg.content,
               status: 'completed'
             }
@@ -77,19 +109,37 @@ export const useChat = () => {
         setActiveEndNodeId(result.nodeId);
       }
 
+      // 流式结束：保留最终内容直到脑图刷新替换，避免闪烁
+      setStreamingNode({ nodeId: result.nodeId, content: result.response, done: true });
+
       return { success: true, result };
     } catch (error) {
+      // 用户主动停止：后端保存部分内容，稍等后刷新展示
+      if (error.name === 'AbortError') {
+        logger.info('useChat', '流式请求已停止');
+        setMessages(prev => prev.map(msg =>
+          msg.nodeId === tempNodeId
+            ? { ...msg, nodeId: realNodeId || tempNodeId, content: accContent, status: 'completed' }
+            : msg
+        ));
+        setStreamingNode(realNodeId ? { nodeId: realNodeId, content: accContent, done: true } : null);
+        // 等待后端把部分内容写入节点后再触发刷新
+        setTimeout(() => setNodeCreated(c => c + 1), 300);
+        return { success: true, aborted: true, nodeId: realNodeId };
+      }
+
       logger.error('useChat', '发送消息失败:', error);
       // 更新为错误状态
-      setMessages(prev => prev.map(msg => 
-        msg.nodeId === tempNodeId 
+      setMessages(prev => prev.map(msg =>
+        msg.nodeId === tempNodeId
           ? { ...msg, status: 'error', error: error.message }
           : msg
       ));
       return { success: false, error: error.message };
     } finally {
       setLoading(false);
-      setNodeCreated(true); // 标记节点已创建/更新，触发脑图刷新
+      setNodeCreated(c => c + 1); // 标记节点已创建/更新，触发脑图刷新
+      abortRef.current = null;
     }
   }, [branchMode, branchFromNodeId, activeEndNodeId]);
 
@@ -158,7 +208,9 @@ export const useChat = () => {
     activeEndNodeId,
     setActiveEndNodeId,
     nodeCreated, // 导出用于触发脑图刷新
+    streamingNode, // 正在流式生成的节点内容（脑图渐进渲染）
     sendMessage,
+    stopStreaming,
     loadMessages,
     enterBranchMode,
     exitBranchMode,

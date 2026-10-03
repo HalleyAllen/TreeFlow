@@ -129,6 +129,8 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
     onToggleExpand,
     onExpandStateChange,
     onNodeHeightChange,
+    isStreaming = false,
+    streamingContent = '',
   } = data || {};
 
   // 获取节点 ID
@@ -196,7 +198,10 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
 
   // 显示内容
   const displayQuestion = (isRoot && !question) ? '开始' : (question || '');
-  const fullAnswer = isError ? (error || '请求失败') : (answer || '');
+  // 流式生成中（或刚结束、等待脑图刷新替换）：优先显示流式内容
+  const fullAnswer = (isStreaming || streamingContent)
+    ? streamingContent
+    : (isError ? (error || '请求失败') : (answer || ''));
 
   // 样式配置：优先级顺序为 选中 > 加载中 > 错误 > 引用分支 > 普通
   const getStyles = () => {
@@ -731,6 +736,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
                 }}
               >
                 {fullAnswer}
+                {isStreaming && <span className="stream-cursor" />}
               </Typography>
             ) : (
               // 回答收起时：用 -webkit-box 截断（最多4行）
@@ -757,6 +763,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
                 }}
               >
                 {fullAnswer}
+                {isStreaming && <span className="stream-cursor" />}
               </Typography>
             )}
 
@@ -771,9 +778,9 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
               }}
             >
               {/* 分支数量或状态 - 只在回答收起时显示 */}
-              {(hasBranches || isLoading) && !answerExpanded && (
+              {(hasBranches || isLoading || isStreaming) && !answerExpanded && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  {isLoading ? (
+                  {(isLoading || isStreaming) ? (
                     <>
                       <Box
                         sx={{
@@ -786,7 +793,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
                         }}
                       />
                       <Typography variant="caption" sx={{ fontSize: '0.75rem', color: '#2563eb' }}>
-                        AI 正在思考...
+                        {isStreaming ? 'AI 正在回答...' : 'AI 正在思考...'}
                       </Typography>
                     </>
                   ) : (
@@ -807,7 +814,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
                 </Box>
               )}
               {/* 占位元素，当没有分支标签时保持按钮靠右 */}
-              {(!hasBranches && !isLoading) || answerExpanded ? <Box /> : null}
+              {(!hasBranches && !isLoading && !isStreaming) || answerExpanded ? <Box /> : null}
 
               {/* 操作按钮 / 编辑态操作按钮 */}
               <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
@@ -871,6 +878,19 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
       <style>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+        @keyframes stream-blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+        .stream-cursor {
+          display: inline-block;
+          width: 2px;
+          height: 1em;
+          margin-left: 2px;
+          vertical-align: text-bottom;
+          background: #3b82f6;
+          animation: stream-blink 1s step-end infinite;
         }
       `}</style>
     </>

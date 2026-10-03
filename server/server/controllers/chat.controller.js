@@ -22,6 +22,48 @@ class ChatController {
   }
 
   /**
+   * 发送消息（流式）- 以 SSE（Server-Sent Events）方式推送回答增量
+   * 事件流：node（节点已创建）→ delta（增量内容）× N → done（完成）| error（失败）
+   */
+  async askStream(req, res) {
+    const { question, fromNodeId, skillId, model, provider, branchType, quoteNodeIds } = req.body;
+
+    // SSE 响应头：禁用缓冲，确保增量实时到达前端
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
+
+    const send = (event, data) => {
+      if (res.writableEnded) return;
+      res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    };
+
+    // 客户端断开时中止上游AI请求（已生成的部分内容会保存到节点）
+    const abortController = new AbortController();
+    res.on('close', () => {
+      if (!res.writableEnded) {
+        abortController.abort();
+      }
+    });
+
+    try {
+      const result = await this.agent.askStream(question, fromNodeId, skillId, model, provider, branchType, quoteNodeIds, {
+        onNode: (nodeId) => send('node', { nodeId }),
+        onDelta: (delta, full) => send('delta', { delta, content: full }),
+        signal: abortController.signal,
+      });
+      send('done', { response: result.response, nodeId: result.nodeId });
+    } catch (error) {
+      send('error', { error: error.message });
+    } finally {
+      res.end();
+    }
+  }
+
+  /**
    * 创建分支
    */
   createBranch(req, res) {

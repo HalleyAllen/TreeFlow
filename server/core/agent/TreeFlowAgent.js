@@ -46,6 +46,63 @@ class TreeFlowAgent {
   }
 
   /**
+   * 准备AI请求的公共上下文：创建对话节点、构建历史上下文
+   * 供 ask（非流式）与 askStream（流式）共用
+   * @private
+   * @returns {{ currentTopic: string, currentModel: string, ollamaBaseUrl: string, conversationHistory: Array, finalQuestion: string, newNode: Object }}
+   */
+  _prepareAsk(question, fromNodeId = null, skillId = null, model = null, branchType = null, quoteNodeIds = []) {
+    const currentTopic = this.configManager.getCurrentTopic();
+    const currentModel = model || this.configManager.getCurrentModel();
+    const ollamaBaseUrl = this.configManager.getOllamaBaseUrl();
+
+    // 先创建节点（只包含问题，回答为空，状态为加载中）
+    // 标记引用分支类型
+    const nodeOptions = { status: 'loading' };
+    let actualParentId = null;
+
+    if (branchType === 'quote') {
+      nodeOptions.branchType = 'quote';
+      nodeOptions.quoteNodeIds = quoteNodeIds || [];
+      // 引用分支直接以被引用节点为父节点
+      actualParentId = fromNodeId;
+    } else if (fromNodeId) {
+      // 从指定节点继续对话：直接以该节点为父节点，不再创建空分支中间节点
+      // 如果 fromNode 是末端节点 → 新节点成为 children[0]（主线延续）
+      // 如果 fromNode 已有子节点 → 新节点成为 children[1+]（分支）
+      actualParentId = fromNodeId;
+    }
+
+    // 获取对话历史用于上下文（必须在 addConversationNode 之前，否则新节点会被包含进历史）
+    // 正常提问：fromNodeId 为 null，基于 currentNode 回溯
+    // 从指定节点继续：fromNodeId 为起点，基于该节点回溯（只包含该节点及之前）
+    const historyEndNodeId = fromNodeId || null;
+    let conversationHistory = this.conversationTreeManager.getConversationHistory(currentTopic, historyEndNodeId);
+
+    const newNode = this.conversationTreeManager.addConversationNode(currentTopic, question, '', nodeOptions, actualParentId);
+    if (!newNode) {
+      logger.error('TreeFlowAgent', '创建节点失败', { topic: currentTopic });
+      throw new Error('创建对话节点失败');
+    }
+    logger.info('TreeFlowAgent', '创建对话节点', { nodeId: newNode.id, status: 'loading', branchType });
+
+    // 如果指定了技能，添加系统提示词
+    let finalQuestion = question;
+    if (skillId) {
+      const skillResult = this.skillManager.executeSkill(skillId, question);
+      if (skillResult.systemPrompt) {
+        conversationHistory = [
+          { role: 'system', content: skillResult.systemPrompt },
+          ...conversationHistory
+        ];
+        logger.info('TreeFlowAgent', '使用技能', { skillId, skillName: skillResult.skillName });
+      }
+    }
+
+    return { currentTopic, currentModel, ollamaBaseUrl, conversationHistory, finalQuestion, newNode };
+  }
+
+  /**
    * 发送AI请求 - 核心业务方法
    * @param {string} question - 问题
    * @param {string} [fromNodeId] - 可选，从指定节点分支后提问
@@ -59,70 +116,26 @@ class TreeFlowAgent {
   async ask(question, fromNodeId = null, skillId = null, model = null, provider = null, branchType = null, quoteNodeIds = []) {
     let newNode = null;
     const currentTopic = this.configManager.getCurrentTopic();
-    
+
     try {
-      const currentModel = model || this.configManager.getCurrentModel();
-      const ollamaBaseUrl = this.configManager.getOllamaBaseUrl();
-      
-      // 先创建节点（只包含问题，回答为空，状态为加载中）
-      // 标记引用分支类型
-      const nodeOptions = { status: 'loading' };
-      let actualParentId = null;
-      
-      if (branchType === 'quote') {
-        nodeOptions.branchType = 'quote';
-        nodeOptions.quoteNodeIds = quoteNodeIds || [];
-        // 引用分支直接以被引用节点为父节点
-        actualParentId = fromNodeId;
-      } else if (fromNodeId) {
-        // 从指定节点继续对话：直接以该节点为父节点，不再创建空分支中间节点
-        // 如果 fromNode 是末端节点 → 新节点成为 children[0]（主线延续）
-        // 如果 fromNode 已有子节点 → 新节点成为 children[1+]（分支）
-        actualParentId = fromNodeId;
-      }
-      
-      // 获取对话历史用于上下文（必须在 addConversationNode 之前，否则新节点会被包含进历史）
-      // 正常提问：fromNodeId 为 null，基于 currentNode 回溯
-      // 从指定节点继续：fromNodeId 为起点，基于该节点回溯（只包含该节点及之前）
-      const historyEndNodeId = fromNodeId || null;
-      let conversationHistory = this.conversationTreeManager.getConversationHistory(currentTopic, historyEndNodeId);
-      
-      newNode = this.conversationTreeManager.addConversationNode(currentTopic, question, '', nodeOptions, actualParentId);
-      if (!newNode) {
-        logger.error('TreeFlowAgent', '创建节点失败', { topic: currentTopic });
-        throw new Error('创建对话节点失败');
-      }
-      logger.info('TreeFlowAgent', '创建对话节点', { nodeId: newNode.id, status: 'loading', branchType });
-      
-      // 如果指定了技能，添加系统提示词
-      let finalQuestion = question;
-      if (skillId) {
-        const skillResult = this.skillManager.executeSkill(skillId, question);
-        if (skillResult.systemPrompt) {
-          conversationHistory = [
-            { role: 'system', content: skillResult.systemPrompt },
-            ...conversationHistory
-          ];
-          finalQuestion = question;
-          logger.info('TreeFlowAgent', '使用技能', { skillId, skillName: skillResult.skillName });
-        }
-      }
-      
-      logger.info('TreeFlowAgent', '开始AI请求', { 
-        model: currentModel, 
+      const ctx = this._prepareAsk(question, fromNodeId, skillId, model, branchType, quoteNodeIds);
+      newNode = ctx.newNode;
+
+      logger.info('TreeFlowAgent', '开始AI请求', {
+        model: ctx.currentModel,
         provider: provider || 'auto',
-        question: finalQuestion.substring(0, 50) + '...', 
-        historyLength: conversationHistory.length, 
+        question: ctx.finalQuestion.substring(0, 50) + '...',
+        historyLength: ctx.conversationHistory.length,
         skillId: skillId || 'none',
         nodeId: newNode.id
       });
-      
+
       // 调用API管理器发送请求（传入对话历史）
-      const aiResponse = await this.apiManager.ask(finalQuestion, currentModel, ollamaBaseUrl, conversationHistory, provider);
-      
+      const aiResponse = await this.apiManager.ask(ctx.finalQuestion, ctx.currentModel, ctx.ollamaBaseUrl, ctx.conversationHistory, provider);
+
       // 更新节点，添加AI回答
       this.conversationTreeManager.updateNodeResponse(currentTopic, newNode.id, aiResponse, { status: 'completed' });
-      
+
       logger.info('TreeFlowAgent', 'AI请求成功', { responseLength: aiResponse.length, nodeId: newNode.id });
       return { response: aiResponse, nodeId: newNode.id };
     } catch (error) {
@@ -132,6 +145,74 @@ class TreeFlowAgent {
         this.conversationTreeManager.updateNodeResponse(currentTopic, newNode.id, `错误: ${error.message}`, { status: 'error' });
       }
       throw new Error(`AI请求失败: ${error.message}`);
+    }
+  }
+
+  /**
+   * 发送AI流式请求 - 与 ask 相同的节点/上下文逻辑，回答以增量方式回调
+   * @param {string} question - 问题
+   * @param {string} [fromNodeId] - 可选，从指定节点分支后提问
+   * @param {string} [skillId] - 可选，使用的技能ID
+   * @param {string} [model] - 可选，模型名称（不传则使用当前配置）
+   * @param {string} [provider] - 可选，供应商名称（不传则自动推断）
+   * @param {string} [branchType] - 可选，分支类型
+   * @param {Array} [quoteNodeIds] - 可选，引用节点ID列表
+   * @param {Object} [callbacks] - 流式回调 { onNode, onDelta, signal }
+   * @returns {Object} - {response, nodeId}
+   */
+  async askStream(question, fromNodeId = null, skillId = null, model = null, provider = null, branchType = null, quoteNodeIds = [], callbacks = {}) {
+    const { onNode, onDelta, signal } = callbacks;
+    let newNode = null;
+    let currentTopic = null;
+    let accContent = '';
+
+    try {
+      const ctx = this._prepareAsk(question, fromNodeId, skillId, model, branchType, quoteNodeIds);
+      newNode = ctx.newNode;
+      currentTopic = ctx.currentTopic;
+
+      logger.info('TreeFlowAgent', '开始AI流式请求', {
+        model: ctx.currentModel,
+        provider: provider || 'auto',
+        question: ctx.finalQuestion.substring(0, 50) + '...',
+        historyLength: ctx.conversationHistory.length,
+        skillId: skillId || 'none',
+        nodeId: newNode.id
+      });
+
+      // 节点已创建，先通知调用方（前端据此把新节点渲染到脑图）
+      onNode?.(newNode.id);
+
+      const aiResponse = await this.apiManager.askStream(
+        ctx.finalQuestion,
+        ctx.currentModel,
+        ctx.ollamaBaseUrl,
+        ctx.conversationHistory,
+        provider,
+        (delta, full) => {
+          accContent = full;
+          onDelta?.(delta, full);
+        },
+        signal
+      );
+
+      // 更新节点，写入完整AI回答
+      this.conversationTreeManager.updateNodeResponse(currentTopic, newNode.id, aiResponse, { status: 'completed' });
+
+      logger.info('TreeFlowAgent', 'AI流式请求成功', { responseLength: aiResponse.length, nodeId: newNode.id });
+      return { response: aiResponse, nodeId: newNode.id };
+    } catch (error) {
+      const aborted = error.name === 'AbortError';
+      logger.error('TreeFlowAgent', aborted ? 'AI流式请求被中止' : 'AI流式请求失败:', { error: error.message, nodeId: newNode?.id });
+      if (newNode && currentTopic) {
+        if (aborted) {
+          // 中止：保留已生成的部分内容
+          this.conversationTreeManager.updateNodeResponse(currentTopic, newNode.id, accContent || '（已停止生成）', { status: 'completed' });
+        } else {
+          this.conversationTreeManager.updateNodeResponse(currentTopic, newNode.id, `错误: ${error.message}`, { status: 'error' });
+        }
+      }
+      throw error;
     }
   }
 
