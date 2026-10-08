@@ -324,7 +324,7 @@ const ChatContainer = () => {
           px: 2,
           py: 1,
           borderRadius: 2,
-          bgcolor: 'rgba(var(--card-background-rgb, 255, 255, 255), 0.9)',
+          bgcolor: 'var(--card-background)',
           backdropFilter: 'blur(8px)',
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
         }}>
