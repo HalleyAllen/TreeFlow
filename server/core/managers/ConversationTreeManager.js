@@ -68,7 +68,7 @@ class ConversationTreeManager {
     if (!topic.currentNode) {
       topic.currentNode = topic.conversationTree;
     }
-    return topic.currentNode.id;
+    return topic.currentNode?.id || null;
   }
 
   /**
