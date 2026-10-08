@@ -44,6 +44,7 @@ export const useChat = (topicId) => {
   const sendMessage = useCallback(async (question, skillId = null, model = null, provider = null, branchType = null, quoteNodeIds = []) => {
     if (!topicId || abortRef.current) return { success: false };
     const requestTopicId = topicId;
+    const requestEpoch = messageLoadRef.current;
     const tempNodeId = `temp-${Date.now()}`;
 
     // 先立即显示用户问题和加载状态
@@ -149,12 +150,23 @@ export const useChat = (topicId) => {
         logger.info('useChat', '流式请求已停止');
         setMessages(prev => prev.map(msg =>
           msg.nodeId === tempNodeId
-            ? { ...msg, nodeId: realNodeId || tempNodeId, content: accContent, status: 'completed' }
+            ? { ...msg, nodeId: realNodeId || tempNodeId, content: msg.type === 'ai' ? accContent : msg.content, status: 'completed' }
             : msg
         ));
         setStreamingNode(realNodeId ? { nodeId: realNodeId, content: accContent, done: true } : null);
+        if (realNodeId) {
+          setActiveEndNodeId(realNodeId);
+          setBranchMode(false);
+          setBranchFromNodeId(null);
+          await treeApi.saveActiveEndNodeId(requestTopicId, realNodeId);
+          if (!isCurrentRequest()) return { success: false, ignored: true };
+        }
         // 等待后端把部分内容写入节点后再触发刷新
-        setTimeout(() => setNodeCreated(c => c + 1), 300);
+        setTimeout(() => {
+          if (topicRef.current === requestTopicId && messageLoadRef.current === requestEpoch) {
+            setNodeCreated(c => c + 1);
+          }
+        }, 300);
         return { success: true, aborted: true, nodeId: realNodeId };
       }
 
