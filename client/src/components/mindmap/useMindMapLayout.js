@@ -19,7 +19,7 @@ const BRANCH_VERTICAL_SPACING = 160; // 分支垂直间距
 function calculateRadialLayout(rootNode, options = {}) {
   const { 
     levelDistance = RADIAL_RADIUS, 
-    nodeSeparation: _nodeSeparation = 1.5 
+    nodeSeparation: _nodeSeparation = 1.5
   } = options;
 
   // 转换为 D3 hierarchy
@@ -86,7 +86,7 @@ function calculateRadialLayout(rootNode, options = {}) {
  */
 function calculateVerticalLayout(rootNode, options = {}) {
   const { 
-    nodeWidth: _nodeWidth = NODE_WIDTH, 
+    nodeWidth: _nodeWidth = NODE_WIDTH,
     nodeHeight: _nodeHeight = NODE_HEIGHT,
     levelSpacing = VERTICAL_SPACING,
     siblingSpacing = HORIZONTAL_SPACING 
@@ -171,7 +171,7 @@ function calculateHorizontalLayout(rootNode, options = {}) {
  */
 function calculateDocumentLayout(rootNode, options = {}) {
   const { 
-    nodeWidth: _nodeWidth = NODE_WIDTH, 
+    nodeWidth: _nodeWidth = NODE_WIDTH,
     nodeHeight: _nodeHeight = NODE_HEIGHT,
     levelSpacing: _levelSpacing = HORIZONTAL_SPACING,  // 子节点水平间距
     siblingSpacing = VERTICAL_SPACING,  // 主流程垂直间距
