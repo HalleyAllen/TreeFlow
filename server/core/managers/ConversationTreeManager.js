@@ -571,13 +571,16 @@ class ConversationTreeManager {
     if (parentNode && parentNode.children) {
       const index = parentNode.children.findIndex(child => child.id === nodeId);
       if (index !== -1) {
+        const removedIds = new Set([node.id, ...this.collectDescendantIds(node)]);
         parentNode.children.splice(index, 1);
         
         // 如果当前节点是被删除的节点，切换到父节点
-        if (topic.currentNode && topic.currentNode.id === nodeId) {
+        if (topic.currentNode && removedIds.has(topic.currentNode.id)) {
           topic.currentNode = parentNode;
         }
         
+        if (removedIds.has(topic.activeEndNodeId)) topic.activeEndNodeId = null;
+        for (const id of removedIds) delete (topic.nodePositions || {})[id];
         this.topicManager.saveTopics();
         logger.info('ConversationTreeManager', '删除节点', { topic: topic.name, nodeId });
         return true;

@@ -99,6 +99,12 @@ export const useApp = () => {
     loadOllamaConfig();
   }, []);
 
+  const refreshActiveEndNode = useCallback(async () => {
+    if (!currentTopic?.id) return;
+    const result = await treeApi.getActiveEndNodeId(currentTopic.id);
+    if (result.success) setActiveEndNodeId(result.nodeId || null);
+  }, [currentTopic?.id, setActiveEndNodeId]);
+
   // 当话题切换时加载消息并恢复活跃末端节点
   useEffect(() => {
     if (currentTopic?.id) {
@@ -304,6 +310,7 @@ export const useApp = () => {
     stopStreaming,
     activeEndNodeId,
     visualNodeId,
+    refreshActiveEndNode,
     input,
     quotedTexts,
     handleInputChange,

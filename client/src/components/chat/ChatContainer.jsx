@@ -26,6 +26,7 @@ const ChatContainer = () => {
     streamingNode,
     stopStreaming: onStopStreaming,
     activeEndNodeId,
+    refreshActiveEndNode,
     visualNodeId,
     skills,
     activeSkill,
@@ -161,12 +162,13 @@ const ChatContainer = () => {
     const result = await treeApi.deleteNode(nodeId, currentTopic.id)
     if (result.success) {
       showNotification('节点已删除')
-      refreshTree(currentTopic.id)
+      await refreshTree(currentTopic.id)
+      await refreshActiveEndNode()
     } else {
       showNotification(result.error || '删除失败', 'error')
     }
     return result
-  }, [currentTopic?.id, refreshTree, showNotification])
+  }, [currentTopic?.id, refreshTree, refreshActiveEndNode, showNotification])
 
   // 节点选中（用 useCallback 避免输入时重建脑图）
   const handleNodeSelect = useCallback((nodeData) => {
