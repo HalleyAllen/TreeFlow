@@ -94,6 +94,7 @@ export const sendMessageStream = async (
       const { done, value } = await reader.read();
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
+      buffer = buffer.replace(/\r\n/g, '\n');
       let sep;
       while ((sep = buffer.indexOf('\n\n')) !== -1) {
         const rawEvent = buffer.slice(0, sep);
@@ -113,7 +114,11 @@ export const sendMessageStream = async (
       }
     }
 
-    return finalResult || {};
+    if (finalResult?.error) return finalResult;
+    if (!finalResult || typeof finalResult.nodeId !== 'string' || !finalResult.nodeId || typeof finalResult.response !== 'string') {
+      return { error: 'Response interrupted before completion. Please retry.' };
+    }
+    return finalResult;
   } catch (error) {
     // 用户主动停止：向上抛出由调用方处理
     if (error.name === 'AbortError') throw error;

@@ -106,6 +106,7 @@ export const useChat = (topicId) => {
 
       if (!isCurrentRequest()) return { success: false, ignored: true };
       if (result.error) {
+        setStreamingNode(null);
         // 更新为错误状态
         setMessages(prev => prev.map(msg =>
           msg.nodeId === tempNodeId
