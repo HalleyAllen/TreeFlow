@@ -6,9 +6,10 @@ import logger from '../logger';
 const API_BASE_URL = '';
 
 // 发送消息（支持引用分支）
-export const sendMessage = async (question, fromNodeId = null, skillId = null, model = null, provider = null, branchType = null, quoteNodeIds = []) => {
+export const sendMessage = async (question, fromNodeId = null, skillId = null, model = null, provider = null, branchType = null, quoteNodeIds = [], topicId = null) => {
   try {
     const body = { question };
+    if (topicId) body.topicId = topicId;
     if (fromNodeId) body.fromNodeId = fromNodeId;
     if (skillId) body.skillId = skillId;
     if (model) body.model = model;
@@ -38,10 +39,11 @@ export const sendMessageStream = async (
   provider = null,
   branchType = null,
   quoteNodeIds = [],
-  { onNode, onDelta, signal } = {}
+  { onNode, onDelta, signal, topicId } = {}
 ) => {
   try {
     const body = { question };
+    if (topicId) body.topicId = topicId;
     if (fromNodeId) body.fromNodeId = fromNodeId;
     if (skillId) body.skillId = skillId;
     if (model) body.model = model;

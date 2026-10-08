@@ -51,8 +51,16 @@ class TreeFlowAgent {
    * @private
    * @returns {{ currentTopic: string, currentModel: string, ollamaBaseUrl: string, conversationHistory: Array, finalQuestion: string, newNode: Object }}
    */
-  _prepareAsk(question, fromNodeId = null, skillId = null, model = null, branchType = null, quoteNodeIds = []) {
-    const currentTopic = this.configManager.getCurrentTopic();
+  _prepareAsk(question, fromNodeId = null, skillId = null, model = null, branchType = null, quoteNodeIds = [], topicId = null) {
+    const currentTopic = topicId || this.configManager.getCurrentTopic();
+    const topic = this.topicManager.getTopic(currentTopic);
+    if (!topic) throw new Error('Topic does not exist');
+    if (fromNodeId && !this.conversationTreeManager.findNodeById(topic.conversationTree, fromNodeId)) {
+      throw new Error('Parent node is not part of this topic');
+    }
+    if (!Array.isArray(quoteNodeIds) || quoteNodeIds.some(id => !this.conversationTreeManager.findNodeById(topic.conversationTree, id))) {
+      throw new Error('Quoted node is not part of this topic');
+    }
     const currentModel = model || this.configManager.getCurrentModel();
     const ollamaBaseUrl = this.configManager.getOllamaBaseUrl();
 
@@ -113,12 +121,12 @@ class TreeFlowAgent {
    * @param {Array} [quoteNodeIds] - 可选，引用节点ID列表
    * @returns {Object} - {response, nodeId}
    */
-  async ask(question, fromNodeId = null, skillId = null, model = null, provider = null, branchType = null, quoteNodeIds = []) {
+  async ask(question, fromNodeId = null, skillId = null, model = null, provider = null, branchType = null, quoteNodeIds = [], topicId = null) {
     let newNode = null;
-    const currentTopic = this.configManager.getCurrentTopic();
+    const currentTopic = topicId || this.configManager.getCurrentTopic();
 
     try {
-      const ctx = this._prepareAsk(question, fromNodeId, skillId, model, branchType, quoteNodeIds);
+      const ctx = this._prepareAsk(question, fromNodeId, skillId, model, branchType, quoteNodeIds, topicId);
       newNode = ctx.newNode;
 
       logger.info('TreeFlowAgent', '开始AI请求', {
@@ -167,7 +175,7 @@ class TreeFlowAgent {
     let accContent = '';
 
     try {
-      const ctx = this._prepareAsk(question, fromNodeId, skillId, model, branchType, quoteNodeIds);
+      const ctx = this._prepareAsk(question, fromNodeId, skillId, model, branchType, quoteNodeIds, callbacks.topicId);
       newNode = ctx.newNode;
       currentTopic = ctx.currentTopic;
 

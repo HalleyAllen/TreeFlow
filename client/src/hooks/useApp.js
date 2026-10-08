@@ -2,7 +2,7 @@
  * App 主逻辑 Hook
  * 整合所有业务逻辑，解耦 App.jsx
  */
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTopics } from './useTopics';
 import { useChat } from './useChat';
 import { useModels } from './useModels';
@@ -55,7 +55,7 @@ export const useApp = () => {
     enterBranchMode,
     exitBranchMode,
     setMessages
-  } = useChat();
+  } = useChat(currentTopic?.id);
 
   const {
     models,
@@ -99,18 +99,31 @@ export const useApp = () => {
     loadOllamaConfig();
   }, []);
 
+  const currentTopicIdRef = useRef(currentTopic?.id);
+  currentTopicIdRef.current = currentTopic?.id;
+  const activeNodeLoadRef = useRef(0);
+
   const refreshActiveEndNode = useCallback(async () => {
     if (!currentTopic?.id) return;
-    const result = await treeApi.getActiveEndNodeId(currentTopic.id);
+    const topicId = currentTopic.id;
+    const requestId = ++activeNodeLoadRef.current;
+    const result = await treeApi.getActiveEndNodeId(topicId);
+    if (currentTopicIdRef.current !== topicId || activeNodeLoadRef.current !== requestId) return;
     if (result.success) setActiveEndNodeId(result.nodeId || null);
   }, [currentTopic?.id, setActiveEndNodeId]);
 
   // 当话题切换时加载消息并恢复活跃末端节点
   useEffect(() => {
+    let cancelled = false;
+    const requestId = ++activeNodeLoadRef.current;
+    setInput('');
+    setQuotedTexts([]);
+    clearSkill();
     if (currentTopic?.id) {
       loadMessages(currentTopic.id);
       // 从服务器加载该话题保存的活跃末端节点
       treeApi.getActiveEndNodeId(currentTopic.id).then(result => {
+        if (cancelled || activeNodeLoadRef.current !== requestId) return;
         if (result.success && result.nodeId) {
           setActiveEndNodeId(result.nodeId);
         } else {
@@ -118,7 +131,8 @@ export const useApp = () => {
         }
       });
     }
-  }, [currentTopic?.id, loadMessages, setActiveEndNodeId]);
+    return () => { cancelled = true; };
+  }, [currentTopic?.id, loadMessages, setActiveEndNodeId, clearSkill]);
 
   // Ollama 启用状态变化处理
   const handleOllamaEnabledChange = useCallback(async (enabled) => {

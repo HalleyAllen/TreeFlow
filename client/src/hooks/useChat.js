@@ -1,11 +1,12 @@
 /**
  * 对话管理Hook
  */
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import * as chatApi from '../services/api/chat.api';
 import logger from '../services/logger';
+import * as treeApi from '../services/api/tree.api';
 
-export const useChat = () => {
+export const useChat = (topicId) => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [branchMode, setBranchMode] = useState(false);
@@ -15,6 +16,25 @@ export const useChat = () => {
   const [streamingNode, setStreamingNode] = useState(null); // 正在流式生成的节点 { nodeId, content, done }
   const abortRef = useRef(null); // 当前流式请求的中止控制器
 
+  const topicRef = useRef(topicId);
+  topicRef.current = topicId;
+  const messageLoadRef = useRef(0);
+
+  useEffect(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    messageLoadRef.current += 1;
+    setMessages([]);
+    setLoading(false);
+    setBranchMode(false);
+    setBranchFromNodeId(null);
+    setActiveEndNodeId(null);
+    setStreamingNode(null);
+    setNodeCreated(0);
+  }, [topicId]);
+
+  useEffect(() => () => { abortRef.current?.abort(); }, []);
+
   // 停止生成：中止流式请求，后端会保存已生成的部分内容
   const stopStreaming = useCallback(() => {
     abortRef.current?.abort();
@@ -22,6 +42,8 @@ export const useChat = () => {
 
   // 发送消息（流式，支持引用分支）
   const sendMessage = useCallback(async (question, skillId = null, model = null, provider = null, branchType = null, quoteNodeIds = []) => {
+    if (!topicId || abortRef.current) return { success: false };
+    const requestTopicId = topicId;
     const tempNodeId = `temp-${Date.now()}`;
 
     // 先立即显示用户问题和加载状态
@@ -36,6 +58,7 @@ export const useChat = () => {
 
     const controller = new AbortController();
     abortRef.current = controller;
+    const isCurrentRequest = () => topicRef.current === requestTopicId && abortRef.current === controller;
 
     let realNodeId = null; // 后端创建的真实节点 ID（node 事件后可用）
     let accContent = '';   // 累计的回答内容
@@ -61,11 +84,13 @@ export const useChat = () => {
         {
           // 节点已创建：触发脑图刷新把新节点渲染出来
           onNode: ({ nodeId }) => {
+            if (!isCurrentRequest()) return;
             realNodeId = nodeId;
             setNodeCreated(c => c + 1);
           },
           // 回答增量：节流更新流式状态，脑图节点渐进渲染
           onDelta: ({ content }) => {
+            if (!isCurrentRequest()) return;
             accContent = content;
             const now = Date.now();
             if (realNodeId && now - lastEmit > 60) {
@@ -73,10 +98,12 @@ export const useChat = () => {
               setStreamingNode({ nodeId: realNodeId, content: accContent, done: false });
             }
           },
-          signal: controller.signal
+          signal: controller.signal,
+          topicId: requestTopicId
         }
       );
 
+      if (!isCurrentRequest()) return { success: false, ignored: true };
       if (result.error) {
         // 更新为错误状态
         setMessages(prev => prev.map(msg =>
@@ -107,6 +134,8 @@ export const useChat = () => {
       // 发送成功后，新节点自动成为活跃末端节点，蓝色效果跟随转移
       if (result.nodeId) {
         setActiveEndNodeId(result.nodeId);
+        await treeApi.saveActiveEndNodeId(requestTopicId, result.nodeId);
+        if (!isCurrentRequest()) return { success: false, ignored: true };
       }
 
       // 流式结束：保留最终内容直到脑图刷新替换，避免闪烁
@@ -114,6 +143,7 @@ export const useChat = () => {
 
       return { success: true, result };
     } catch (error) {
+      if (!isCurrentRequest()) return { success: false, ignored: true };
       // 用户主动停止：后端保存部分内容，稍等后刷新展示
       if (error.name === 'AbortError') {
         logger.info('useChat', '流式请求已停止');
@@ -137,16 +167,20 @@ export const useChat = () => {
       ));
       return { success: false, error: error.message };
     } finally {
+      if (isCurrentRequest()) {
       setLoading(false);
       setNodeCreated(c => c + 1); // 标记节点已创建/更新，触发脑图刷新
       abortRef.current = null;
+      }
     }
-  }, [branchMode, branchFromNodeId, activeEndNodeId]);
+  }, [topicId, branchMode, branchFromNodeId, activeEndNodeId]);
 
   // 加载话题消息
   const loadMessages = useCallback(async (topicId) => {
+    const requestId = ++messageLoadRef.current;
     try {
       const messages = await chatApi.loadTopicMessages(topicId);
+      if (topicRef.current !== topicId || messageLoadRef.current !== requestId) return [];
       setMessages(messages.map(msg => ({
         type: msg.type,
         content: msg.content,

@@ -1,7 +1,7 @@
 /**
  * 脑图数据管理 Hook
  */
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import * as treeApi from '../services/api/tree.api';
 import logger from '../services/logger';
 
@@ -11,17 +11,28 @@ export function useMindMap() {
   const [error, setError] = useState(null);
   const [currentNodeId, setCurrentNodeId] = useState(null);
 
+  const requestRef = useRef(0);
+  const topicRef = useRef(null);
+  useEffect(() => () => { requestRef.current += 1; }, []);
+
   /**
    * 加载话题树数据
    */
   const loadTree = useCallback(async (topicId) => {
     if (!topicId) return;
+    const requestId = ++requestRef.current;
+    if (topicRef.current !== topicId) {
+      topicRef.current = topicId;
+      setTreeData(null);
+      setCurrentNodeId(null);
+    }
     
     setLoading(true);
     setError(null);
     
     try {
       const result = await treeApi.getTree(topicId);
+      if (requestRef.current !== requestId) return;
       console.log('useMindMap loadTree result:', result ? {
         success: result.success,
         hasTree: !!result.tree,
@@ -37,10 +48,11 @@ export function useMindMap() {
         setError(result.error || '加载失败');
       }
     } catch (err) {
+      if (requestRef.current !== requestId) return;
       logger.error('useMindMap', '加载树数据失败:', err);
       setError(err.message);
     } finally {
-      setLoading(false);
+      if (requestRef.current === requestId) setLoading(false);
     }
   }, []);
 

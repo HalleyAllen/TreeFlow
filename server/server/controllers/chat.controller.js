@@ -16,8 +16,8 @@ class ChatController {
    * 发送消息
    */
   async ask(req, res) {
-    const { question, fromNodeId, skillId, model, provider, branchType, quoteNodeIds } = req.body;
-    const result = await this.agent.ask(question, fromNodeId, skillId, model, provider, branchType, quoteNodeIds);
+    const { question, fromNodeId, skillId, model, provider, branchType, quoteNodeIds, topicId } = req.body;
+    const result = await this.agent.ask(question, fromNodeId, skillId, model, provider, branchType, quoteNodeIds, topicId);
     res.success({ response: result.response, nodeId: result.nodeId });
   }
 
@@ -26,7 +26,7 @@ class ChatController {
    * 事件流：node（节点已创建）→ delta（增量内容）× N → done（完成）| error（失败）
    */
   async askStream(req, res) {
-    const { question, fromNodeId, skillId, model, provider, branchType, quoteNodeIds } = req.body;
+    const { question, fromNodeId, skillId, model, provider, branchType, quoteNodeIds, topicId } = req.body;
 
     // SSE 响应头：禁用缓冲，确保增量实时到达前端
     res.writeHead(200, {
@@ -54,6 +54,7 @@ class ChatController {
         onNode: (nodeId) => send('node', { nodeId }),
         onDelta: (delta, full) => send('delta', { delta, content: full }),
         signal: abortController.signal,
+        topicId,
       });
       send('done', { response: result.response, nodeId: result.nodeId });
     } catch (error) {
