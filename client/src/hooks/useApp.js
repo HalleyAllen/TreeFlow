@@ -217,6 +217,7 @@ export const useApp = () => {
 
   // 按键事件：监听键盘按下，实现回车发送消息，Shift+回车换行
   const handleKeyDown = useCallback((e) => {
+    if (e.isComposing || e.nativeEvent?.isComposing || e.keyCode === 229 || e.nativeEvent?.keyCode === 229) return;
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
