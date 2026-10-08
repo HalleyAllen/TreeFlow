@@ -60,7 +60,6 @@ const ChatContainer = () => {
   // 脑图数据管理
   const { 
     treeData, 
-    loading: treeLoading, 
     loadTree, 
     refreshTree 
   } = useMindMap()
@@ -346,7 +345,6 @@ const ChatContainer = () => {
         <MindMap
           treeData={treeData}
           topicId={currentTopic?.id}
-          loading={treeLoading || isLoading}
           activeEndNodeId={activeEndNodeId}
           visualNodeId={visualNodeId}
           streamingNode={streamingNode}

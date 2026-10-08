@@ -243,7 +243,6 @@ function calculateLayout(
 function MindMapInner({
   treeData,
   topicId,
-  loading,
   activeEndNodeId,
   visualNodeId,
   streamingNode,
@@ -654,52 +653,7 @@ function MindMapInner({
         </Tooltip>
       </Box>
 
-      {loading && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            bgcolor: 'rgba(15, 23, 42, 0.7)',
-            zIndex: 10,
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box sx={{
-              width: 10,
-              height: 10,
-              borderRadius: '50%',
-              bgcolor: 'var(--primary-color)',
-              animation: 'mindmap-pulse 1.4s infinite ease-in-out',
-            }} />
-            <Box sx={{
-              width: 10,
-              height: 10,
-              borderRadius: '50%',
-              bgcolor: 'var(--primary-color)',
-              animation: 'mindmap-pulse 1.4s infinite ease-in-out 0.2s',
-            }} />
-            <Box sx={{
-              width: 10,
-              height: 10,
-              borderRadius: '50%',
-              bgcolor: 'var(--primary-color)',
-              animation: 'mindmap-pulse 1.4s infinite ease-in-out 0.4s',
-            }} />
-          </Box>
-        </Box>
-      )}
-
       <style>{`
-        @keyframes mindmap-pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.3; }
-        }
         .mindmap-flow .react-flow__node {
           cursor: default;
         }
