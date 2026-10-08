@@ -395,7 +395,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
   const handleReanswerSave = useCallback(async (event) => {
     event?.stopPropagation?.();
     event?.preventDefault?.();
-    if (!actualNodeId || !onEditNode) return;
+    if (!actualNodeId || !onEditNode || editSaving) return;
     if (!editQuestion.trim()) {
       alert('请先填写问题内容');
       return;
@@ -405,11 +405,11 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
     let keepEditing = false;
     try {
       // 先保存修改后的问题
-      await onEditNode(actualNodeId, editQuestion, editAnswer);
       // 再以当前问题重新调用 AI，外部完成后会刷新该节点回答
-      const result = await onReanswerNode?.(actualNodeId, editQuestion);
-      keepEditing = !!result?.cancelled;
+      const result = await onReanswerNode?.(actualNodeId, editQuestion, editAnswer);
+      keepEditing = result?.success !== true;
     } catch (err) {
+      keepEditing = true;
       console.error('[保存并重新回答失败]', err);
     } finally {
       setEditSaving(false);
@@ -417,7 +417,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
         setIsEditing(false);
       }
     }
-  }, [actualNodeId, onEditNode, onReanswerNode, editQuestion, editAnswer]);
+  }, [actualNodeId, onEditNode, onReanswerNode, editQuestion, editAnswer, editSaving]);
 
   // 内联编辑键盘操作：Esc 取消，Ctrl/Cmd + Enter 保存并重新回答
   const handleEditorKeyDown = useCallback((event) => {

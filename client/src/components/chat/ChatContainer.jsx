@@ -112,11 +112,28 @@ const ChatContainer = () => {
   }, [])
 
   // 重新回答节点：以修改后的问题重新调用 AI
-  const handleReanswerNode = useCallback(async (nodeId) => {
+  const handleReanswerNode = useCallback(async (nodeId, draftQuestion, draftAnswer) => {
     if (!currentTopic?.id) return { success: false }
     // 使用当前选中的模型/provider 重新提问
     const currentModel = models.find(m => m.id === selectedModel)
-    let result = await treeApi.reanswerNode(nodeId, currentTopic.id, false, currentModel?.id, currentModel?.provider)
+    let confirmedAction = null
+    if (draftQuestion !== undefined) {
+      const detail = await treeApi.getNodeDetail(nodeId, currentTopic.id)
+      if (!detail.success) {
+        showNotification(detail.error || 'Could not load node', 'error')
+        return { success: false }
+      }
+      if (detail.data.childrenCount > 0) {
+        confirmedAction = await askReanswerConfirm(detail.data.childrenCount)
+        if (confirmedAction !== 'replace' && confirmedAction !== 'self') return { success: false, cancelled: true }
+      }
+      const edited = await treeApi.editNode(nodeId, currentTopic.id, draftQuestion, draftAnswer)
+      if (!edited.success) {
+        showNotification(edited.error || 'Could not save changes', 'error')
+        return { success: false, error: edited.error }
+      }
+    }
+    let result = await treeApi.reanswerNode(nodeId, currentTopic.id, confirmedAction === 'replace', currentModel?.id, currentModel?.provider, confirmedAction === 'self')
     // 该节点存在后续分支时需二次确认（重新提问将清空后续节点）
     if (result.success && result.data?.needsConfirm) {
       // 'replace'：清空后续分支后重答；'self'：只重新回答当前节点，保留后续分支
@@ -134,6 +151,7 @@ const ChatContainer = () => {
     if (result.success) {
       // 等待刷新完成，确保节点上展示的是新回答
       await refreshTree(currentTopic.id)
+      await refreshActiveEndNode()
       showNotification('已重新回答')
       return { success: true }
     }
@@ -141,7 +159,7 @@ const ChatContainer = () => {
     await refreshTree(currentTopic.id)
     showNotification(result.error || '重新回答失败', 'error')
     return { success: false, error: result.error }
-  }, [currentTopic?.id, models, selectedModel, refreshTree, showNotification, askReanswerConfirm])
+  }, [currentTopic?.id, models, selectedModel, refreshTree, showNotification, askReanswerConfirm, refreshActiveEndNode])
 
   // 复制节点
   const handleCopyNode = useCallback(async (nodeId) => {
