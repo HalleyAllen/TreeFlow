@@ -38,8 +38,6 @@ export const useApp = () => {
     currentTopic, 
     createTopic, 
     switchTopic, 
-    deleteTopic,
-    loadTopics 
   } = useTopics();
 
   const {
@@ -47,7 +45,6 @@ export const useApp = () => {
     loading: chatLoading,
     error: chatError,
     branchMode,
-    branchFromNodeId,
     nodeCreated,
     streamingNode,
     stopStreaming,
@@ -57,7 +54,6 @@ export const useApp = () => {
     loadMessages,
     enterBranchMode,
     exitBranchMode,
-    setMessages
   } = useChat(currentTopic?.id);
 
   const {
@@ -220,7 +216,7 @@ export const useApp = () => {
       setInput(previous => previous || input);
       setQuotedTexts(previous => previous.length ? previous : quotedTexts);
     }
-  }, [currentTopic?.id, input, branchFromNodeId, sendChatMessage, activeSkill, clearSkill, setMessages, models, selectedModel, quotedTexts]);
+  }, [currentTopic?.id, input, sendChatMessage, activeSkill, clearSkill, models, selectedModel, quotedTexts]);
 
   // 按键事件：监听键盘按下，实现回车发送消息，Shift+回车换行
   const handleKeyDown = useCallback((e) => {

@@ -3,7 +3,7 @@
  * 实现多种树形布局计算
  */
 import { useMemo } from 'react';
-import { hierarchy, tree, cluster } from 'd3-hierarchy';
+import { hierarchy, tree } from 'd3-hierarchy';
 
 const NODE_WIDTH = 280;
 const NODE_HEIGHT = 140;
@@ -19,18 +19,18 @@ const BRANCH_VERTICAL_SPACING = 160; // 分支垂直间距
 function calculateRadialLayout(rootNode, options = {}) {
   const { 
     levelDistance = RADIAL_RADIUS, 
-    nodeSeparation = 1.5 
+    nodeSeparation: _nodeSeparation = 1.5 
   } = options;
 
   // 转换为 D3 hierarchy
   const root = hierarchy(rootNode, d => d.children);
   
   // 计算放射状布局
-  const radius = levelDistance;
+  const _radius = levelDistance;
   
   // 按层级分配角度
   const nodes = root.descendants();
-  const maxDepth = root.height;
+  const _maxDepth = root.height;
   
   // 计算每个节点的位置
   const positionedNodes = nodes.map(node => {
@@ -86,8 +86,8 @@ function calculateRadialLayout(rootNode, options = {}) {
  */
 function calculateVerticalLayout(rootNode, options = {}) {
   const { 
-    nodeWidth = NODE_WIDTH, 
-    nodeHeight = NODE_HEIGHT,
+    nodeWidth: _nodeWidth = NODE_WIDTH, 
+    nodeHeight: _nodeHeight = NODE_HEIGHT,
     levelSpacing = VERTICAL_SPACING,
     siblingSpacing = HORIZONTAL_SPACING 
   } = options;
@@ -171,9 +171,9 @@ function calculateHorizontalLayout(rootNode, options = {}) {
  */
 function calculateDocumentLayout(rootNode, options = {}) {
   const { 
-    nodeWidth = NODE_WIDTH, 
-    nodeHeight = NODE_HEIGHT,
-    levelSpacing = HORIZONTAL_SPACING,  // 子节点水平间距
+    nodeWidth: _nodeWidth = NODE_WIDTH, 
+    nodeHeight: _nodeHeight = NODE_HEIGHT,
+    levelSpacing: _levelSpacing = HORIZONTAL_SPACING,  // 子节点水平间距
     siblingSpacing = VERTICAL_SPACING,  // 主流程垂直间距
     branchSpacing = HORIZONTAL_SPACING * 0.8  // 分支水平间距
   } = options;

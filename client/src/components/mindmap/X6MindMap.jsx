@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Graph, MiniMap } from '@antv/x6';
 import { register } from '@antv/x6-react-shape';
 import { Box, IconButton, Tooltip } from '@mui/material';
-import { Map as MapIcon, FitScreen, Restore, Add, Remove, RestartAlt } from '@mui/icons-material';
+import { FitScreen, Add, Remove, RestartAlt } from '@mui/icons-material';
 import X6MindMapNode, { NODE_WIDTH, NODE_HEIGHT } from './X6MindMapNode';
 import * as treeApi from '../../services/api/tree.api';
 
@@ -332,7 +332,7 @@ export default function X6MindMap({
   activeEndNodeId,
   visualNodeId,
   onNodeSelect,
-  onBranchFromNode,
+  onBranchFromNode: _onBranchFromNode,
   onQuoteText,
   onEditNode,
   onCopyNode,
@@ -350,7 +350,7 @@ export default function X6MindMap({
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const selectedNodeIdRef = useRef(null); // 存储最新选中节点ID，供异步回调使用
   const activeEndNodeIdRef = useRef(null); // 存储最新活跃末端节点ID，供异步回调使用
-  const [showMiniMap, setShowMiniMap] = useState(true);
+  const [_showMiniMap, setShowMiniMap] = useState(true);
   
   // 初始数据加载标志
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
@@ -427,6 +427,7 @@ export default function X6MindMap({
   useEffect(() => {
     if (!containerRef.current) return;
 
+    const containerElement = containerRef.current;
     const graph = new Graph({
       container: containerRef.current,
       width: containerRef.current.clientWidth,
@@ -604,8 +605,8 @@ export default function X6MindMap({
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', handleKeyDown);
-      if (miniMapRef.current && containerRef.current) {
-        containerRef.current.removeChild(miniMapRef.current);
+      if (miniMapRef.current && containerElement) {
+        containerElement.removeChild(miniMapRef.current);
       }
       graph.dispose();
     };
@@ -776,7 +777,7 @@ export default function X6MindMap({
   }, [activeEndNodeId]);
 
   // 适应画布
-  const handleFitView = useCallback(() => {
+  const _handleFitView = useCallback(() => {
     graphRef.current?.centerContent();
   }, []);
 
@@ -797,7 +798,7 @@ export default function X6MindMap({
   }, []);
 
   // 切换小地图显示
-  const toggleMiniMap = useCallback(() => {
+  const _toggleMiniMap = useCallback(() => {
     setShowMiniMap((prev) => {
       const newValue = !prev;
       if (miniMapRef.current) {
@@ -808,7 +809,7 @@ export default function X6MindMap({
   }, []);
 
   // 重置布局（清除服务器保存的位置和视口）
-  const handleResetLayout = useCallback(async () => {
+  const _handleResetLayout = useCallback(async () => {
     if (topicId) {
       try {
         await treeApi.resetNodePositions(topicId);
@@ -850,7 +851,7 @@ export default function X6MindMap({
         console.error('重置布局失败:', error);
       }
     }
-  }, [topicId, treeData, selectedNodeId, handleNodeSelectInternal, handleToggleExpand]);
+  }, [topicId, treeData, selectedNodeId, handleNodeSelectInternal, handleToggleExpand, activeEndNodeId]);
 
   // 重置节点（只清除节点位置，保留视口，重新应用自动布局）
   const handleResetNodes = useCallback(async () => {
@@ -929,7 +930,7 @@ export default function X6MindMap({
         console.error('重置节点失败:', error);
       }
     }
-  }, [topicId, treeData, selectedNodeId, handleNodeSelectInternal, handleToggleExpand]);
+  }, [topicId, treeData, selectedNodeId, handleNodeSelectInternal, handleToggleExpand, activeEndNodeId]);
 
   return (
     <Box

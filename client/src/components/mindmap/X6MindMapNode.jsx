@@ -9,6 +9,7 @@ import { ExpandMore, ExpandLess, FormatQuote, ContentCopy, Edit, Delete, Account
 
 // 节点尺寸常量（与 X6MindMap 共享）
 // 修改时需在 X6MindMap.jsx 中同步调整布局和间距配置
+const EMPTY_DATA = {};
 export const NODE_WIDTH = 280;
 export const NODE_HEIGHT = 220;
 export const QUESTION_AREA_HEIGHT = 60; // 上半部分问题区域高度（收起时容纳2行文字）
@@ -98,7 +99,7 @@ const X6MindMapNode = memo(({ node }) => {
   }, [node]);
 
   // 每次渲染重新从 X6 节点读取数据，确保 X6 setData 后的最新值能被 React 使用
-  const data = node?.getData?.() || node?.data || {};
+  const data = node?.getData?.() || node?.data || EMPTY_DATA;
 
   const {
     id: nodeId,
@@ -114,7 +115,7 @@ const X6MindMapNode = memo(({ node }) => {
     initialAnswerExpanded = false,
     onQuoteText,
     onNodeSelect,
-    onCopyNode,
+    onCopyNode: _onCopyNode,
     onEditNode,
     onDeleteNode,
     onDeleteBranch,
@@ -191,9 +192,9 @@ const X6MindMapNode = memo(({ node }) => {
   const isError = status === 'error';
   // 铁打定律：children[0] 是主线，不算分支；真正的分支数 = childrenCount - 1（如果大于0）
   const branchCount = Math.max(0, childrenCount - 1);
-  const hasChildren = childrenCount > 0;
+  const _hasChildren = childrenCount > 0;
   const hasBranches = branchCount > 0;
-  const isEndNode = childrenCount === 0; // 末端节点（没有子节点）
+  const _isEndNode = childrenCount === 0; // 末端节点（没有子节点）
 
   // 显示内容
   const displayQuestion = (isRoot && !question) ? '开始' : (question || '');
@@ -378,7 +379,7 @@ const X6MindMapNode = memo(({ node }) => {
     if (onEditNode && data.id) {
       onEditNode(data);
     }
-  }, [onEditNode, data.id, data]);
+  }, [onEditNode, data]);
 
   // 处理删除单个节点
   const handleDelete = useCallback((event) => {

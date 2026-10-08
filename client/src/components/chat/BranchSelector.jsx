@@ -1,21 +1,16 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Box, Paper, Typography, IconButton, Fade } from '@mui/material'
 import CallSplitIcon from '@mui/icons-material/CallSplit'
 import CloseIcon from '@mui/icons-material/Close'
 import { getNodeBranches, switchBranch } from '../../services/api'
 import logger from '../../services/logger'
 
-const BranchSelector = ({ nodeId, topicId, open, onClose, onBranchSwitched }) => {
+const BranchSelector = ({ nodeId, topicId: _topicId, open, onClose, onBranchSwitched }) => {
   const [branches, setBranches] = useState([])
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    if (open && nodeId) {
-      loadBranches()
-    }
-  }, [open, nodeId])
 
-  const loadBranches = async () => {
+  const loadBranches = useCallback(async () => {
     setLoading(true)
     try {
       const data = await getNodeBranches(nodeId)
@@ -25,7 +20,13 @@ const BranchSelector = ({ nodeId, topicId, open, onClose, onBranchSwitched }) =>
     } finally {
       setLoading(false)
     }
-  }
+  }, [nodeId])
+
+  useEffect(() => {
+    if (open && nodeId) {
+      loadBranches()
+    }
+  }, [open, nodeId, loadBranches])
 
   const handleSwitchBranch = async (branchId) => {
     try {

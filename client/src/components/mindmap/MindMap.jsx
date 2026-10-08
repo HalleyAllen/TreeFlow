@@ -17,7 +17,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Box, IconButton, Tooltip } from '@mui/material';
 import { Add, Remove, FitScreen, RestartAlt } from '@mui/icons-material';
-import MindMapNode, { NODE_WIDTH, NODE_HEIGHT } from './MindMapNode';
+import MindMapNode, { NODE_HEIGHT } from './MindMapNode';
 import * as treeApi from '../../services/api/tree.api';
 
 // 节点间距配置

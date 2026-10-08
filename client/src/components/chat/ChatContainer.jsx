@@ -52,7 +52,6 @@ const ChatContainer = () => {
   const handleSelectModelLocal = useCallback((model) => {
     handleSelectModel(model)
   }, [handleSelectModel])
-  const [hoveredMsgIndex, setHoveredMsgIndex] = useState(-1)
   const [showSkillSelector, setShowSkillSelector] = useState(false)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
@@ -62,7 +61,6 @@ const ChatContainer = () => {
   const { 
     treeData, 
     loading: treeLoading, 
-    currentNodeId, 
     loadTree, 
     refreshTree 
   } = useMindMap()
@@ -258,7 +256,6 @@ const ChatContainer = () => {
   }, [showModelDropdown, handleToggleModelDropdown])
 
   const handleInputChange = (e) => {
-    const value = e.target.value
     onInputChange(e)
     // TODO: 暂时禁用 '/' 触发技能选择
     // if (value === '/' && !activeSkill) {

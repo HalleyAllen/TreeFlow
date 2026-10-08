@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Typography, Autocomplete,
   Snackbar, Alert, Switch, Chip, IconButton, CircularProgress, Tabs, Tab, Paper,
-  Card, CardContent, CardActions, Tooltip, Slider, Divider, Badge, InputAdornment
+  Card, CardContent, Tooltip, Slider, InputAdornment
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import RefreshIcon from '@mui/icons-material/Refresh'
@@ -16,7 +16,6 @@ import ComputerIcon from '@mui/icons-material/Computer'
 import KeyIcon from '@mui/icons-material/Key'
 import StorageIcon from '@mui/icons-material/Storage'
 import EditIcon from '@mui/icons-material/Edit'
-import ScienceIcon from '@mui/icons-material/Science'
 import LinkIcon from '@mui/icons-material/Link'
 import MemoryIcon from '@mui/icons-material/Memory'
 import ThermostatIcon from '@mui/icons-material/Thermostat'
@@ -92,7 +91,7 @@ const TokenManager = () => {
   const [checkingAll, setCheckingAll] = useState(false)
 
   // Ollama相关状态
-  const [localOllamaUrl, setLocalOllamaUrl] = useState('http://localhost:11434')
+  const [_localOllamaUrl, setLocalOllamaUrl] = useState('http://localhost:11434')
   const [ollamaUrlInput, setOllamaUrlInput] = useState('http://localhost:11434')
   const [ollamaConnectionStatus, setOllamaConnectionStatus] = useState({
     checking: false, connected: false, message: ''
@@ -111,15 +110,6 @@ const TokenManager = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
 
   // 初始化
-  useEffect(() => {
-    if (open) {
-      loadOllamaSettings()
-      if (ollamaEnabled) {
-        checkConnectionStatus()
-        loadOllamaModelsList()
-      }
-    }
-  }, [open])
 
   const loadOllamaSettings = async () => {
     try {
@@ -294,7 +284,7 @@ const TokenManager = () => {
     }
   }
 
-  const loadOllamaModelsList = async () => {
+  const loadOllamaModelsList = useCallback(async () => {
     if (!ollamaEnabled) return
     setOllamaModelsLoading(true)
     try {
@@ -305,7 +295,17 @@ const TokenManager = () => {
     } finally {
       setOllamaModelsLoading(false)
     }
-  }
+  }, [ollamaEnabled])
+
+  useEffect(() => {
+    if (open) {
+      loadOllamaSettings()
+      if (ollamaEnabled) {
+        checkConnectionStatus()
+        loadOllamaModelsList()
+      }
+    }
+  }, [open, ollamaEnabled, loadOllamaModelsList])
 
   const handlePullModel = async () => {
     if (!newModelName.trim()) {

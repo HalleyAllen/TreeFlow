@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Box, Button, TextField, Typography } from '@mui/material'
-import { getOllamaUrl, setOllamaUrl } from '../../services/api'
+import { setOllamaUrl } from '../../services/api'
 import logger from '../../services/logger'
 
 const OllamaSettings = ({ ollamaUrl, onOllamaUrlChange }) => {
