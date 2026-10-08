@@ -4,6 +4,7 @@
  * 从 TopicManager 抽离，遵循单一职责原则
  */
 const logger = require('../utils/logger');
+const { randomUUID } = require('node:crypto');
 
 class ConversationTreeManager {
   constructor(topicManager) {
@@ -140,7 +141,7 @@ class ConversationTreeManager {
       }
 
       const newBranch = {
-        id: `branch-${Date.now()}`,
+        id: `branch-${randomUUID()}`,
         parentId: topic.currentNode.parentId,
         message: topic.currentNode.message,
         response: topic.currentNode.response,
@@ -180,7 +181,7 @@ class ConversationTreeManager {
       if (!fromNode) return '节点不存在';
 
       const newBranch = {
-        id: `branch-${Date.now()}`,
+        id: `branch-${randomUUID()}`,
         parentId: fromNode.id,
         message: '',
         response: '',
@@ -274,7 +275,7 @@ class ConversationTreeManager {
     // 如果是第一个节点（conversationTree为空），创建根节点
     if (!topic.conversationTree) {
       const rootNode = {
-        id: `node-${Date.now()}`,
+        id: `node-${randomUUID()}`,
         parentId: null,
         message: message,
         response: response,
@@ -322,7 +323,7 @@ class ConversationTreeManager {
     }
 
     const newNode = {
-      id: `node-${Date.now()}`,
+      id: `node-${randomUUID()}`,
       parentId: parentNode.id,
       message: message,
       response: response,
@@ -433,7 +434,7 @@ class ConversationTreeManager {
     // 递归复制节点
     const copyNodeRecursive = (node, newParentId) => {
       const newNode = {
-        id: `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: `node-${randomUUID()}`,
         parentId: newParentId,
         message: node.message,
         response: node.response,

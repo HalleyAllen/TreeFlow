@@ -6,6 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const logger = require('../utils/logger');
+const { randomUUID } = require('node:crypto');
 
 class TopicManager {
   constructor(topicsFile) {
@@ -143,7 +144,7 @@ class TopicManager {
    */
   createTopic(name) {
     try {
-      const topicId = `topic-${Date.now()}`;
+      const topicId = `topic-${randomUUID()}`;
       this.topics[topicId] = {
         id: topicId,
         name: name,
