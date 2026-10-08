@@ -240,7 +240,7 @@ class ConversationTreeManager {
     return node.children.map(child => ({
       id: child.id,
       message: child.message ? child.message.substring(0, 50) + (child.message.length > 50 ? '...' : '') : '(空分支)',
-      isCurrentBranch: topic.currentNode && this.isAncestor(topic.currentNode, child.id, topic.conversationTree)
+      isCurrentBranch: !!topic.currentNode && this.isAncestor(child, topic.currentNode.id, topic.conversationTree)
     }));
   }
 
