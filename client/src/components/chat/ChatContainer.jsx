@@ -282,7 +282,7 @@ const ChatContainer = () => {
   }
 
   return (
-    <Box sx={{ flex: 1, p: '4px 8px 4px 8px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ flex: 1, minWidth: 0, minHeight: 0, position: 'relative', p: '4px 8px 4px 8px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       {/* 分支模式提示条 */}
       <Fade in={branchMode}>
         <Paper
@@ -428,13 +428,16 @@ const ChatContainer = () => {
       <Paper
         onClick={() => inputRef.current?.focus()}
         sx={{
-          position: 'absolute',
-          bottom: 24,
-          left: '57%',
-          transform: 'translateX(-50%)',
+          position: 'relative',
+          bottom: 0,
+          left: 0,
+          transform: 'none',
+          alignSelf: 'center',
+          flexShrink: 0,
+          mt: 1,
           width: '100%',
           maxWidth: 720,
-          p: 2,
+          p: { xs: 1.5, sm: 2 },
           borderRadius: 2.5,
           border: branchMode ? '2px solid rgba(59, 130, 246, 0.5)' : '1px solid var(--border-color)',
           bgcolor: 'var(--card-background)',

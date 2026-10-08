@@ -20,6 +20,8 @@ export const useApp = () => {
   const [topicNameInput, setTopicNameInput] = useState('');
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   // 输入状态
   const [input, setInput] = useState('');
   
@@ -303,6 +305,8 @@ export const useApp = () => {
     // UI 状态
     showAIServiceModal,
     setShowAIServiceModal,
+    sidebarOpen,
+    setSidebarOpen,
     showCreateTopicModal,
     setShowCreateTopicModal,
     topicNameInput,

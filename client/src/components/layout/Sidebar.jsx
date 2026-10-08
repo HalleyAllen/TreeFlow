@@ -1,10 +1,12 @@
-import { Paper, Box, Typography, IconButton, TextField, Button, List, ListItem, ListItemButton, ListItemText } from '@mui/material'
+import { Paper, Box, Typography, IconButton, TextField, Button, List, ListItem, ListItemButton, ListItemText, Drawer, useMediaQuery } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import TopicIcon from '@mui/icons-material/Topic'
 import { useAppContext } from '../../contexts/AppContext'
 
 const Sidebar = () => {
   const {
+    sidebarOpen,
+    setSidebarOpen,
     topics,
     currentTopic,
     showCreateTopicModal,
@@ -15,6 +17,8 @@ const Sidebar = () => {
     handleSwitchTopic
   } = useAppContext()
 
+  const compact = useMediaQuery('(max-width:899.95px)')
+
   const handleShowCreateTopicModal = () => setShowCreateTopicModal(true)
   const handleCancelCreateTopic = () => {
     setShowCreateTopicModal(false)
@@ -22,7 +26,7 @@ const Sidebar = () => {
   }
   const handleTopicNameChange = (e) => setTopicNameInput(e.target.value)
 
-  return (
+  const content = (
     <Paper sx={{ 
       width: '240px', 
       bgcolor: 'var(--sidebar-bg)', 
@@ -107,7 +111,7 @@ const Sidebar = () => {
           <ListItem key={topic.id} disablePadding>
             <ListItemButton
               selected={currentTopic?.id === topic.id}
-              onClick={() => handleSwitchTopic(topic.id)}
+              onClick={() => { handleSwitchTopic(topic.id); setSidebarOpen(false) }}
               sx={{ 
                 borderRadius: 1,
                 color: 'var(--text-color)',
@@ -130,6 +134,15 @@ const Sidebar = () => {
         ))}
       </List>
     </Paper>
+  )
+
+  return (
+    <>
+      <Box sx={{ display: { xs: 'none', md: 'flex' }, width: 240, flexShrink: 0 }}>{content}</Box>
+      <Drawer open={compact && sidebarOpen} onClose={() => setSidebarOpen(false)} slotProps={{ paper: { sx: { width: 240, bgcolor: 'var(--sidebar-bg)' } } }}>
+        {content}
+      </Drawer>
+    </>
   )
 }
 

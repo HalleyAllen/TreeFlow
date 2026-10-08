@@ -1,17 +1,21 @@
 import { AppBar, Toolbar, Typography, Box, Button, IconButton, Tooltip } from '@mui/material'
 import SettingsIcon from '@mui/icons-material/Settings'
+import MenuIcon from '@mui/icons-material/Menu'
 import LightModeIcon from '@mui/icons-material/LightMode'
 import DarkModeIcon from '@mui/icons-material/DarkMode'
 import { useAppContext } from '../../contexts/AppContext'
 
 const Header = () => {
-  const { theme, toggleTheme, setShowAIServiceModal } = useAppContext()
+  const { theme, toggleTheme, setShowAIServiceModal, setSidebarOpen } = useAppContext()
   const isDark = theme === 'dark'
 
   return (
     <AppBar position="static" elevation={0} sx={{ backgroundColor: 'var(--header-bg)', borderBottom: '1px solid var(--border-color)', width: '100%', padding: 0, boxShadow: 'none' }}>
-      <Toolbar sx={{ width: '100%', minHeight: '56px' }}>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-color)', fontWeight: 'bold' }}>
+      <Toolbar sx={{ width: '100%', minHeight: '56px', px: { xs: 1, sm: 3 } }}>
+        <IconButton aria-label="Open topics" onClick={() => setSidebarOpen(true)} sx={{ display: { xs: 'inline-flex', md: 'none' }, color: 'var(--text-color)', mr: 1 }}>
+          <MenuIcon />
+        </IconButton>
+        <Typography variant="h6" component="div" sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-color)', fontWeight: 'bold', fontSize: { xs: '1rem', sm: '1.25rem' }, whiteSpace: 'nowrap' }}>
           🌳 TreeFlow
         </Typography>
         <Box sx={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
