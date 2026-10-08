@@ -43,6 +43,7 @@ export const useApp = () => {
   const {
     messages,
     loading: chatLoading,
+    error: chatError,
     branchMode,
     branchFromNodeId,
     nodeCreated,
@@ -183,6 +184,7 @@ export const useApp = () => {
   // 发送消息
   const handleSend = useCallback(async () => {
     if (!input.trim()) return;
+    const requestTopicId = currentTopic?.id;
 
     // 构造带引用的消息内容
     let currentInput = input;
@@ -212,8 +214,11 @@ export const useApp = () => {
     if (result.success) {
       // 清除技能
       clearSkill();
+    } else if (!result.ignored && currentTopicIdRef.current === requestTopicId) {
+      setInput(previous => previous || input);
+      setQuotedTexts(previous => previous.length ? previous : quotedTexts);
     }
-  }, [input, branchFromNodeId, sendChatMessage, activeSkill, clearSkill, setMessages, models, selectedModel, quotedTexts]);
+  }, [currentTopic?.id, input, branchFromNodeId, sendChatMessage, activeSkill, clearSkill, setMessages, models, selectedModel, quotedTexts]);
 
   // 按键事件：监听键盘按下，实现回车发送消息，Shift+回车换行
   const handleKeyDown = useCallback((e) => {
@@ -319,6 +324,7 @@ export const useApp = () => {
     // 聊天相关
     messages,
     chatLoading,
+    chatError,
     branchMode,
     nodeCreated,
     streamingNode,

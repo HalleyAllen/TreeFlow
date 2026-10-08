@@ -201,7 +201,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
   // 流式生成中（或刚结束、等待脑图刷新替换）：优先显示流式内容
   const fullAnswer = (isStreaming || streamingContent)
     ? streamingContent
-    : (isError ? (error || '请求失败') : (answer || ''));
+    : (isError ? (error || answer || '请求失败') : (answer || ''));
 
   // 样式配置：优先级顺序为 选中 > 加载中 > 错误 > 引用分支 > 普通
   const getStyles = () => {

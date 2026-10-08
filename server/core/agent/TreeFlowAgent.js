@@ -150,7 +150,7 @@ class TreeFlowAgent {
       logger.error('TreeFlowAgent', 'AI请求失败:', { error: error.message });
       // 更新节点状态为错误
       if (newNode) {
-        this.conversationTreeManager.updateNodeResponse(currentTopic, newNode.id, `错误: ${error.message}`, { status: 'error' });
+        this.conversationTreeManager.updateNodeResponse(currentTopic, newNode.id, `错误: ${error.message}`, { status: 'error', error: error.message });
       }
       throw new Error(`AI请求失败: ${error.message}`);
     }
@@ -217,7 +217,7 @@ class TreeFlowAgent {
           // 中止：保留已生成的部分内容
           this.conversationTreeManager.updateNodeResponse(currentTopic, newNode.id, accContent || '（已停止生成）', { status: 'completed' });
         } else {
-          this.conversationTreeManager.updateNodeResponse(currentTopic, newNode.id, `错误: ${error.message}`, { status: 'error' });
+          this.conversationTreeManager.updateNodeResponse(currentTopic, newNode.id, `错误: ${error.message}`, { status: 'error', error: error.message });
         }
       }
       throw error;
@@ -296,7 +296,7 @@ class TreeFlowAgent {
     } catch (error) {
       logger.error('TreeFlowAgent', '重新回答失败:', { error: error.message, nodeId });
       // 更新节点状态为错误
-      this.conversationTreeManager.updateNodeResponse(topicId, nodeId, `错误: ${error.message}`, { status: 'error' });
+      this.conversationTreeManager.updateNodeResponse(topicId, nodeId, `错误: ${error.message}`, { status: 'error', error: error.message });
       throw new Error(`重新回答失败: ${error.message}`);
     }
   }

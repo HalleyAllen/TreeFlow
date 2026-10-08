@@ -17,6 +17,7 @@ const ChatContainer = () => {
     messages,
     input,
     chatLoading: isLoading,
+    chatError,
     models,
     selectedModel,
     showModelDropdown,
@@ -202,6 +203,10 @@ const ChatContainer = () => {
       onEnterBranchMode(index, nodeData.id)
     }
   }, [messages, onEnterBranchMode])
+
+  useEffect(() => {
+    if (chatError) showNotification(chatError, 'error')
+  }, [chatError, showNotification])
 
   // 话题切换时加载树数据
   useEffect(() => {

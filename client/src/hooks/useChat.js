@@ -9,6 +9,7 @@ import * as treeApi from '../services/api/tree.api';
 export const useChat = (topicId) => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [branchMode, setBranchMode] = useState(false);
   const [branchFromNodeId, setBranchFromNodeId] = useState(null);
   const [activeEndNodeId, setActiveEndNodeId] = useState(null); // 活跃末端节点（点击末端节点切换）
@@ -30,6 +31,7 @@ export const useChat = (topicId) => {
     setBranchFromNodeId(null);
     setActiveEndNodeId(null);
     setStreamingNode(null);
+    setError(null);
     setNodeCreated(0);
   }, [topicId]);
 
@@ -54,6 +56,7 @@ export const useChat = (topicId) => {
       { type: 'ai', content: '', nodeId: tempNodeId, status: 'loading' }
     ]);
     setLoading(true);
+    setError(null);
     setNodeCreated(0); // 重置节点创建计数
     setStreamingNode(null); // 清理上一次的流式状态
 
@@ -106,6 +109,7 @@ export const useChat = (topicId) => {
 
       if (!isCurrentRequest()) return { success: false, ignored: true };
       if (result.error) {
+        setError(result.error);
         setStreamingNode(null);
         // 更新为错误状态
         setMessages(prev => prev.map(msg =>
@@ -171,6 +175,7 @@ export const useChat = (topicId) => {
         return { success: true, aborted: true, nodeId: realNodeId };
       }
 
+      setError(error.message);
       logger.error('useChat', '发送消息失败:', error);
       // 更新为错误状态
       setMessages(prev => prev.map(msg =>
@@ -250,6 +255,7 @@ export const useChat = (topicId) => {
   return {
     messages,
     loading,
+    error,
     branchMode,
     branchFromNodeId,
     activeEndNodeId,
