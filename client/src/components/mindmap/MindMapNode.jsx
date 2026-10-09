@@ -101,7 +101,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
   const quoteButtonRef = useRef(null);
   const [selectedText, setSelectedText] = useState('');
   const [showQuoteButton, setShowQuoteButton] = useState(false);
-  const [quoteButtonPos, setQuoteButtonPos] = useState({ x: 0, y: 0 });
+  const [quoteButtonPos, setQuoteButtonPos] = useState(null);
   // 问题区/回答区是否需要展开按钮（通过测量 DOM 溢出精确判断）
   const [needsExpandQuestion, setNeedsExpandQuestion] = useState(false);
   const [needsExpandAnswer, setNeedsExpandAnswer] = useState(false);
@@ -303,8 +303,8 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
       if (nodeRect) {
         const zoom = getCurrentZoom();
         // 按钮宽度约 46px，根据缩放比例调整偏移
-        const buttonWidth = 80 / zoom;
-        const buttonHeight = 34 / zoom;
+        const buttonWidth = 54 / zoom;
+        const buttonHeight = 24 / zoom;
 
         const canvasRect = nodeRef.current.closest('.react-flow')?.getBoundingClientRect();
         const bounds = {
@@ -319,17 +319,33 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
           top: Math.max(rect.top, nodeRect.top, bounds.top),
           bottom: Math.min(rect.bottom, nodeRect.bottom, bounds.bottom),
         };
+        let element = range.commonAncestorContainer;
+        if (element.nodeType !== Node.ELEMENT_NODE) element = element.parentElement;
+        while (element && element !== nodeRef.current) {
+          const style = window.getComputedStyle(element);
+          const clip = element.getBoundingClientRect();
+          if (/auto|scroll|hidden|clip/.test(style.overflowX)) {
+            visibleRect.left = Math.max(visibleRect.left, clip.left);
+            visibleRect.right = Math.min(visibleRect.right, clip.right);
+          }
+          if (/auto|scroll|hidden|clip/.test(style.overflowY)) {
+            visibleRect.top = Math.max(visibleRect.top, clip.top);
+            visibleRect.bottom = Math.min(visibleRect.bottom, clip.bottom);
+          }
+          element = element.parentElement;
+        }
         if (visibleRect.right <= visibleRect.left || visibleRect.bottom <= visibleRect.top) {
-          setShowQuoteButton(false);
+          setQuoteButtonPos(null);
           return;
         }
         const width = buttonWidth * zoom;
         const height = buttonHeight * zoom;
         const top = visibleRect.top - height - 8;
-        setQuoteButtonPos({
+        const position = {
           x: Math.max(bounds.left, Math.min((visibleRect.left + visibleRect.right - width) / 2, bounds.right - width)),
           y: Math.max(bounds.top, Math.min(top >= bounds.top ? top : visibleRect.bottom + 8, bounds.bottom - height)),
-        });
+        };
+        setQuoteButtonPos(previous => previous && Math.abs(previous.x - position.x) < 0.25 && Math.abs(previous.y - position.y) < 0.25 ? previous : position);
         setShowQuoteButton(true);
       }
     } else {
@@ -368,6 +384,12 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
     const handleClickOutside = (event) => {
       if (showQuoteButton && nodeRef.current) {
         const isInsideNode = nodeRef.current.contains(event.target) || quoteButtonRef.current?.contains(event.target);
+        const canvas = nodeRef.current.closest('.react-flow');
+        const isCanvasGesture = canvas?.contains(event.target) && !event.target.closest('.nodrag, .node-resize-border, .node-resize-handle');
+        if (isCanvasGesture) {
+          event.preventDefault();
+          return;
+        }
         if (!isInsideNode) {
           setShowQuoteButton(false);
           window.getSelection()?.removeAllRanges();
@@ -375,27 +397,27 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside, true);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside, true);
     };
   }, [showQuoteButton]);
 
   useEffect(() => {
     if (!showQuoteButton) return undefined;
-    const hide = () => setShowQuoteButton(false);
-    const handleKeyDown = event => { if (event.key === 'Escape') hide(); };
-    window.addEventListener('resize', hide);
-    document.addEventListener('scroll', hide, true);
-    document.addEventListener('wheel', hide, { passive: true });
+    let frame;
+    const followSelection = () => {
+      handleTextSelection();
+      frame = window.requestAnimationFrame(followSelection);
+    };
+    frame = window.requestAnimationFrame(followSelection);
+    const handleKeyDown = event => { if (event.key === 'Escape') setShowQuoteButton(false); };
     document.addEventListener('keydown', handleKeyDown);
     return () => {
-      window.removeEventListener('resize', hide);
-      document.removeEventListener('scroll', hide, true);
-      document.removeEventListener('wheel', hide);
+      window.cancelAnimationFrame(frame);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [showQuoteButton]);
+  }, [showQuoteButton, handleTextSelection]);
 
   // 点击引用按钮：将选中文本和节点ID发送给父组件
   const handleQuote = useCallback((event) => {
@@ -576,7 +598,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
         onClick={handleNodeClick}
       >
         {/* 引用按钮浮动层 */}
-        {showQuoteButton && (
+        {showQuoteButton && quoteButtonPos && (
           <Portal>
             <Button
               ref={quoteButtonRef}
@@ -593,27 +615,27 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
                 left: quoteButtonPos.x,
                 top: quoteButtonPos.y,
                 zIndex: 1200,
-                width: 80,
-                minWidth: 80,
-                height: 34,
+                width: 54,
+                minWidth: 54,
+                height: 24,
                 p: 0,
-                borderRadius: '10px',
+                borderRadius: '6px',
                 border: '1px solid var(--border-color)',
                 backgroundColor: 'var(--card-background)',
                 color: 'var(--primary-color)',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.18)',
-                fontSize: 13,
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.14)',
+                fontSize: 11,
                 fontWeight: 600,
                 lineHeight: 1,
                 textTransform: 'none',
                 userSelect: 'none',
                 transition: 'background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease',
-                '& .MuiButton-startIcon': { ml: 0, mr: '5px' },
-                '& .MuiButton-startIcon > svg': { fontSize: 18 },
+                '& .MuiButton-startIcon': { ml: 0, mr: '3px' },
+                '& .MuiButton-startIcon > svg': { fontSize: 14 },
                 '&:hover': {
                   backgroundColor: 'var(--sidebar-bg)',
                   borderColor: 'var(--primary-color)',
-                  boxShadow: '0 6px 20px rgba(0, 0, 0, 0.22)',
+                  boxShadow: '0 3px 10px rgba(0, 0, 0, 0.18)',
                 },
                 '&:active': { backgroundColor: 'var(--card-background)', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.16)' },
                 '&.Mui-focusVisible': { outline: '2px solid var(--primary-color)', outlineOffset: 3 },
