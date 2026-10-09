@@ -40,7 +40,8 @@ class TopicManager {
         const data = fs.readFileSync(this.topicsFile, 'utf8');
         const loadedTopics = JSON.parse(data);
         // 合并加载的话题，保留默认话题
-        this.topics = { ...this.topics, ...loadedTopics };
+        // A saved topic list replaces the bootstrap default, including after its deletion.
+        this.topics = Object.keys(loadedTopics).length ? loadedTopics : this.topics;
         // 重新同步每个话题的 currentNode 引用
         Object.values(this.topics).forEach(topic => {
           if (!topic.conversationTree) {
@@ -249,6 +250,27 @@ class TopicManager {
     }
   }
 
+  removeTopic(topicId) {
+    const topic = this.getTopic(topicId);
+    if (!topic) return '话题不存在';
+    const previous = this.topics;
+    this.topics = { ...previous };
+    delete this.topics[topicId];
+    if (!Object.keys(this.topics).length) {
+      const id = `topic-${randomUUID()}`;
+      this.topics[id] = {
+        id, name: '新话题', autoNameFromFirstQuestion: true,
+        conversationTree: null, currentNode: null,
+        nodePositions: {}, nodeSizes: {}, viewport: null, activeEndNodeId: null,
+      };
+    }
+    if (this.saveTopics() === false) {
+      this.topics = previous;
+      return '删除话题失败';
+    }
+    return true;
+  }
+
   /**
    * 更新话题名称
    * @param {string} topicId - 话题ID
@@ -260,9 +282,18 @@ class TopicManager {
       if (!this.topics[topicId]) {
         return '话题不存在';
       }
-      const oldName = this.topics[topicId].name;
-      this.topics[topicId].name = newName;
-      this.saveTopics();
+      if (typeof newName !== 'string' || !newName.trim()) return 'Invalid topic name';
+      newName = newName.trim();
+      const topic = this.topics[topicId];
+      const oldName = topic.name;
+      const previousAutoName = topic.autoNameFromFirstQuestion;
+      topic.name = newName;
+      topic.autoNameFromFirstQuestion = false;
+      if (this.saveTopics() === false) {
+        topic.name = oldName;
+        topic.autoNameFromFirstQuestion = previousAutoName;
+        throw new Error('Could not save topic title');
+      }
       logger.info('TopicManager', '更新话题名称', { topicId, oldName, newName });
       return `话题名称已更新: ${newName}`;
     } catch (error) {

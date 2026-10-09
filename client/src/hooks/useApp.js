@@ -38,6 +38,8 @@ export const useApp = () => {
     currentTopic, 
     createTopic, 
     switchTopic, 
+    renameTopic,
+    deleteTopic,
     loadTopics,
     loadCurrentTopic,
   } = useTopics();
@@ -262,6 +264,11 @@ export const useApp = () => {
     }
   }, [switchTopic]);
 
+  const handleDeleteTopic = useCallback(async topicId => {
+    if (currentTopicIdRef.current === topicId) stopStreaming();
+    return deleteTopic(topicId);
+  }, [deleteTopic, stopStreaming]);
+
   // 选择模型
   const handleSelectModel = useCallback(async (model) => {
     if (model.available) {
@@ -331,6 +338,8 @@ export const useApp = () => {
     currentTopic,
     handleCreateTopic,
     handleSwitchTopic,
+    handleRenameTopic: renameTopic,
+    handleDeleteTopic,
 
     // 聊天相关
     messages,

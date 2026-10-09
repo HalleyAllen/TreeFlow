@@ -74,6 +74,17 @@ export const deleteTopic = async (topicId) => {
   }
 };
 
+export const renameTopic = async (topicId, name) => {
+  const response = await fetch(`${API_BASE_URL}/api/topics/${encodeURIComponent(topicId)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  });
+  const result = await response.json();
+  if (!response.ok || result.success === false) throw new Error(result.error || 'Could not rename topic');
+  return result;
+};
+
 // 加载话题消息
 export const loadTopicMessages = async (topicId) => {
   try {

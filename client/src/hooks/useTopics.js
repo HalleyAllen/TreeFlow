@@ -83,6 +83,21 @@ export const useTopics = () => {
     }
   }, [loadTopics, loadCurrentTopic]);
 
+  const renameTopic = useCallback(async (topicId, name) => {
+    try {
+      const result = await topicApi.renameTopic(topicId, name);
+      const updated = result.data.topic;
+      topicsLoadRef.current += 1;
+      currentTopicLoadRef.current += 1;
+      setLoading(false);
+      setTopics(previous => previous.map(topic => topic.id === topicId ? { ...topic, ...updated } : topic));
+      setCurrentTopic(previous => previous?.id === topicId ? { ...previous, ...updated } : previous);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }, []);
+
   // 初始化加载
   useEffect(() => {
     loadTopics();
@@ -97,6 +112,7 @@ export const useTopics = () => {
     loadCurrentTopic,
     createTopic,
     switchTopic,
-    deleteTopic
+    deleteTopic,
+    renameTopic
   };
 };
