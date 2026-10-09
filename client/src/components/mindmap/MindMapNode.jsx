@@ -217,7 +217,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
   const isLoading = status === 'loading';
   const isError = status === 'error';
   // 铁打定律：children[0] 是主线，不算分支；真正的分支数 = childrenCount - 1（如果大于0）
-  const branchCount = Math.max(0, childrenCount - 1);
+  const branchCount = data?.branchCount ?? Math.max(0, childrenCount - 1);
   const hasBranches = branchCount > 0;
 
   // 显示内容

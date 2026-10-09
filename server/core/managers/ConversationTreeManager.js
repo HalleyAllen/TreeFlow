@@ -335,7 +335,11 @@ class ConversationTreeManager {
       ...metadata
     };
 
-    parentNode.children.push(newNode);
+    if (newNode.branchType !== 'quote' && parentNode.children.every(child => child.branchType === 'quote')) {
+      parentNode.children.unshift(newNode);
+    } else {
+      parentNode.children.push(newNode);
+    }
     topic.currentNode = newNode;
     this.topicManager.saveTopics();
     logger.info('ConversationTreeManager', '添加对话节点', { 

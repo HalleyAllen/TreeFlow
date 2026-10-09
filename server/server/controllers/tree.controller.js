@@ -137,6 +137,8 @@ class TreeController {
       quoteNodeIds: node.quoteNodeIds || [],
       children: node.children.map(child => this.buildTreeNode(child, topic)),
       childrenCount: node.children.length,
+      isContinuationEnd: !node.children.some(child => child.branchType !== 'quote'),
+      branchCount: node.children.length - (node.children.some(child => child.branchType !== 'quote') ? 1 : 0),
       isCurrentPath: topic.currentNode && this.isInPath(topic.currentNode, node, topic.conversationTree),
       depth: this.calculateDepth(node, topic.conversationTree)
     };
@@ -157,6 +159,8 @@ class TreeController {
       error: node.error || null,
       childrenIds: node.children.map(c => c.id),
       childrenCount: node.children.length,
+      isContinuationEnd: !node.children.some(child => child.branchType !== 'quote'),
+      branchCount: node.children.length - (node.children.some(child => child.branchType !== 'quote') ? 1 : 0),
       isCurrentPath: topic.currentNode && this.isInPath(topic.currentNode, node, topic.conversationTree)
     };
   }

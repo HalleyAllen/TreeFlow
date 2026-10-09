@@ -18,6 +18,7 @@ import '@xyflow/react/dist/style.css';
 import { Box, IconButton, Tooltip, Snackbar, Alert } from '@mui/material';
 import { Add, Remove, FitScreen, RestartAlt } from '@mui/icons-material';
 import MindMapNode, { NODE_WIDTH, NODE_HEIGHT } from './MindMapNode';
+import { splitNodeChildren } from './treeStructure';
 import * as treeApi from '../../services/api/tree.api';
 
 // 节点间距配置
@@ -49,8 +50,7 @@ function calculateSubtreeHeight(node, getHeight = () => NODE_HEIGHT) {
     return ownHeight + MAIN_VERTICAL_SPACING;
   }
 
-  const mainChild = node.children[0];
-  const branchChildren = node.children.slice(1);
+  const { mainChild, branchChildren } = splitNodeChildren(node);
 
   // 主流程子树高度
   let mainChildHeight = 0;
@@ -152,8 +152,11 @@ function calculateLayout(
     }
 
     const isActiveEndNode = nodeId === activeEndNodeId;
+    const { mainChild, branchChildren } = splitNodeChildren(node);
     const data = {
       ...node,
+      isContinuationEnd: !mainChild,
+      branchCount: branchChildren.length,
       depth,
       isBranch,
       selected: isSelected,
@@ -185,9 +188,6 @@ function calculateLayout(
 
     // 处理子节点
     if (node.children && node.children.length > 0) {
-      const mainChild = node.children[0];
-      const branchChildren = node.children.slice(1);
-
       // 主流程子节点 - 垂直向下
       if (mainChild) {
         const isQuote = mainChild.branchType === 'quote';

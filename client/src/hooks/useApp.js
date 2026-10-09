@@ -296,7 +296,7 @@ export const useApp = () => {
   // 节点选中处理（用于活跃末端节点切换）
   const handleNodeSelect = useCallback((nodeData) => {
     console.log('[useApp handleNodeSelect] nodeData:', nodeData);
-    if (nodeData && nodeData.childrenCount === 0) {
+    if (nodeData && (nodeData.isContinuationEnd ?? (nodeData.childrenCount === 0))) {
       // 有引用时不更新活跃末端节点（保持引用优先）
       if (quotedTexts.length === 0) {
         console.log('[useApp] 设为活跃末端节点:', nodeData.id);
