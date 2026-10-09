@@ -16,6 +16,7 @@ import {
   Divider,
   Button,
   TextField,
+  Portal,
 } from '@mui/material';
 import { ExpandMore, ExpandLess, FormatQuote, ContentCopy, Edit, Delete, AccountTree, Send } from '@mui/icons-material';
 
@@ -97,6 +98,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
   const questionTextRef = useRef(null);
   const answerTextRef = useRef(null);
   // 划词引用相关状态
+  const quoteButtonRef = useRef(null);
   const [selectedText, setSelectedText] = useState('');
   const [showQuoteButton, setShowQuoteButton] = useState(false);
   const [quoteButtonPos, setQuoteButtonPos] = useState({ x: 0, y: 0 });
@@ -277,7 +279,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
   // 获取当前画布缩放比例（节点渲染在缩放后的 viewport 内，定位需换算回节点本地坐标）
   const getCurrentZoom = useCallback(() => {
     try {
-      return Math.max(getZoom?.() ?? 1, 0.5);
+      return Math.max(getZoom?.() ?? 1, 0.1);
     } catch {
       return 1;
     }
@@ -286,7 +288,11 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
   // 划词引用：鼠标释放时检测是否有选中文本，计算引用按钮位置
   const handleTextSelection = useCallback(() => {
     const selection = window.getSelection();
-    const text = selection.toString().trim();
+    const text = selection?.toString().trim();
+    if (!selection?.rangeCount || isEditing || !onQuoteText || !nodeRef.current?.contains(selection.getRangeAt(0).commonAncestorContainer)) {
+      setShowQuoteButton(false);
+      return;
+    }
 
     if (text && text.length > 0) {
       setSelectedText(text);
@@ -297,19 +303,39 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
       if (nodeRect) {
         const zoom = getCurrentZoom();
         // 按钮宽度约 46px，根据缩放比例调整偏移
-        const buttonWidth = 46 / zoom;
-        const buttonHeight = 20 / zoom;
+        const buttonWidth = 80 / zoom;
+        const buttonHeight = 34 / zoom;
 
+        const canvasRect = nodeRef.current.closest('.react-flow')?.getBoundingClientRect();
+        const bounds = {
+          left: Math.max(8, canvasRect?.left ?? 0),
+          right: Math.min(window.innerWidth - 8, canvasRect?.right ?? window.innerWidth),
+          top: Math.max(8, canvasRect?.top ?? 0),
+          bottom: Math.min(window.innerHeight - 8, canvasRect?.bottom ?? window.innerHeight),
+        };
+        const visibleRect = {
+          left: Math.max(rect.left, nodeRect.left, bounds.left),
+          right: Math.min(rect.right, nodeRect.right, bounds.right),
+          top: Math.max(rect.top, nodeRect.top, bounds.top),
+          bottom: Math.min(rect.bottom, nodeRect.bottom, bounds.bottom),
+        };
+        if (visibleRect.right <= visibleRect.left || visibleRect.bottom <= visibleRect.top) {
+          setShowQuoteButton(false);
+          return;
+        }
+        const width = buttonWidth * zoom;
+        const height = buttonHeight * zoom;
+        const top = visibleRect.top - height - 8;
         setQuoteButtonPos({
-          x: (rect.left - nodeRect.left + rect.width / 2) / zoom - buttonWidth / 2,
-          y: (rect.top - nodeRect.top) / zoom - buttonHeight - 8 / zoom,
+          x: Math.max(bounds.left, Math.min((visibleRect.left + visibleRect.right - width) / 2, bounds.right - width)),
+          y: Math.max(bounds.top, Math.min(top >= bounds.top ? top : visibleRect.bottom + 8, bounds.bottom - height)),
         });
         setShowQuoteButton(true);
       }
     } else {
       setShowQuoteButton(false);
     }
-  }, [getCurrentZoom]);
+  }, [getCurrentZoom, isEditing, onQuoteText]);
 
   // 全局监听选区变化：选区在其他节点时隐藏本节点的引用按钮
   useEffect(() => {
@@ -341,7 +367,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (showQuoteButton && nodeRef.current) {
-        const isInsideNode = nodeRef.current.contains(event.target);
+        const isInsideNode = nodeRef.current.contains(event.target) || quoteButtonRef.current?.contains(event.target);
         if (!isInsideNode) {
           setShowQuoteButton(false);
           window.getSelection()?.removeAllRanges();
@@ -352,6 +378,22 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showQuoteButton]);
+
+  useEffect(() => {
+    if (!showQuoteButton) return undefined;
+    const hide = () => setShowQuoteButton(false);
+    const handleKeyDown = event => { if (event.key === 'Escape') hide(); };
+    window.addEventListener('resize', hide);
+    document.addEventListener('scroll', hide, true);
+    document.addEventListener('wheel', hide, { passive: true });
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('resize', hide);
+      document.removeEventListener('scroll', hide, true);
+      document.removeEventListener('wheel', hide);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [showQuoteButton]);
 
@@ -535,38 +577,51 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
       >
         {/* 引用按钮浮动层 */}
         {showQuoteButton && (
-          <Box
-            className="nodrag"
-            onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
-            onMouseUp={(e) => { e.stopPropagation(); e.preventDefault(); }}
-            onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleQuote(e); }}
-            sx={{
-              position: 'absolute',
-              left: quoteButtonPos.x,
-              top: quoteButtonPos.y,
-              zIndex: 1000,
-              backgroundColor: '#3b82f6',
-              borderRadius: `calc(4px / ${getCurrentZoom()})`,
-              boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: `calc(1px / ${getCurrentZoom()}) calc(6px / ${getCurrentZoom()})`,
-              height: `calc(20px / ${getCurrentZoom()})`,
-              cursor: 'pointer',
-              '&:hover': {
-                backgroundColor: '#2563eb',
-              },
-            }}
-          >
-            <FormatQuote sx={{ color: 'white', fontSize: `calc(12px / ${getCurrentZoom()})`, mr: 0.3 / getCurrentZoom() }} />
-            <Typography
-              variant="caption"
-              sx={{ color: 'white', fontSize: `calc(11px / ${getCurrentZoom()})`, lineHeight: 1 }}
+          <Portal>
+            <Button
+              ref={quoteButtonRef}
+              type="button"
+              data-quote-action="true"
+              className="nodrag nopan nowheel"
+              disableRipple
+              startIcon={<FormatQuote />}
+              onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+              onMouseUp={(e) => { e.stopPropagation(); e.preventDefault(); }}
+              onClick={handleQuote}
+              sx={{
+                position: 'fixed',
+                left: quoteButtonPos.x,
+                top: quoteButtonPos.y,
+                zIndex: 1200,
+                width: 80,
+                minWidth: 80,
+                height: 34,
+                p: 0,
+                borderRadius: '10px',
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--card-background)',
+                color: 'var(--primary-color)',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.18)',
+                fontSize: 13,
+                fontWeight: 600,
+                lineHeight: 1,
+                textTransform: 'none',
+                userSelect: 'none',
+                transition: 'background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease',
+                '& .MuiButton-startIcon': { ml: 0, mr: '5px' },
+                '& .MuiButton-startIcon > svg': { fontSize: 18 },
+                '&:hover': {
+                  backgroundColor: 'var(--sidebar-bg)',
+                  borderColor: 'var(--primary-color)',
+                  boxShadow: '0 6px 20px rgba(0, 0, 0, 0.22)',
+                },
+                '&:active': { backgroundColor: 'var(--card-background)', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.16)' },
+                '&.Mui-focusVisible': { outline: '2px solid var(--primary-color)', outlineOffset: 3 },
+              }}
             >
               引用
-            </Typography>
-          </Box>
+            </Button>
+          </Portal>
         )}
 
         <Paper
