@@ -1,7 +1,7 @@
 /**
  * 话题管理Hook
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import * as topicApi from '../services/api/topic.api';
 import logger from '../services/logger';
 
@@ -9,25 +9,29 @@ export const useTopics = () => {
   const [topics, setTopics] = useState([]);
   const [currentTopic, setCurrentTopic] = useState(null);
   const [loading, setLoading] = useState(false);
+  const topicsLoadRef = useRef(0);
+  const currentTopicLoadRef = useRef(0);
 
   // 加载话题列表
   const loadTopics = useCallback(async () => {
+    const requestId = ++topicsLoadRef.current;
     setLoading(true);
     try {
       const topicsData = await topicApi.loadTopics();
-      setTopics(topicsData);
+      if (topicsLoadRef.current === requestId) setTopics(topicsData);
     } catch (error) {
       logger.error('useTopics', '加载话题失败:', error);
     } finally {
-      setLoading(false);
+      if (topicsLoadRef.current === requestId) setLoading(false);
     }
   }, []);
 
   // 加载当前话题
   const loadCurrentTopic = useCallback(async () => {
+    const requestId = ++currentTopicLoadRef.current;
     try {
       const topic = await topicApi.loadCurrentTopic();
-      setCurrentTopic(topic);
+      if (topic?.id && currentTopicLoadRef.current === requestId) setCurrentTopic(topic);
     } catch (error) {
       logger.error('useTopics', '加载当前话题失败:', error);
     }
@@ -38,7 +42,7 @@ export const useTopics = () => {
     try {
       const result = await topicApi.createTopic(name);
       if (result.success !== false) {
-        await loadTopics();
+        await Promise.all([loadTopics(), loadCurrentTopic()]);
         return { success: true, result };
       }
       return { success: false, error: result.error };
@@ -46,7 +50,7 @@ export const useTopics = () => {
       logger.error('useTopics', '创建话题失败:', error);
       return { success: false, error: error.message };
     }
-  }, [loadTopics]);
+  }, [loadTopics, loadCurrentTopic]);
 
   // 切换话题
   const switchTopic = useCallback(async (topicId) => {

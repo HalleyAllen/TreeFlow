@@ -142,12 +142,16 @@ class TopicManager {
    * @param {string} name - 话题名称
    * @returns {string} - 创建话题的结果信息
    */
-  createTopic(name) {
+  createTopic(name = '', returnTopic = false) {
     try {
+      name = typeof name === 'string' ? name.trim() : '';
+      const autoNameFromFirstQuestion = !name;
+      if (autoNameFromFirstQuestion) name = '新话题';
       const topicId = `topic-${randomUUID()}`;
       this.topics[topicId] = {
         id: topicId,
         name: name,
+        autoNameFromFirstQuestion,
         conversationTree: null,  // 初始为空，等用户提问时再创建
         currentNode: null,
         nodePositions: {},  // 节点位置持久化存储
@@ -156,7 +160,8 @@ class TopicManager {
       };
       this.saveTopics();
       logger.info('TopicManager', '创建话题', { topicId, name });
-      return `已创建话题: ${name} (ID: ${topicId})`;
+      const result = `已创建话题: ${name} (ID: ${topicId})`;
+      return returnTopic ? { topic: this.topics[topicId], result } : result;
     } catch (error) {
       logger.error('TopicManager', '创建话题失败:', { error: error.message, name });
       return '创建话题失败';

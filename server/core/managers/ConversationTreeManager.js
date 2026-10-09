@@ -284,6 +284,10 @@ class ConversationTreeManager {
       };
       topic.conversationTree = rootNode;
       topic.currentNode = rootNode;
+      if (topic.autoNameFromFirstQuestion && typeof message === 'string' && message.trim()) {
+        topic.name = message.trim();
+        topic.autoNameFromFirstQuestion = false;
+      }
       this.topicManager.saveTopics();
       logger.info('ConversationTreeManager', '创建首个对话节点', { 
         topic: topic.name, 

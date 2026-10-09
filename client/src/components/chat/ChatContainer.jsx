@@ -17,6 +17,7 @@ const ChatContainer = () => {
     messages,
     input,
     chatLoading: isLoading,
+    creatingTopic,
     chatError,
     models,
     selectedModel,
@@ -205,6 +206,12 @@ const ChatContainer = () => {
     if (chatError) showNotification(chatError, 'error')
   }, [chatError, showNotification])
 
+  useEffect(() => {
+    if (!currentTopic?.id || creatingTopic) return undefined
+    const frame = requestAnimationFrame(() => inputRef.current?.focus())
+    return () => cancelAnimationFrame(frame)
+  }, [currentTopic?.id, creatingTopic])
+
   // 话题切换时加载树数据
   useEffect(() => {
     if (currentTopic?.id) {
@@ -317,6 +324,7 @@ const ChatContainer = () => {
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 2,
+          maxWidth: 'calc(100% - 48px)',
           px: 2,
           py: 1,
           borderRadius: 2,
@@ -324,7 +332,7 @@ const ChatContainer = () => {
           backdropFilter: 'blur(8px)',
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
         }}>
-          <Typography variant="h6" component="h2" sx={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-color)', fontSize: '1.1rem' }}>
+          <Typography variant="h6" component="h2" noWrap title={currentTopic?.name} sx={{ display: 'block', minWidth: 0, alignItems: 'center', gap: '8px', color: 'var(--text-color)', fontSize: '1.1rem' }}>
             💬 {currentTopic?.name || '默认话题'}
           </Typography>
           {branchMode && (

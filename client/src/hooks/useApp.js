@@ -16,8 +16,8 @@ import logger from '../services/logger';
 export const useApp = () => {
   // UI 状态
   const [showAIServiceModal, setShowAIServiceModal] = useState(false);
-  const [showCreateTopicModal, setShowCreateTopicModal] = useState(false);
-  const [topicNameInput, setTopicNameInput] = useState('');
+  const [creatingTopic, setCreatingTopic] = useState(false);
+  const creatingTopicRef = useRef(false);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -38,6 +38,8 @@ export const useApp = () => {
     currentTopic, 
     createTopic, 
     switchTopic, 
+    loadTopics,
+    loadCurrentTopic,
   } = useTopics();
 
   const {
@@ -55,6 +57,13 @@ export const useApp = () => {
     enterBranchMode,
     exitBranchMode,
   } = useChat(currentTopic?.id);
+
+  useEffect(() => {
+    if (nodeCreated && currentTopic?.autoNameFromFirstQuestion) {
+      loadTopics();
+      loadCurrentTopic();
+    }
+  }, [nodeCreated, currentTopic?.id, currentTopic?.autoNameFromFirstQuestion, loadTopics, loadCurrentTopic]);
 
   const {
     models,
@@ -229,16 +238,21 @@ export const useApp = () => {
 
   // 创建话题
   const handleCreateTopic = useCallback(async () => {
-    if (!topicNameInput.trim()) return;
-
-    const result = await createTopic(topicNameInput);
-    if (result.success) {
-      setShowCreateTopicModal(false);
-      setTopicNameInput('');
-    } else {
-      alert(`创建话题失败: ${result.error}`);
+    if (creatingTopicRef.current) return;
+    creatingTopicRef.current = true;
+    setCreatingTopic(true);
+    try {
+      const result = await createTopic();
+      if (result.success) {
+        setSidebarOpen(false);
+      } else {
+        alert(`创建话题失败: ${result.error}`);
+      }
+    } finally {
+      creatingTopicRef.current = false;
+      setCreatingTopic(false);
     }
-  }, [topicNameInput, createTopic]);
+  }, [createTopic]);
 
   // 切换话题
   const handleSwitchTopic = useCallback(async (topicId) => {
@@ -303,10 +317,7 @@ export const useApp = () => {
     setShowAIServiceModal,
     sidebarOpen,
     setSidebarOpen,
-    showCreateTopicModal,
-    setShowCreateTopicModal,
-    topicNameInput,
-    setTopicNameInput,
+    creatingTopic,
     showModelDropdown,
     setShowModelDropdown,
 

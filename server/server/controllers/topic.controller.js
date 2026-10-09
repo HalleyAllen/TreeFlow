@@ -27,8 +27,11 @@ class TopicController {
    */
   createTopic(req, res) {
     const { name } = req.body;
-    const result = this.topicManager.createTopic(name);
-    res.success({ result });
+    const created = this.topicManager.createTopic(name, true);
+    if (!created?.topic) return res.error(created || 'Could not create topic', 500);
+    const { topic, result } = created;
+    this.configManager.setCurrentTopic(topic.id);
+    res.success({ result, topicId: topic.id });
   }
 
   /**
@@ -73,7 +76,8 @@ class TopicController {
     
     const currentTopic = {
       id: topicId,
-      name: topic ? topic.name : '默认话题'
+      name: topic ? topic.name : '默认话题',
+      autoNameFromFirstQuestion: !!topic?.autoNameFromFirstQuestion
     };
     res.success({ currentTopic });
   }
