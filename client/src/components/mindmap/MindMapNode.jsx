@@ -6,6 +6,7 @@
  */
 import { memo, useState, useCallback, useRef, useEffect } from 'react';
 import { Handle, Position, useReactFlow } from '@xyflow/react';
+import MarkdownAnswer from '../common/MarkdownAnswer';
 import {
   Box,
   Typography,
@@ -17,6 +18,8 @@ import {
   TextField,
 } from '@mui/material';
 import { ExpandMore, ExpandLess, FormatQuote, ContentCopy, Edit, Delete, AccountTree, Send } from '@mui/icons-material';
+
+const COLLAPSED_ANSWER_HEIGHT = 82;
 
 // 节点尺寸常量（与 MindMap 共享）
 export const NODE_WIDTH = 280;
@@ -450,15 +453,24 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
 
   // 精确判断问题区/回答区是否需要展开按钮：通过 DOM 测量是否溢出
   useEffect(() => {
-    if (questionTextRef.current) {
-      const el = questionTextRef.current;
-      setNeedsExpandQuestion(el.scrollHeight > el.clientHeight + 1);
-    }
-    if (answerTextRef.current) {
-      const el = answerTextRef.current;
-      setNeedsExpandAnswer(el.scrollHeight > el.clientHeight + 1);
-    }
-  }, [displayQuestion, fullAnswer]);
+    const measure = () => {
+      if (questionTextRef.current) {
+        const el = questionTextRef.current;
+        setNeedsExpandQuestion(el.scrollHeight > el.clientHeight + 1);
+      }
+      if (answerTextRef.current) {
+        const el = answerTextRef.current;
+        setNeedsExpandAnswer(el.scrollHeight > COLLAPSED_ANSWER_HEIGHT + 1);
+      }
+    };
+    measure();
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const observer = new ResizeObserver(measure);
+    const answerContent = answerTextRef.current?.querySelector('.markdown-answer');
+    if (questionTextRef.current) observer.observe(questionTextRef.current);
+    if (answerContent) observer.observe(answerContent);
+    return () => observer.disconnect();
+  }, [displayQuestion, fullAnswer, answerExpanded]);
 
   // 是否有删除支线操作（有真正分支且非根节点）
   const canDeleteBranch = hasBranches && !isRoot && !!onDeleteBranch;
@@ -718,16 +730,15 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
             </Box>
             {answerExpanded ? (
               // 回答展开时：用 span 让容器只包裹实际文字
-              <Typography
-                variant="body2"
-                component="span"
+              <Box
+                ref={answerTextRef}
                 className="nodrag"
                 onMouseDown={(e) => e.stopPropagation()}
                 sx={{
-                  width: 'fit-content',
-                  fontSize: '0.75rem',
+                  width: '100%',
+                  fontSize: '0.8rem',
                   color: isError ? '#dc2626' : '#374151',
-                  lineHeight: 1.4,
+                  lineHeight: 1.6,
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-word',
                   cursor: 'text',
@@ -735,22 +746,20 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
                   WebkitUserSelect: 'text',
                 }}
               >
-                {fullAnswer}
+                <MarkdownAnswer content={fullAnswer} />
                 {isStreaming && <span className="stream-cursor" />}
-              </Typography>
+              </Box>
             ) : (
               // 回答收起时：用 -webkit-box 截断（最多4行）
-              <Typography
+              <Box
                 ref={answerTextRef}
-                variant="body2"
-                component="span"
                 className="nodrag"
                 onMouseDown={(e) => e.stopPropagation()}
                 sx={{
-                  width: 'fit-content',
-                  fontSize: '0.75rem',
+                  width: '100%',
+                  fontSize: '0.8rem',
                   color: isError ? '#dc2626' : '#374151',
-                  lineHeight: 1.4,
+                  lineHeight: 1.6,
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-word',
                   cursor: 'text',
@@ -760,11 +769,12 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
                   WebkitLineClamp: 4,
                   WebkitBoxOrient: 'vertical',
                   overflow: 'hidden',
+                  maxHeight: COLLAPSED_ANSWER_HEIGHT,
                 }}
               >
-                {fullAnswer}
+                <MarkdownAnswer content={fullAnswer} />
                 {isStreaming && <span className="stream-cursor" />}
-              </Typography>
+              </Box>
             )}
 
             {/* 分支状态/操作按钮栏 */}
