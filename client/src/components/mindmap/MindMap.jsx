@@ -24,7 +24,7 @@ import * as treeApi from '../../services/api/tree.api';
 // 节点间距配置
 const MAIN_VERTICAL_SPACING = 80;    // 主流程节点之间的垂直间距
 const HORIZONTAL_SPACING = 400;      // 分支的水平间距
-const BRANCH_VERTICAL_SPACING = 240; // 分支之间的垂直间距
+const BRANCH_VERTICAL_SPACING = 60; // 分支之间的垂直间距
 
 // 主流程边 / 引用边样式（与 X6 注册的 mind-map-edge / quote-edge 一致）
 const EDGE_STYLE = {
@@ -47,7 +47,7 @@ function calculateSubtreeHeight(node, getHeight = () => NODE_HEIGHT) {
   const ownHeight = getHeight(node.id);
 
   if (!node.children || node.children.length === 0) {
-    return ownHeight + MAIN_VERTICAL_SPACING;
+    return ownHeight;
   }
 
   const { mainChild, branchChildren } = splitNodeChildren(node);
@@ -70,8 +70,8 @@ function calculateSubtreeHeight(node, getHeight = () => NODE_HEIGHT) {
   });
 
   // 返回主流程和分支中较高的那个，再加上当前节点高度
-  const childrenHeight = Math.max(mainChildHeight, branchesTotalHeight);
-  return ownHeight + MAIN_VERTICAL_SPACING + childrenHeight;
+  const childrenHeight = Math.max(mainChild ? ownHeight + MAIN_VERTICAL_SPACING + mainChildHeight : 0, branchesTotalHeight);
+  return Math.max(ownHeight, childrenHeight);
 }
 
 /**
