@@ -18,6 +18,7 @@ class TopicManager {
         conversationTree: null,  // 初始为空，等用户提问时再创建
         currentNode: null,
         nodePositions: {},  // 节点位置持久化存储
+        nodeSizes: {},
         viewport: null,  // 视口位置持久化存储 { x, y, zoom }
         activeEndNodeId: null  // 活跃末端节点ID持久化存储
       }
@@ -115,8 +116,10 @@ class TopicManager {
       // 保存所有话题（包括默认话题，以保留话题状态）
       fs.writeFileSync(this.topicsFile, JSON.stringify(this.topics, null, 2));
       logger.info('TopicManager', '保存话题成功', { topicCount: Object.keys(this.topics).length });
+      return true;
     } catch (error) {
       logger.error('TopicManager', '保存话题失败:', { error: error.message });
+      return false;
     }
   }
 
@@ -137,6 +140,37 @@ class TopicManager {
     return this.topics[topicId] || null;
   }
 
+  getNodeSizes(topicId) {
+    return this.getTopic(topicId)?.nodeSizes || {};
+  }
+
+  saveNodeSizes(topicId, sizes) {
+    const topic = this.getTopic(topicId);
+    if (!topic || !sizes || typeof sizes !== 'object' || Array.isArray(sizes)) return false;
+    const nodeIds = new Set();
+    const pending = topic.conversationTree ? [topic.conversationTree] : [];
+    while (pending.length) {
+      const node = pending.pop();
+      nodeIds.add(node.id);
+      pending.push(...(node.children || []));
+    }
+    const entries = Object.entries(sizes);
+    for (const [id, size] of entries) {
+      if (!nodeIds.has(id) || !size || !Number.isFinite(size.width) || !Number.isFinite(size.height) ||
+          size.width < 240 || size.width > 1200 || size.height < 220 || size.height > 1600) return false;
+    }
+    const normalized = Object.fromEntries(entries.map(([id, size]) => [id, {
+      width: Math.round(size.width), height: Math.round(size.height),
+    }]));
+    const previous = topic.nodeSizes;
+    topic.nodeSizes = { ...previous, ...normalized };
+    if (this.saveTopics() === false) {
+      topic.nodeSizes = previous;
+      return false;
+    }
+    return true;
+  }
+
   /**
    * 创建话题
    * @param {string} name - 话题名称
@@ -155,6 +189,7 @@ class TopicManager {
         conversationTree: null,  // 初始为空，等用户提问时再创建
         currentNode: null,
         nodePositions: {},  // 节点位置持久化存储
+        nodeSizes: {},
         viewport: null,  // 视口位置持久化存储
         activeEndNodeId: null  // 活跃末端节点ID持久化存储
       };

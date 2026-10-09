@@ -5,7 +5,7 @@
  * React Flow 使用 data 驱动：主组件把业务数据与回调放入 node.data
  */
 import { memo, useState, useCallback, useRef, useEffect } from 'react';
-import { Handle, Position, useReactFlow } from '@xyflow/react';
+import { Handle, Position, useReactFlow, NodeResizeControl } from '@xyflow/react';
 import MarkdownAnswer from '../common/MarkdownAnswer';
 import {
   Box,
@@ -17,7 +17,7 @@ import {
   Button,
   TextField,
 } from '@mui/material';
-import { ExpandMore, ExpandLess, FormatQuote, ContentCopy, Edit, Delete, AccountTree, Send } from '@mui/icons-material';
+import { ExpandMore, ExpandLess, FormatQuote, ContentCopy, Edit, Delete, AccountTree, Send, OpenInFull } from '@mui/icons-material';
 
 const COLLAPSED_ANSWER_HEIGHT = 82;
 
@@ -132,6 +132,8 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
     onToggleExpand,
     onExpandStateChange,
     onNodeHeightChange,
+    onNodeResize,
+    expandedSize,
     isStreaming = false,
     streamingContent = '',
   } = data || {};
@@ -147,6 +149,10 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
 
   // 任一区域展开即视为节点有展开行为
   const isAnyExpanded = questionExpanded || answerExpanded;
+  const manualSize = isAnyExpanded ? expandedSize : null;
+  const handleResizeStart = useCallback(() => onNodeResize?.(actualNodeId, null, 'start'), [actualNodeId, onNodeResize]);
+  const handleResize = useCallback((_event, size) => onNodeResize?.(actualNodeId, size, 'resize'), [actualNodeId, onNodeResize]);
+  const handleResizeEnd = useCallback((_event, size) => onNodeResize?.(actualNodeId, size, 'end'), [actualNodeId, onNodeResize]);
 
   // 包装 toggleQuestion，添加持久化逻辑
   const wrappedToggleQuestion = useCallback((event) => {
@@ -491,11 +497,23 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
       <Handle id="bottom" type="source" position={Position.Bottom} style={HANDLE_STYLE} isConnectable={false} />
       <Handle id="right" type="source" position={Position.Right} style={HANDLE_STYLE} isConnectable={false} />
 
+      {isAnyExpanded && !isEditing && (
+        <NodeResizeControl
+          position="bottom-right" minWidth={240} minHeight={220} maxWidth={1200} maxHeight={1600}
+          color="transparent" className="node-resize-handle nodrag nopan"
+          style={{ width: 18, height: 18, background: 'transparent', border: 0, zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onResizeStart={handleResizeStart} onResize={handleResize} onResizeEnd={handleResizeEnd}
+        >
+          <OpenInFull sx={{ fontSize: 18, color: '#3b82f6' }} />
+        </NodeResizeControl>
+      )}
+
       <Box
         ref={nodeRef}
         className="mindmap-node"
         sx={{
-          width: NODE_WIDTH,
+          width: manualSize?.width || NODE_WIDTH,
+          height: manualSize?.height || 'auto',
           position: 'relative',
         }}
         onMouseUp={handleTextSelection}
@@ -540,35 +558,43 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
         <Paper
           ref={paperRef}
           sx={{
-            width: NODE_WIDTH,
-            height: 'auto',
+            width: '100%',
+            height: manualSize ? '100%' : 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
             border: styles.border,
             borderRadius: 3,
             boxShadow: styles.boxShadow,
             // 任一区域展开或编辑时溢出可见，确保底部文字可选中；收起时隐藏溢出内容
-            overflow: isAnyExpanded || isEditing ? 'visible' : 'hidden',
-            transition: 'all 0.2s ease',
+            overflow: manualSize ? 'hidden' : (isAnyExpanded || isEditing ? 'visible' : 'hidden'),
+            transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
             backgroundColor: selected ? '#eff6ff' : (isQuote ? '#fffbeb' : (isError ? '#fef2f2' : '#ffffff')),
             boxSizing: 'border-box',
           }}
         >
           {/* 上半部分：问题区域 */}
           <Box
+            className={manualSize ? 'node-question-area nowheel' : 'node-question-area'}
             sx={{
               position: 'relative',
               p: 1.2,
               pb: 0.8,
-              minHeight: questionExpanded || isEditing ? 'auto' : QUESTION_AREA_HEIGHT,
+              minHeight: manualSize && questionExpanded ? 0 : (questionExpanded || isEditing ? 'auto' : QUESTION_AREA_HEIGHT),
+              flex: manualSize && questionExpanded && !answerExpanded ? '1 1 0' : undefined,
+              flexShrink: manualSize && questionExpanded && !answerExpanded ? 1 : 0,
+              maxHeight: manualSize && (!questionExpanded || answerExpanded) ? '45%' : undefined,
               backgroundColor: styles.questionBg,
               borderBottom: isAnyExpanded || isEditing ? '1px solid' : 'none',
               borderColor: isQuote ? '#fde68a' : (isRoot ? '#bfdbfe' : '#e5e7eb'),
               boxSizing: 'border-box',
               display: 'flex',
               flexDirection: 'column',
-              justifyContent: 'center',
+              justifyContent: manualSize ? 'flex-start' : 'center',
               gap: questionExpanded || isEditing ? 1 : 0,
               // 展开时隐藏溢出，防止背景色显示为直角超出圆角边框
               overflow: 'hidden',
+              overflowY: manualSize ? 'auto' : 'hidden',
               // 保持与 Paper 一致的上圆角
               borderRadius: '12px 12px 0 0',
             }}
@@ -577,7 +603,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
               <ExpandToggleButton
                 isExpanded={questionExpanded}
                 onToggle={wrappedToggleQuestion}
-                visible={needsExpandQuestion && !isEditing}
+                visible={(needsExpandQuestion || questionExpanded) && !isEditing}
               />
             </Box>
             {isEditing ? (
@@ -714,31 +740,38 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
           </Box>
 
           {/* 下半部分：回答区域 */}
-          <Box
+          <Box className="node-answer-area"
             sx={{
               p: 1.5,
               pt: 1,
               boxSizing: 'border-box',
+              display: 'flex',
+              flexDirection: 'column',
+              flex: manualSize ? (answerExpanded ? '1 1 0' : '0 0 auto') : undefined,
+              minHeight: 0,
             }}
           >
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 0 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 0, flexShrink: 0 }}>
               <ExpandToggleButton
                 isExpanded={answerExpanded}
                 onToggle={wrappedToggleAnswer}
-                visible={needsExpandAnswer}
+                visible={needsExpandAnswer || answerExpanded || !!fullAnswer}
               />
             </Box>
             {answerExpanded ? (
               // 回答展开时：用 span 让容器只包裹实际文字
               <Box
                 ref={answerTextRef}
-                className="nodrag"
+                className={manualSize ? "nodrag nopan nowheel" : "nodrag"}
                 onMouseDown={(e) => e.stopPropagation()}
                 sx={{
                   width: '100%',
+                  flex: manualSize ? '1 1 auto' : undefined,
+                  minHeight: 0,
                   fontSize: '0.8rem',
                   color: isError ? '#dc2626' : '#374151',
                   lineHeight: 1.6,
+                  overflowY: manualSize ? 'auto' : 'visible',
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-word',
                   cursor: 'text',
@@ -753,10 +786,12 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
               // 回答收起时：用 -webkit-box 截断（最多4行）
               <Box
                 ref={answerTextRef}
-                className="nodrag"
+                className={manualSize ? "nodrag nopan nowheel" : "nodrag"}
                 onMouseDown={(e) => e.stopPropagation()}
                 sx={{
                   width: '100%',
+                  flex: manualSize ? '1 1 auto' : undefined,
+                  minHeight: 0,
                   fontSize: '0.8rem',
                   color: isError ? '#dc2626' : '#374151',
                   lineHeight: 1.6,
@@ -778,13 +813,14 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
             )}
 
             {/* 分支状态/操作按钮栏 */}
-            <Divider sx={{ my: 1, borderColor: '#e5e7eb' }} />
+            <Divider sx={{ flexShrink: 0, my: 1, borderColor: '#e5e7eb' }} />
             <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 mt: 1,
+                flexShrink: 0,
               }}
             >
               {/* 分支数量或状态 - 只在回答收起时显示 */}

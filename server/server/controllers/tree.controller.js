@@ -6,6 +6,19 @@
 const logger = require('../../core/utils/logger');
 
 class TreeController {
+  getNodeSizes = (req, res) => {
+    const { topicId } = req.params;
+    if (!this.topicManager.getTopic(topicId)) return res.error('Topic not found', 404);
+    return res.success(this.topicManager.getNodeSizes(topicId));
+  }
+
+  saveNodeSizes = (req, res) => {
+    const { topicId } = req.params;
+    if (!this.topicManager.getTopic(topicId)) return res.error('Topic not found', 404);
+    if (!this.topicManager.saveNodeSizes(topicId, req.body.sizes)) return res.error('Invalid node size or missing node', 400);
+    return res.success({ saved: true });
+  }
+
   constructor(container) {
     // 从容器中获取所需服务，实现依赖注入解耦
     this.treeManager = container.get('conversationTreeManager');

@@ -15,9 +15,9 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Box, IconButton, Tooltip } from '@mui/material';
+import { Box, IconButton, Tooltip, Snackbar, Alert } from '@mui/material';
 import { Add, Remove, FitScreen, RestartAlt } from '@mui/icons-material';
-import MindMapNode, { NODE_HEIGHT } from './MindMapNode';
+import MindMapNode, { NODE_WIDTH, NODE_HEIGHT } from './MindMapNode';
 import * as treeApi from '../../services/api/tree.api';
 
 // 节点间距配置
@@ -92,9 +92,10 @@ function calculateLayout(
   activeEndNodeId = null,
   nodeHeights = {},
   manualOffsets = {},
-  autoPositions = {}
+  autoPositions = {},
+  nodeSizes = {}
 ) {
-  const { onQuoteText, onNodeSelect, onEditNode, onReanswerNode, onDeleteNode, onDeleteBranch, onToggleExpand, onExpandStateChange, onNodeHeightChange } = callbacks;
+  const { onQuoteText, onNodeSelect, onEditNode, onReanswerNode, onDeleteNode, onDeleteBranch, onToggleExpand, onExpandStateChange, onNodeHeightChange, onNodeResize } = callbacks;
   const nodes = [];
   const edges = [];
 
@@ -102,6 +103,11 @@ function calculateLayout(
   const getHeight = (nodeId) => {
     const height = nodeHeights[nodeId];
     return typeof height === 'number' && height > 0 ? height : NODE_HEIGHT;
+  };
+
+  const getWidth = nodeId => {
+    const state = expandedStates[nodeId];
+    return (state?.question || state?.answer) ? (nodeSizes[nodeId]?.width || NODE_WIDTH) : NODE_WIDTH;
   };
 
   // 第一遍：计算所有子树高度
@@ -163,12 +169,16 @@ function calculateLayout(
       onToggleExpand,
       onExpandStateChange,
       onNodeHeightChange,
+      onNodeResize,
+      expandedSize: nodeSizes[nodeId] || null,
     };
 
     nodes.push({
       id: nodeId,
       type: 'mindMapNode',
       position: { x: finalX, y: finalY },
+      style: (initialQuestionExpanded || initialAnswerExpanded) && nodeSizes[nodeId]
+        ? { width: nodeSizes[nodeId].width, height: nodeSizes[nodeId].height } : {},
       selectable: false, // 节点选中状态完全由外部 visualNodeId 驱动
       data,
     });
@@ -209,7 +219,7 @@ function calculateLayout(
 
         branchChildren.forEach((child) => {
           const isQuote = child.branchType === 'quote';
-          const branchX = x + HORIZONTAL_SPACING;
+          const branchX = x + Math.max(HORIZONTAL_SPACING, getWidth(nodeId) + 120);
           const childTreeHeight = subtreeHeights.get(child.id) || NODE_HEIGHT;
 
           edges.push({
@@ -254,6 +264,11 @@ function MindMapInner({
   onDeleteBranch,
 }) {
   const containerRef = useRef(null);
+  const topicIdRef = useRef(topicId);
+  topicIdRef.current = topicId;
+  const nodeSizesRef = useRef({});
+  const resizingNodeRef = useRef(null);
+  const [resizeError, setResizeError] = useState('');
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const { setViewport, fitView, zoomIn, zoomOut } = useReactFlow();
@@ -296,6 +311,8 @@ function MindMapInner({
       expandedStatesRef.current[nodeId] = {};
     }
     expandedStatesRef.current[nodeId][type] = isExpanded;
+    if (!isExpanded && resizingNodeRef.current === nodeId) resizingNodeRef.current = null;
+    relayoutRef.current?.();
     console.log(`[展开状态] 节点 ${nodeId} ${type}: ${isExpanded ? '展开' : '收起'}`);
   }, []);
 
@@ -322,6 +339,7 @@ function MindMapInner({
     const previous = nodeHeightsRef.current[nodeId];
     if (previous !== undefined && Math.abs(previous - height) < 1) return;
     nodeHeightsRef.current[nodeId] = height;
+    if (resizingNodeRef.current) return;
 
     // 合并同一帧内的多次上报，避免频繁重排
     if (relayoutRafRef.current) return;
@@ -330,6 +348,32 @@ function MindMapInner({
       relayoutRef.current?.();
     });
   }, []);
+
+  const handleNodeResize = useCallback(async (nodeId, size, phase) => {
+    if (!topicId || topicIdRef.current !== topicId) return;
+    if (phase === 'start') {
+      setResizeError('');
+      resizingNodeRef.current = nodeId;
+      return;
+    }
+    if (!size || !Number.isFinite(size.width) || !Number.isFinite(size.height)) return;
+    const dimensions = { width: Math.round(size.width), height: Math.round(size.height) };
+    nodeSizesRef.current[nodeId] = dimensions;
+    nodeHeightsRef.current[nodeId] = dimensions.height;
+    setNodes(nds => nds.map(node => node.id === nodeId ? {
+      ...node, style: { ...node.style, ...dimensions },
+      data: { ...node.data, expandedSize: dimensions },
+    } : node));
+    if (phase === 'end') {
+      resizingNodeRef.current = null;
+      requestAnimationFrame(() => {
+        if (topicIdRef.current === topicId) relayoutRef.current?.();
+      });
+      const requestId = layoutRequestRef.current;
+      const result = await treeApi.saveNodeSizes(topicId, { [nodeId]: dimensions });
+      if (!result.success && layoutRequestRef.current === requestId) setResizeError(result.error || 'Could not save node size');
+    }
+  }, [topicId, setNodes]);
 
   // 组件卸载时清理未执行的帧回调
   useEffect(() => () => {
@@ -371,6 +415,9 @@ function MindMapInner({
 
     // 重置状态，避免旧话题数据污染新话题
     expandedStatesRef.current = {};
+    nodeSizesRef.current = {};
+    resizingNodeRef.current = null;
+    setResizeError('');
     positionStatesRef.current = {};
     nodeHeightsRef.current = {};
     manualOffsetsRef.current = {};
@@ -382,12 +429,13 @@ function MindMapInner({
     setInitialDataLoaded(false);
 
     // 从服务器加载节点位置
-    treeApi.getNodePositions(topicId).then(result => {
+    Promise.all([treeApi.getNodePositions(topicId), treeApi.getNodeSizes(topicId)]).then(([result, sizesResult]) => {
       // 话题已切换则丢弃结果
       if (layoutRequestRef.current !== requestId) return;
       if (result.success) {
         positionStatesRef.current = result.positions || {};
       }
+      if (sizesResult.success) nodeSizesRef.current = sizesResult.sizes || {};
       setInitialDataLoaded(true);
     });
 
@@ -424,6 +472,7 @@ function MindMapInner({
         onToggleExpand: handleToggleExpand,
         onExpandStateChange: handleExpandStateChange,
         onNodeHeightChange: handleNodeHeightChange,
+        onNodeResize: handleNodeResize,
       },
       expandedStatesRef.current,
       positionStatesRef.current,
@@ -431,12 +480,20 @@ function MindMapInner({
       activeEndNodeIdRef.current,
       nodeHeightsRef.current,
       manualOffsetsRef.current,
-      autoPositionsRef.current
+      autoPositionsRef.current,
+      nodeSizesRef.current
     );
 
-    setNodes(layoutNodes);
+    setNodes(previous => {
+      const current = new Map(previous.map(node => [node.id, node]));
+      return layoutNodes.map(node => {
+        const prior = current.get(node.id);
+        return prior?.data.isStreaming && node.data.status === 'loading'
+          ? { ...node, data: { ...node.data, isStreaming: true, streamingContent: prior.data.streamingContent } } : node;
+      });
+    });
     setEdges(layoutEdges);
-  }, [treeData, setNodes, setEdges, handleNodeSelectInternal, handleToggleExpand, handleExpandStateChange, handleNodeHeightChange]);
+  }, [treeData, setNodes, setEdges, handleNodeSelectInternal, handleToggleExpand, handleExpandStateChange, handleNodeHeightChange, handleNodeResize]);
 
   // 供高度变化回调触发重新布局
   relayoutRef.current = buildLayout;
@@ -652,6 +709,10 @@ function MindMapInner({
           </IconButton>
         </Tooltip>
       </Box>
+
+      <Snackbar open={!!resizeError} autoHideDuration={5000} onClose={() => setResizeError('')}>
+        <Alert severity="error" onClose={() => setResizeError('')}>{resizeError}</Alert>
+      </Snackbar>
 
       <style>{`
         .mindmap-flow .react-flow__node {

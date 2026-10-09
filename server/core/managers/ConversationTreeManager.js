@@ -537,6 +537,7 @@ class ConversationTreeManager {
         delete topic.nodePositions[id];
       });
     }
+    if (topic.nodeSizes) removedIds.forEach(id => { delete topic.nodeSizes[id]; });
 
     this.topicManager.saveTopics();
     logger.info('ConversationTreeManager', '清空节点子分支', { topic: topic.name, nodeId, removedCount });
@@ -586,6 +587,7 @@ class ConversationTreeManager {
         
         if (removedIds.has(topic.activeEndNodeId)) topic.activeEndNodeId = null;
         for (const id of removedIds) delete (topic.nodePositions || {})[id];
+        for (const id of removedIds) delete (topic.nodeSizes || {})[id];
         this.topicManager.saveTopics();
         logger.info('ConversationTreeManager', '删除节点', { topic: topic.name, nodeId });
         return true;

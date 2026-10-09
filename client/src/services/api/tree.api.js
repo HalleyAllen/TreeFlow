@@ -5,6 +5,27 @@ import logger from '../logger';
 
 const API_BASE_URL = '';
 
+export async function getNodeSizes(topicId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/tree/sizes/${topicId}`);
+    const result = await response.json();
+    return result.success ? { success: true, sizes: result.data || {} } : { success: false, error: result.error };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function saveNodeSizes(topicId, sizes) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/tree/sizes/${topicId}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sizes }),
+    });
+    return await response.json();
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
 /**
  * 获取话题的完整对话树（包含节点位置和视口状态）
  * @param {string} topicId - 话题ID
