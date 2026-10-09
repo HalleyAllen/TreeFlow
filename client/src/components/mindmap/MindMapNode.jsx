@@ -5,7 +5,7 @@
  * React Flow 使用 data 驱动：主组件把业务数据与回调放入 node.data
  */
 import { memo, useState, useCallback, useRef, useEffect } from 'react';
-import { Handle, Position, useReactFlow, NodeResizeControl } from '@xyflow/react';
+import { Handle, Position, useReactFlow, NodeResizer } from '@xyflow/react';
 import MarkdownAnswer from '../common/MarkdownAnswer';
 import {
   Box,
@@ -17,7 +17,7 @@ import {
   Button,
   TextField,
 } from '@mui/material';
-import { ExpandMore, ExpandLess, FormatQuote, ContentCopy, Edit, Delete, AccountTree, Send, OpenInFull } from '@mui/icons-material';
+import { ExpandMore, ExpandLess, FormatQuote, ContentCopy, Edit, Delete, AccountTree, Send } from '@mui/icons-material';
 
 const COLLAPSED_ANSWER_HEIGHT = 82;
 
@@ -150,7 +150,20 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
   // 任一区域展开即视为节点有展开行为
   const isAnyExpanded = questionExpanded || answerExpanded;
   const manualSize = isAnyExpanded ? expandedSize : null;
-  const handleResizeStart = useCallback(() => onNodeResize?.(actualNodeId, null, 'start'), [actualNodeId, onNodeResize]);
+  const resizeGestureRef = useRef(null);
+  const handleResizeStart = useCallback((_event, size) => {
+    resizeGestureRef.current = { width: size.width, height: size.height, active: false };
+    onNodeResize?.(actualNodeId, null, 'start');
+  }, [actualNodeId, onNodeResize]);
+  const shouldResize = useCallback((_event, size) => {
+    const gesture = resizeGestureRef.current;
+    if (!gesture) return false;
+    if (gesture.active) return true;
+    const movement = Math.max(Math.abs(size.width - gesture.width), Math.abs(size.height - gesture.height)) * getZoom();
+    if (movement < 3) return false;
+    gesture.active = true;
+    return true;
+  }, [getZoom]);
   const handleResize = useCallback((_event, size) => onNodeResize?.(actualNodeId, size, 'resize'), [actualNodeId, onNodeResize]);
   const handleResizeEnd = useCallback((_event, size) => onNodeResize?.(actualNodeId, size, 'end'), [actualNodeId, onNodeResize]);
 
@@ -498,14 +511,15 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
       <Handle id="right" type="source" position={Position.Right} style={HANDLE_STYLE} isConnectable={false} />
 
       {isAnyExpanded && !isEditing && (
-        <NodeResizeControl
-          position="bottom-right" minWidth={240} minHeight={220} maxWidth={1200} maxHeight={1600}
-          color="transparent" className="node-resize-handle nodrag nopan"
-          style={{ width: 18, height: 18, background: 'transparent', border: 0, zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        <NodeResizer
+          minWidth={240} minHeight={220} maxWidth={1200} maxHeight={1600} autoScale={false}
+          color="transparent" lineClassName="node-resize-border nodrag nopan"
+          handleClassName="node-resize-handle node-resize-corner nodrag nopan"
+          lineStyle={{ border: 0, background: 'transparent', zIndex: 1100 }}
+          handleStyle={{ width: 14, height: 14, border: 0, background: 'transparent', zIndex: 1101 }}
+          shouldResize={shouldResize}
           onResizeStart={handleResizeStart} onResize={handleResize} onResizeEnd={handleResizeEnd}
-        >
-          <OpenInFull sx={{ fontSize: 18, color: '#3b82f6' }} />
-        </NodeResizeControl>
+        />
       )}
 
       <Box
@@ -562,12 +576,13 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
             height: manualSize ? '100%' : 'auto',
             display: 'flex',
             flexDirection: 'column',
-            minHeight: 0,
+            minHeight: isAnyExpanded ? 220 : 0,
+            maxHeight: isAnyExpanded ? 1600 : undefined,
             border: styles.border,
             borderRadius: 3,
             boxShadow: styles.boxShadow,
             // 任一区域展开或编辑时溢出可见，确保底部文字可选中；收起时隐藏溢出内容
-            overflow: manualSize ? 'hidden' : (isAnyExpanded || isEditing ? 'visible' : 'hidden'),
+            overflow: isAnyExpanded ? 'hidden' : (isEditing ? 'visible' : 'hidden'),
             transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
             backgroundColor: selected ? '#eff6ff' : (isQuote ? '#fffbeb' : (isError ? '#fef2f2' : '#ffffff')),
             boxSizing: 'border-box',
@@ -583,18 +598,18 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
               minHeight: manualSize && questionExpanded ? 0 : (questionExpanded || isEditing ? 'auto' : QUESTION_AREA_HEIGHT),
               flex: manualSize && questionExpanded && !answerExpanded ? '1 1 0' : undefined,
               flexShrink: manualSize && questionExpanded && !answerExpanded ? 1 : 0,
-              maxHeight: manualSize && (!questionExpanded || answerExpanded) ? '45%' : undefined,
+              maxHeight: manualSize ? ((!questionExpanded || answerExpanded) ? '45%' : undefined) : (isAnyExpanded ? (questionExpanded && !answerExpanded ? 1400 : 700) : undefined),
               backgroundColor: styles.questionBg,
               borderBottom: isAnyExpanded || isEditing ? '1px solid' : 'none',
               borderColor: isQuote ? '#fde68a' : (isRoot ? '#bfdbfe' : '#e5e7eb'),
               boxSizing: 'border-box',
               display: 'flex',
               flexDirection: 'column',
-              justifyContent: manualSize ? 'flex-start' : 'center',
+              justifyContent: isAnyExpanded ? 'flex-start' : 'center',
               gap: questionExpanded || isEditing ? 1 : 0,
               // 展开时隐藏溢出，防止背景色显示为直角超出圆角边框
               overflow: 'hidden',
-              overflowY: manualSize ? 'auto' : 'hidden',
+              overflowY: isAnyExpanded ? 'auto' : 'hidden',
               // 保持与 Paper 一致的上圆角
               borderRadius: '12px 12px 0 0',
             }}
@@ -747,7 +762,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
               boxSizing: 'border-box',
               display: 'flex',
               flexDirection: 'column',
-              flex: manualSize ? (answerExpanded ? '1 1 0' : '0 0 auto') : undefined,
+              flex: manualSize ? (answerExpanded ? '1 1 0' : '0 0 auto') : (answerExpanded ? '1 1 auto' : undefined),
               minHeight: 0,
             }}
           >
@@ -762,16 +777,16 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
               // 回答展开时：用 span 让容器只包裹实际文字
               <Box
                 ref={answerTextRef}
-                className={manualSize ? "nodrag nopan nowheel" : "nodrag"}
+                className="nodrag nopan nowheel"
                 onMouseDown={(e) => e.stopPropagation()}
                 sx={{
                   width: '100%',
-                  flex: manualSize ? '1 1 auto' : undefined,
+                  flex: '1 1 auto',
                   minHeight: 0,
                   fontSize: '0.8rem',
                   color: isError ? '#dc2626' : '#374151',
                   lineHeight: 1.6,
-                  overflowY: manualSize ? 'auto' : 'visible',
+                  overflowY: 'auto',
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-word',
                   cursor: 'text',

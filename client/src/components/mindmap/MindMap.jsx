@@ -268,6 +268,7 @@ function MindMapInner({
   topicIdRef.current = topicId;
   const nodeSizesRef = useRef({});
   const resizingNodeRef = useRef(null);
+  const resizeReleaseRef = useRef(null);
   const [resizeError, setResizeError] = useState('');
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -354,29 +355,60 @@ function MindMapInner({
     if (phase === 'start') {
       setResizeError('');
       resizingNodeRef.current = nodeId;
+      resizeReleaseRef.current?.();
+      const stopListening = () => {
+        window.removeEventListener('pointerup', release, true);
+        window.removeEventListener('pointercancel', release, true);
+      };
+      const release = () => {
+        stopListening();
+        resizeReleaseRef.current = null;
+        if (topicIdRef.current === topicId && resizingNodeRef.current === nodeId) {
+          resizingNodeRef.current = null;
+          requestAnimationFrame(() => {
+            if (topicIdRef.current === topicId) relayoutRef.current?.();
+          });
+        }
+      };
+      resizeReleaseRef.current = stopListening;
+      window.addEventListener('pointerup', release, { capture: true, once: true });
+      window.addEventListener('pointercancel', release, { capture: true, once: true });
       return;
     }
     if (!size || !Number.isFinite(size.width) || !Number.isFinite(size.height)) return;
     const dimensions = { width: Math.round(size.width), height: Math.round(size.height) };
+    const position = Number.isFinite(size.x) && Number.isFinite(size.y) ? { x: size.x, y: size.y } : null;
+    if (position) {
+      positionStatesRef.current[nodeId] = position;
+      const base = autoPositionsRef.current[nodeId];
+      if (base) manualOffsetsRef.current[nodeId] = { dx: position.x - base.x, dy: position.y - base.y };
+    }
     nodeSizesRef.current[nodeId] = dimensions;
     nodeHeightsRef.current[nodeId] = dimensions.height;
     setNodes(nds => nds.map(node => node.id === nodeId ? {
-      ...node, style: { ...node.style, ...dimensions },
+      ...node, position: position || node.position, style: { ...node.style, ...dimensions },
       data: { ...node.data, expandedSize: dimensions },
     } : node));
     if (phase === 'end') {
+      resizeReleaseRef.current?.();
+      resizeReleaseRef.current = null;
       resizingNodeRef.current = null;
       requestAnimationFrame(() => {
         if (topicIdRef.current === topicId) relayoutRef.current?.();
       });
       const requestId = layoutRequestRef.current;
-      const result = await treeApi.saveNodeSizes(topicId, { [nodeId]: dimensions });
+      const results = await Promise.all([
+        treeApi.saveNodeSizes(topicId, { [nodeId]: dimensions }),
+        ...(position ? [treeApi.saveNodePositions(topicId, { [nodeId]: position })] : []),
+      ]);
+      const result = results.find(item => !item.success) || { success: true };
       if (!result.success && layoutRequestRef.current === requestId) setResizeError(result.error || 'Could not save node size');
     }
   }, [topicId, setNodes]);
 
   // 组件卸载时清理未执行的帧回调
   useEffect(() => () => {
+    resizeReleaseRef.current?.();
     if (relayoutRafRef.current) {
       cancelAnimationFrame(relayoutRafRef.current);
       relayoutRafRef.current = 0;
@@ -417,6 +449,8 @@ function MindMapInner({
     expandedStatesRef.current = {};
     nodeSizesRef.current = {};
     resizingNodeRef.current = null;
+    resizeReleaseRef.current?.();
+    resizeReleaseRef.current = null;
     setResizeError('');
     positionStatesRef.current = {};
     nodeHeightsRef.current = {};

@@ -1386,3 +1386,18 @@ nav button:hover {
     background: transparent;
   }
 }
+
+/* Invisible resize targets follow the expanded node border. */
+.mindmap-flow .node-resize-border.left,
+.mindmap-flow .node-resize-border.right {
+  width: 8px;
+  top: 6px;
+  height: calc(100% - 12px);
+}
+
+.mindmap-flow .node-resize-border.top,
+.mindmap-flow .node-resize-border.bottom {
+  height: 8px;
+  left: 6px;
+  width: calc(100% - 12px);
+}
