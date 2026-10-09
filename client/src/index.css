@@ -1,5 +1,6 @@
 /* ==================== 主题变量 ==================== */
 :root {
+  color-scheme: dark;
   /* 深色主题（默认） */
   --primary-color: #3b82f6;
   --primary-hover: #2563eb;
@@ -21,7 +22,8 @@
   --success-bg: rgba(16, 185, 129, 0.1);
   --error-bg: rgba(239, 68, 68, 0.1);
   --scrollbar-track: #1a1a1a;
-  --scrollbar-thumb: #444;
+  --scrollbar-thumb: #64748b;
+  --scrollbar-thumb-hover: #94a3b8;
   --hover-bg: rgba(59, 130, 246, 0.1);
   --tooltip-bg: #333;
   --divider-color: #333;
@@ -50,6 +52,8 @@
   --error-bg: rgba(239, 68, 68, 0.1);
   --scrollbar-track: #f1f5f9;
   --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
+  color-scheme: light;
   --hover-bg: rgba(37, 99, 235, 0.08);
   --tooltip-bg: #475569;
   --divider-color: #e2e8f0;
@@ -60,7 +64,6 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color-scheme: light dark;
   color: var(--text-color);
   background-color: var(--background-color);
   font-synthesis: none;
@@ -470,7 +473,7 @@ nav button:hover {
 }
 
 .chat-messages::-webkit-scrollbar-thumb:hover {
-  background: var(--secondary-color);
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* ==================== 消息气泡 ==================== */
@@ -1323,5 +1326,63 @@ nav button:hover {
   .modal-content {
     min-width: 90%;
     margin: 1rem;
+  }
+}
+
+/* Scrollbars inherit the palette of their scrolling surface. */
+.mindmap-node {
+  color-scheme: light;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: #9ca3af;
+  --scrollbar-thumb-hover: #6b7280;
+}
+
+.markdown-answer pre {
+  color-scheme: dark;
+  --scrollbar-track: #111827;
+  --scrollbar-thumb: #6b7280;
+  --scrollbar-thumb-hover: #9ca3af;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+@supports selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: auto;
+    scrollbar-color: auto;
+  }
+
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+    border-radius: 8px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+  }
+
+  *::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
   }
 }
