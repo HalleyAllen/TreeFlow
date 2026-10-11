@@ -273,6 +273,13 @@ function MindMapInner({
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const { setViewport, fitView, zoomIn, zoomOut } = useReactFlow();
+  const getFitPadding = useCallback(() => {
+    const canvas = containerRef.current;
+    const composer = canvas?.closest('[data-chat-workspace]')?.querySelector('[data-chat-composer]');
+    if (!canvas || !composer) return 0.2;
+    const occupiedHeight = Math.max(0, canvas.getBoundingClientRect().bottom - composer.getBoundingClientRect().top);
+    return { top: '10%', right: '10%', bottom: `${occupiedHeight + 24}px`, left: '10%' };
+  }, []);
 
   // 固定 nodeTypes 引用，避免重复渲染触发 React Flow 重建
   const nodeTypes = useRef({ mindMapNode: MindMapNode }).current;
@@ -552,7 +559,7 @@ function MindMapInner({
             const { x, y, zoom } = savedViewportRef.current;
             setViewport({ x: x || 0, y: y || 0, zoom: zoom || 1 });
           } else {
-            fitView({ padding: 0.2, duration: 400 });
+            fitView({ padding: getFitPadding(), duration: 400 });
           }
         }, 60);
       });
@@ -634,8 +641,8 @@ function MindMapInner({
 
   // 适应画布
   const handleFitView = useCallback(() => {
-    fitView({ padding: 0.2, duration: 300 });
-  }, [fitView]);
+    fitView({ padding: getFitPadding(), duration: 300 });
+  }, [fitView, getFitPadding]);
 
   // 放大
   const handleZoomIn = useCallback(() => {
@@ -699,7 +706,7 @@ function MindMapInner({
             height: 120,
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             overflow: 'hidden',
-            marginBottom: '48px', // 抬高，避免遮挡底部输入面板
+            marginBottom: 'calc(var(--composer-height, 120px) + var(--composer-bottom, 12px) + 16px)', // 抬高，避免遮挡底部输入面板
           }}
           pannable
           zoomable
@@ -711,7 +718,7 @@ function MindMapInner({
         sx={{
           position: 'absolute',
           left: 16,
-          bottom: 16,
+          bottom: 'calc(var(--composer-height, 120px) + var(--composer-bottom, 12px) + 12px)',
           display: 'flex',
           flexDirection: 'column',
           gap: 1,

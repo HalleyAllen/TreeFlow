@@ -56,7 +56,24 @@ const ChatContainer = () => {
   const [showSkillSelector, setShowSkillSelector] = useState(false)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
+  const workspaceRef = useRef(null)
+  const composerRef = useRef(null)
   const modelDropdownRef = useRef(null)
+
+  useEffect(() => {
+    const composer = composerRef.current
+    const workspace = workspaceRef.current
+    if (!composer || !workspace) return undefined
+    const updateHeight = () => workspace.style.setProperty('--composer-height', `${composer.offsetHeight}px`)
+    updateHeight()
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateHeight)
+    observer?.observe(composer)
+    window.addEventListener('resize', updateHeight)
+    return () => {
+      observer?.disconnect()
+      window.removeEventListener('resize', updateHeight)
+    }
+  }, [])
   
   // 脑图数据管理
   const { 
@@ -285,7 +302,7 @@ const ChatContainer = () => {
   }
 
   return (
-    <Box sx={{ flex: 1, minWidth: 0, minHeight: 0, position: 'relative', p: '4px 8px 4px 8px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <Box ref={workspaceRef} data-chat-workspace="true" sx={{ '--composer-height': '120px', '--composer-bottom': 'max(12px, env(safe-area-inset-bottom))', flex: 1, minWidth: 0, minHeight: 0, position: 'relative', p: '4px 8px 4px 8px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       {/* 分支模式提示条 */}
       <Fade in={branchMode}>
         <Paper
@@ -313,7 +330,7 @@ const ChatContainer = () => {
       </Fade>
 
       {/* 脑图视图 - React Flow */}
-      <Box sx={{ flex: 1, mb: 0, borderRadius: 2, overflow: 'hidden', border: '1px solid var(--border-color)', position: 'relative' }}>
+      <Box sx={{ flex: 1, minHeight: 0, mb: 0, borderRadius: 2, overflow: 'hidden', border: '1px solid var(--border-color)', position: 'relative', zIndex: 0 }}>
         {/* 标题栏 - 悬浮在脑图上层 */}
         <Box sx={{
           position: 'absolute',
@@ -429,16 +446,15 @@ const ChatContainer = () => {
 
       {/* 输入区域 - 悬浮在脑图上方 */}
       <Paper
+        ref={composerRef}
+        data-chat-composer="true"
         onClick={() => inputRef.current?.focus()}
         sx={{
-          position: 'relative',
-          bottom: 0,
-          left: 0,
-          transform: 'none',
-          alignSelf: 'center',
-          flexShrink: 0,
-          mt: 1,
-          width: '100%',
+          position: 'absolute',
+          bottom: 'var(--composer-bottom)',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 'calc(100% - 32px)',
           maxWidth: 720,
           p: { xs: 1.5, sm: 2 },
           borderRadius: 2.5,
@@ -447,7 +463,7 @@ const ChatContainer = () => {
           transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
           boxShadow: branchMode ? '0 4px 20px rgba(59, 130, 246, 0.25)' : '0 4px 20px rgba(0, 0, 0, 0.15)',
           cursor: 'text',
-          zIndex: 10,
+          zIndex: 20,
           '&:hover': {
             borderColor: branchMode ? 'rgba(59, 130, 246, 0.5)' : 'var(--border-color)'
           },
