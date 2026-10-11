@@ -917,7 +917,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
               }}
             >
               {/* 分支数量或状态 - 只在回答收起时显示 */}
-              {(hasBranches || isLoading || isStreaming) && !answerExpanded && (
+              {(hasBranches || isLoading || isStreaming) && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   {(isLoading || isStreaming) ? (
                     <>
@@ -953,7 +953,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
                 </Box>
               )}
               {/* 占位元素，当没有分支标签时保持按钮靠右 */}
-              {(!hasBranches && !isLoading && !isStreaming) || answerExpanded ? <Box /> : null}
+              {!hasBranches && !isLoading && !isStreaming ? <Box /> : null}
 
               {/* 操作按钮 / 编辑态操作按钮 */}
               <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
