@@ -722,7 +722,7 @@ function MindMapInner({
             height: 120,
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             overflow: 'hidden',
-            marginBottom: 'calc(var(--composer-height, 120px) + var(--composer-bottom, 12px) + 16px)', // 抬高，避免遮挡底部输入面板
+            marginBottom: 'var(--canvas-minimap-bottom, calc(var(--composer-height, 120px) + var(--composer-bottom, 12px) + 16px))', // 抬高，避免遮挡底部输入面板
           }}
           pannable
           zoomable
