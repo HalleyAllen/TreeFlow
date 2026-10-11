@@ -25,6 +25,7 @@ const COLLAPSED_ANSWER_HEIGHT = 82;
 // 节点尺寸常量（与 MindMap 共享）
 export const NODE_WIDTH = 280;
 export const NODE_HEIGHT = 220;
+const STREAMING_NODE_SIZE = { width: NODE_WIDTH, height: 360 };
 export const QUESTION_AREA_HEIGHT = 60; // 上半部分问题区域高度（收起时容纳2行文字）
 
 // React Flow 连接桩（Handle）样式：隐藏但保留锚点位置，边的端点在 handle 中心
@@ -156,7 +157,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
 
   // 任一区域展开即视为节点有展开行为
   const isAnyExpanded = questionExpanded || answerExpanded;
-  const manualSize = isAnyExpanded ? expandedSize : null;
+  const manualSize = isAnyExpanded ? (expandedSize || (isStreaming ? STREAMING_NODE_SIZE : null)) : null;
   const rememberScroll = useCallback((area, element) => {
     if (area === 'question' ? (!questionExpanded || isEditing) : !answerExpanded) return;
     readingPositionsRef.current[area] = { top: element.scrollTop, left: element.scrollLeft };

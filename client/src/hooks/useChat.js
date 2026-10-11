@@ -95,6 +95,7 @@ export const useChat = (topicId) => {
           onNode: ({ nodeId }) => {
             if (!isCurrentRequest()) return;
             realNodeId = nodeId;
+            setStreamingNode({ nodeId, content: '', done: false });
             if (lastQuestionNodeRef.current !== nodeId) {
               setQuestionNode({ nodeId, previousNodeId: previousQuestionNodeId, topicId: requestTopicId });
               lastQuestionNodeRef.current = nodeId;

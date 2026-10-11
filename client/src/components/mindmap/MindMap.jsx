@@ -268,6 +268,8 @@ function MindMapInner({
   const containerRef = useRef(null);
   const topicIdRef = useRef(topicId);
   topicIdRef.current = topicId;
+  const streamingNodeRef = useRef(streamingNode);
+  streamingNodeRef.current = streamingNode;
   const questionNodeRef = useRef(questionNode);
   questionNodeRef.current = questionNode;
   const focusedQuestionRef = useRef(null);
@@ -535,14 +537,11 @@ function MindMapInner({
       nodeSizesRef.current
     );
 
-    setNodes(previous => {
-      const current = new Map(previous.map(node => [node.id, node]));
-      return layoutNodes.map(node => {
-        const prior = current.get(node.id);
-        return prior?.data.isStreaming && node.data.status === 'loading'
-          ? { ...node, data: { ...node.data, isStreaming: true, streamingContent: prior.data.streamingContent } } : node;
-      });
-    });
+    const stream = streamingNodeRef.current;
+    setNodes(layoutNodes.map(node => stream?.nodeId === node.id && (!stream.done || node.data.status === 'loading') ? {
+      ...node,
+      data: { ...node.data, isStreaming: !stream.done, streamingContent: stream.content },
+    } : node));
     setEdges(layoutEdges);
   }, [treeData, setNodes, setEdges, handleNodeSelectInternal, handleToggleExpand, handleExpandStateChange, handleNodeHeightChange, handleNodeResize]);
 
