@@ -4,7 +4,7 @@
  * 功能：选中文字引用、展开/收起回答、编辑节点
  * React Flow 使用 data 驱动：主组件把业务数据与回调放入 node.data
  */
-import { memo, useState, useCallback, useRef, useEffect } from 'react';
+import { memo, useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
 import { Handle, Position, useReactFlow, NodeResizer } from '@xyflow/react';
 import MarkdownAnswer from '../common/MarkdownAnswer';
 import {
@@ -100,6 +100,8 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
   // 问题/回答文本 ref，用于测量是否需要展开按钮
   const questionTextRef = useRef(null);
   const answerTextRef = useRef(null);
+  const questionAreaRef = useRef(null);
+  const readingPositionsRef = useRef({ question: { top: 0, left: 0 }, answer: { top: 0, left: 0 } });
   // 划词引用相关状态
   const quoteButtonRef = useRef(null);
   const [selectedText, setSelectedText] = useState('');
@@ -155,6 +157,21 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
   // 任一区域展开即视为节点有展开行为
   const isAnyExpanded = questionExpanded || answerExpanded;
   const manualSize = isAnyExpanded ? expandedSize : null;
+  const rememberScroll = useCallback((area, element) => {
+    if (area === 'question' ? (!questionExpanded || isEditing) : !answerExpanded) return;
+    readingPositionsRef.current[area] = { top: element.scrollTop, left: element.scrollLeft };
+  }, [questionExpanded, answerExpanded, isEditing]);
+  const restoreScroll = useCallback((element, position) => {
+    if (!element) return;
+    element.scrollTop = Math.min(Math.max(0, position?.top || 0), Math.max(0, element.scrollHeight - element.clientHeight));
+    element.scrollLeft = Math.min(Math.max(0, position?.left || 0), Math.max(0, element.scrollWidth - element.clientWidth));
+  }, []);
+  useLayoutEffect(() => {
+    restoreScroll(questionAreaRef.current, questionExpanded && !isEditing ? readingPositionsRef.current.question : null);
+  }, [questionExpanded, isEditing, restoreScroll]);
+  useLayoutEffect(() => {
+    restoreScroll(answerTextRef.current, answerExpanded ? readingPositionsRef.current.answer : null);
+  }, [answerExpanded, restoreScroll]);
   const resizeGestureRef = useRef(null);
   const handleResizeStart = useCallback((_event, size) => {
     resizeGestureRef.current = { width: size.width, height: size.height, active: false };
@@ -556,7 +573,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
     if (questionTextRef.current) observer.observe(questionTextRef.current);
     if (answerContent) observer.observe(answerContent);
     return () => observer.disconnect();
-  }, [displayQuestion, fullAnswer, answerExpanded]);
+  }, [displayQuestion, fullAnswer, questionExpanded, answerExpanded]);
 
   // 是否有删除支线操作（有真正分支且非根节点）
   const canDeleteBranch = hasBranches && !isRoot && !!onDeleteBranch;
@@ -670,6 +687,9 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
         >
           {/* 上半部分：问题区域 */}
           <Box
+            ref={questionAreaRef}
+            data-node-scroll="question"
+            onScroll={event => rememberScroll('question', event.currentTarget)}
             className={manualSize ? 'node-question-area nowheel' : 'node-question-area'}
             sx={{
               position: 'relative',
@@ -857,7 +877,10 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
             {answerExpanded ? (
               // 回答展开时：用 span 让容器只包裹实际文字
               <Box
+                key="answer-expanded"
                 ref={answerTextRef}
+                data-node-scroll="answer"
+                onScroll={event => rememberScroll('answer', event.currentTarget)}
                 className="nodrag nopan nowheel"
                 onMouseDown={(e) => e.stopPropagation()}
                 sx={{
@@ -881,7 +904,9 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
             ) : (
               // 回答收起时：用 -webkit-box 截断（最多4行）
               <Box
+                key="answer-collapsed"
                 ref={answerTextRef}
+                data-node-scroll="answer"
                 className={manualSize ? "nodrag nopan nowheel" : "nodrag"}
                 onMouseDown={(e) => e.stopPropagation()}
                 sx={{
@@ -896,9 +921,8 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
                   cursor: 'text',
                   userSelect: 'text',
                   WebkitUserSelect: 'text',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 4,
-                  WebkitBoxOrient: 'vertical',
+                  // Block clipping keeps nested Markdown paragraphs in normal flow.
+                  display: 'block',
                   overflow: 'hidden',
                   maxHeight: COLLAPSED_ANSWER_HEIGHT,
                 }}
