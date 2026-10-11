@@ -65,14 +65,33 @@ const ChatContainer = () => {
     const composer = composerRef.current
     const workspace = workspaceRef.current
     if (!composer || !workspace) return undefined
-    const updateHeight = () => workspace.style.setProperty('--composer-height', `${composer.offsetHeight}px`)
-    updateHeight()
-    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateHeight)
+    const updateLayout = () => {
+      workspace.style.setProperty('--composer-height', `${composer.offsetHeight}px`)
+      const canvas = workspace.querySelector('.mindmap-flow')
+      if (!canvas) return
+      const canvasRect = canvas.getBoundingClientRect()
+      const composerRect = composer.getBoundingClientRect()
+      const alignedBottom = Math.max(0, canvasRect.bottom - composerRect.bottom)
+      const raisedBottom = Math.max(0, canvasRect.bottom - composerRect.top + 12)
+      for (const [selector, property] of [
+        ['[data-canvas-controls]', '--canvas-controls-bottom'],
+        ['.react-flow__minimap', '--canvas-minimap-bottom'],
+      ]) {
+        const panel = workspace.querySelector(selector)
+        if (!panel) continue
+        const rect = panel.getBoundingClientRect()
+        const overlapsInput = rect.left < composerRect.right + 12 && rect.right > composerRect.left - 12
+        workspace.style.setProperty(property, `${overlapsInput ? raisedBottom : alignedBottom}px`)
+      }
+    }
+    updateLayout()
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateLayout)
     observer?.observe(composer)
-    window.addEventListener('resize', updateHeight)
+    observer?.observe(workspace)
+    window.addEventListener('resize', updateLayout)
     return () => {
       observer?.disconnect()
-      window.removeEventListener('resize', updateHeight)
+      window.removeEventListener('resize', updateLayout)
     }
   }, [])
   

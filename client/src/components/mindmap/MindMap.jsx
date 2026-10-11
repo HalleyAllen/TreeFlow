@@ -731,10 +731,11 @@ function MindMapInner({
 
       {/* 左下角控制按钮组 */}
       <Box
+        data-canvas-controls="true"
         sx={{
           position: 'absolute',
           left: 16,
-          bottom: 'calc(var(--composer-height, 120px) + var(--composer-bottom, 12px) + 12px)',
+          bottom: 'var(--canvas-controls-bottom, calc(var(--composer-height, 120px) + var(--composer-bottom, 12px) + 12px))',
           display: 'flex',
           flexDirection: 'column',
           gap: 1,
