@@ -78,18 +78,22 @@ const ChatContainer = () => {
         ['.react-flow__minimap', '--canvas-minimap-bottom'],
       ]) {
         const panel = workspace.querySelector(selector)
-        if (!panel) continue
-        const rect = panel.getBoundingClientRect()
+        const measured = panel?.getBoundingClientRect()
+        const rect = measured?.width ? measured : (selector === '[data-canvas-controls]'
+          ? { left: canvasRect.left + 16, right: canvasRect.left + 56 }
+          : { left: canvasRect.right - 166, right: canvasRect.right - 16 })
         const overlapsInput = rect.left < composerRect.right + 12 && rect.right > composerRect.left - 12
         workspace.style.setProperty(property, `${overlapsInput ? raisedBottom : alignedBottom}px`)
       }
     }
     updateLayout()
+    const initialFrame = window.requestAnimationFrame(updateLayout)
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateLayout)
     observer?.observe(composer)
     observer?.observe(workspace)
     window.addEventListener('resize', updateLayout)
     return () => {
+      window.cancelAnimationFrame(initialFrame)
       observer?.disconnect()
       window.removeEventListener('resize', updateLayout)
     }

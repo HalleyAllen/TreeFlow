@@ -735,7 +735,7 @@ function MindMapInner({
         sx={{
           position: 'absolute',
           left: 16,
-          bottom: 'var(--canvas-controls-bottom, calc(var(--composer-height, 120px) + var(--composer-bottom, 12px) + 12px))',
+          bottom: 'var(--canvas-controls-bottom, 8px)',
           display: 'flex',
           flexDirection: 'column',
           gap: 1,
