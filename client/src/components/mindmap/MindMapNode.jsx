@@ -672,21 +672,21 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
               position: 'relative',
               p: 1.2,
               pb: 0.8,
-              minHeight: manualSize && questionExpanded ? 0 : (questionExpanded || isEditing ? 'auto' : QUESTION_AREA_HEIGHT),
+              minHeight: manualSize && questionExpanded ? 0 : (isEditing ? 'auto' : QUESTION_AREA_HEIGHT),
               flex: manualSize && questionExpanded && !answerExpanded ? '1 1 0' : undefined,
               flexShrink: manualSize && questionExpanded && !answerExpanded ? 1 : 0,
               maxHeight: manualSize ? ((!questionExpanded || answerExpanded) ? '45%' : undefined) : (isAnyExpanded ? (questionExpanded && !answerExpanded ? 1400 : 700) : undefined),
               backgroundColor: styles.questionBg,
-              borderBottom: isAnyExpanded || isEditing ? '1px solid' : 'none',
+              borderBottom: isEditing ? '1px solid' : 'none',
               borderColor: isQuote ? '#fde68a' : (isRoot ? '#bfdbfe' : '#e5e7eb'),
               boxSizing: 'border-box',
               display: 'flex',
               flexDirection: 'column',
-              justifyContent: isAnyExpanded ? 'flex-start' : 'center',
-              gap: questionExpanded || isEditing ? 1 : 0,
+              justifyContent: questionExpanded || isEditing ? 'flex-start' : 'center',
+              gap: isEditing ? 1 : 0,
               // 展开时隐藏溢出，防止背景色显示为直角超出圆角边框
               overflow: 'hidden',
-              overflowY: isAnyExpanded ? 'auto' : 'hidden',
+              overflowY: questionExpanded || isEditing ? 'auto' : 'hidden',
               // 保持与 Paper 一致的上圆角
               borderRadius: '12px 12px 0 0',
             }}
@@ -726,6 +726,7 @@ const MindMapNode = memo(({ data, id: flowNodeId }) => {
                 className="nodrag"
                 onMouseDown={(e) => e.stopPropagation()}
                 sx={{
+                  alignSelf: 'flex-start',
                   width: 'fit-content',
                   fontSize: '0.8rem',
                   fontWeight: 600,
