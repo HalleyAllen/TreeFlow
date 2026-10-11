@@ -19,6 +19,7 @@ import { Box, IconButton, Tooltip, Snackbar, Alert } from '@mui/material';
 import { Add, Remove, FitScreen, RestartAlt } from '@mui/icons-material';
 import MindMapNode, { NODE_WIDTH, NODE_HEIGHT } from './MindMapNode';
 import { splitNodeChildren } from './treeStructure';
+import { getNodeFocusViewport } from './focusViewport';
 import * as treeApi from '../../services/api/tree.api';
 
 // 节点间距配置
@@ -267,13 +268,16 @@ function MindMapInner({
   const containerRef = useRef(null);
   const topicIdRef = useRef(topicId);
   topicIdRef.current = topicId;
+  const questionNodeRef = useRef(questionNode);
+  questionNodeRef.current = questionNode;
+  const focusedQuestionRef = useRef(null);
   const nodeSizesRef = useRef({});
   const resizingNodeRef = useRef(null);
   const resizeReleaseRef = useRef(null);
   const [resizeError, setResizeError] = useState('');
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const { setViewport, fitView, zoomIn, zoomOut } = useReactFlow();
+  const { setViewport, getViewport, fitView, zoomIn, zoomOut } = useReactFlow();
   const getFitPadding = useCallback(() => {
     const canvas = containerRef.current;
     const composer = canvas?.closest('[data-chat-workspace]')?.querySelector('[data-chat-composer]');
@@ -455,6 +459,7 @@ function MindMapInner({
 
     // 重置状态，避免旧话题数据污染新话题
     expandedStatesRef.current = {};
+    focusedQuestionRef.current = null;
     nodeSizesRef.current = {};
     resizingNodeRef.current = null;
     resizeReleaseRef.current?.();
@@ -484,6 +489,10 @@ function MindMapInner({
     // 从服务器加载视口位置（可独立于节点布局恢复）
     treeApi.getViewport(topicId).then(result => {
       if (layoutRequestRef.current !== requestId) return;
+      if (questionNodeRef.current?.topicId === topicId) {
+        viewportRestoredRef.current = true;
+        return;
+      }
       if (result.success && result.viewport) {
         savedViewportRef.current = result.viewport;
         const { x, y, zoom } = result.viewport;
@@ -555,6 +564,35 @@ function MindMapInner({
     relayoutRef.current?.();
   }, [questionNode, topicId, initialDataLoaded]);
 
+  useEffect(() => {
+    const nodeId = questionNode?.nodeId;
+    if (!initialDataLoaded || questionNode?.topicId !== topicId || !nodeId || focusedQuestionRef.current === nodeId) return undefined;
+    const node = nodes.find(item => item.id === nodeId);
+    if (!node || !nodeHeightsRef.current[nodeId]) return undefined;
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        if (topicIdRef.current !== topicId || questionNodeRef.current?.nodeId !== nodeId) return;
+        const canvas = containerRef.current;
+        const element = [...(canvas?.querySelectorAll('.react-flow__node') || [])]
+          .find(item => item.dataset.id === nodeId)?.querySelector('.mindmap-node');
+        if (!canvas || !element || !element.offsetWidth || !element.offsetHeight) return;
+        const bounds = canvas.getBoundingClientRect();
+        const composer = canvas.closest('[data-chat-workspace]')?.querySelector('[data-chat-composer]');
+        const viewport = getNodeFocusViewport(node.position, {
+          width: element.offsetWidth, height: element.offsetHeight,
+        }, getViewport().zoom, {
+          width: bounds.width,
+          top: 72,
+          bottom: composer ? composer.getBoundingClientRect().top - bounds.top - 16 : bounds.height - 24,
+        });
+        focusedQuestionRef.current = nodeId;
+        viewportRestoredRef.current = true;
+        setViewport(viewport, { duration: 280 });
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [questionNode, topicId, initialDataLoaded, nodes, getViewport, setViewport]);
+
   // 构建布局：仅在 treeData 变化或位置数据加载完成后执行
   useEffect(() => {
     if (!treeData) {
@@ -571,6 +609,7 @@ function MindMapInner({
       viewportRestoredRef.current = true;
       requestAnimationFrame(() => {
         setTimeout(() => {
+          if (topicIdRef.current !== topicId || questionNodeRef.current?.topicId === topicId) return;
           if (savedViewportRef.current) {
             const { x, y, zoom } = savedViewportRef.current;
             setViewport({ x: x || 0, y: y || 0, zoom: zoom || 1 });
