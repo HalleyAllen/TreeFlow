@@ -26,6 +26,7 @@ const ChatContainer = () => {
     branchMode,
     nodeCreated,
     streamingNode,
+    questionNode,
     stopStreaming: onStopStreaming,
     activeEndNodeId,
     refreshActiveEndNode,
@@ -373,6 +374,7 @@ const ChatContainer = () => {
           activeEndNodeId={activeEndNodeId}
           visualNodeId={visualNodeId}
           streamingNode={streamingNode}
+          questionNode={questionNode}
           onNodeSelect={handleNodeSelect}
           onBranchFromNode={handleBranchFromNode}
           onQuoteText={onQuoteText}

@@ -256,6 +256,7 @@ function MindMapInner({
   activeEndNodeId,
   visualNodeId,
   streamingNode,
+  questionNode,
   onNodeSelect,
   onQuoteText,
   onEditNode,
@@ -538,6 +539,21 @@ function MindMapInner({
 
   // 供高度变化回调触发重新布局
   relayoutRef.current = buildLayout;
+
+  useEffect(() => {
+    if (!initialDataLoaded || questionNode?.topicId !== topicId || !questionNode?.nodeId) return;
+    const { nodeId, previousNodeId } = questionNode;
+    if (previousNodeId && previousNodeId !== nodeId) {
+      expandedStatesRef.current[previousNodeId] = { question: false, answer: false };
+      if (resizingNodeRef.current === previousNodeId) {
+        resizeReleaseRef.current?.();
+        resizeReleaseRef.current = null;
+        resizingNodeRef.current = null;
+      }
+    }
+    expandedStatesRef.current[nodeId] = { question: true, answer: true };
+    relayoutRef.current?.();
+  }, [questionNode, topicId, initialDataLoaded]);
 
   // 构建布局：仅在 treeData 变化或位置数据加载完成后执行
   useEffect(() => {

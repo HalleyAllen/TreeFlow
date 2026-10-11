@@ -15,6 +15,8 @@ export const useChat = (topicId) => {
   const [activeEndNodeId, setActiveEndNodeId] = useState(null); // 活跃末端节点（点击末端节点切换）
   const [nodeCreated, setNodeCreated] = useState(0); // 计数器：变化时触发脑图刷新
   const [streamingNode, setStreamingNode] = useState(null); // 正在流式生成的节点 { nodeId, content, done }
+  const [questionNode, setQuestionNode] = useState(null);
+  const lastQuestionNodeRef = useRef(null);
   const abortRef = useRef(null); // 当前流式请求的中止控制器
 
   const topicRef = useRef(topicId);
@@ -33,6 +35,8 @@ export const useChat = (topicId) => {
     setStreamingNode(null);
     setError(null);
     setNodeCreated(0);
+    setQuestionNode(null);
+    lastQuestionNodeRef.current = null;
   }, [topicId]);
 
   useEffect(() => () => { abortRef.current?.abort(); }, []);
@@ -47,6 +51,7 @@ export const useChat = (topicId) => {
     if (!topicId || abortRef.current) return { success: false };
     const requestTopicId = topicId;
     const requestEpoch = messageLoadRef.current;
+    const previousQuestionNodeId = lastQuestionNodeRef.current || activeEndNodeId;
     const tempNodeId = `temp-${Date.now()}`;
 
     // 先立即显示用户问题和加载状态
@@ -90,6 +95,10 @@ export const useChat = (topicId) => {
           onNode: ({ nodeId }) => {
             if (!isCurrentRequest()) return;
             realNodeId = nodeId;
+            if (lastQuestionNodeRef.current !== nodeId) {
+              setQuestionNode({ nodeId, previousNodeId: previousQuestionNodeId, topicId: requestTopicId });
+              lastQuestionNodeRef.current = nodeId;
+            }
             setNodeCreated(c => c + 1);
           },
           // 回答增量：节流更新流式状态，脑图节点渐进渲染
@@ -254,6 +263,7 @@ export const useChat = (topicId) => {
 
   return {
     messages,
+    questionNode,
     loading,
     error,
     branchMode,

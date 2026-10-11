@@ -47,6 +47,9 @@ function useNodeExpand(initialQuestionExpanded = false, initialAnswerExpanded = 
   const [questionExpanded, setQuestionExpanded] = useState(initialQuestionExpanded);
   const [answerExpanded, setAnswerExpanded] = useState(initialAnswerExpanded);
 
+  useEffect(() => { setQuestionExpanded(initialQuestionExpanded); }, [initialQuestionExpanded]);
+  useEffect(() => { setAnswerExpanded(initialAnswerExpanded); }, [initialAnswerExpanded]);
+
   const toggleQuestion = useCallback((event) => {
     event?.stopPropagation?.();
     event?.preventDefault?.();
